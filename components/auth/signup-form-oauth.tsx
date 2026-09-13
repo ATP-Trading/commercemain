@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRTL } from "@/hooks/use-rtl"
 import { Mail, Loader2, Shield, Zap, Users } from "lucide-react"
-import Link from "next/link"
-import { useTranslations } from 'next-intl'
+import { Link } from "@/src/i18n/navigation"
+import { localizedReturnPath } from "@/lib/auth/return-path"
+import { useTranslations, useLocale } from 'next-intl'
 import { useCustomerOAuth } from '@/hooks/use-customer-oauth'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -18,18 +19,21 @@ export function SignupFormOAuth() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
+  const returnTo = localizedReturnPath(searchParams.get('returnTo'), useLocale())
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   // Redirect if already logged in
   useEffect(() => {
-    if (isLoggedIn) {
-      router.push('/account')
+    if (isLoggedIn && !isLoading) {
+      router.push(returnTo)
     }
-  }, [isLoggedIn, router])
+  }, [isLoggedIn, isLoading, router, returnTo])
 
   const handleCreateAccount = () => {
     // OAuth flow handles both login and signup
     // Pass signup hint to show user this is for creating an account
-    login('/account')
+    setIsRedirecting(true)
+    login(returnTo)
   }
 
   const benefits = [
@@ -79,9 +83,9 @@ export function SignupFormOAuth() {
             type="button"
             onClick={handleCreateAccount}
             className="w-full atp-button-gold h-12 text-base"
-            disabled={isLoading}
+            disabled={isLoading || isRedirecting || isLoggedIn}
           >
-            {isLoading ? (
+            {isLoading || isRedirecting ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 {t('redirecting') || 'Redirecting...'}
@@ -100,29 +104,23 @@ export function SignupFormOAuth() {
               {t('howItWorks') || 'How it works:'}
             </p>
             <ol className={`text-sm text-muted-foreground space-y-2 ${isRTL ? "text-right" : ""}`}>
-              <li className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <span className="flex-shrink-0 w-5 h-5 bg-atp-gold/20 rounded-full flex items-center justify-center text-xs font-medium text-atp-gold">1</span>
-                <span>{t('howItWorksStep1') || 'Enter your email address'}</span>
-              </li>
-              <li className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <span className="flex-shrink-0 w-5 h-5 bg-atp-gold/20 rounded-full flex items-center justify-center text-xs font-medium text-atp-gold">2</span>
-                <span>{t('howItWorksStep2') || 'Receive a secure one-time code'}</span>
-              </li>
-              <li className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <span className="flex-shrink-0 w-5 h-5 bg-atp-gold/20 rounded-full flex items-center justify-center text-xs font-medium text-atp-gold">3</span>
-                <span>{t('howItWorksStep3') || 'Enter the code to access your account'}</span>
-              </li>
+              {[1, 2, 3, 4].map(step => (
+                <li key={step} className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-5 h-5 bg-atp-gold/20 rounded-full flex items-center justify-center text-xs font-medium text-atp-gold">{step}</span>
+                  <span>{t(`howItWorksStep${step}`)}</span>
+                </li>
+              ))}
             </ol>
           </div>
 
           {/* Terms notice */}
           <p className={`text-xs text-muted-foreground text-center ${isRTL ? "text-right" : ""}`}>
             {t('byCreatingAccount') || 'By creating an account, you agree to our'}{" "}
-            <Link href="/terms" className="text-atp-gold hover:underline">
+            <Link href="/policies/terms-of-service" className="text-atp-gold hover:underline">
               {t('termsOfService') || 'Terms of Service'}
             </Link>{" "}
             {t('and') || 'and'}{" "}
-            <Link href="/privacy" className="text-atp-gold hover:underline">
+            <Link href="/policies/privacy-policy" className="text-atp-gold hover:underline">
               {t('privacyPolicy') || 'Privacy Policy'}
             </Link>
           </p>
@@ -142,7 +140,7 @@ export function SignupFormOAuth() {
           {/* Login link */}
           <div className="text-center">
             <Link 
-              href="/auth/login" 
+              href={`/login?returnTo=${encodeURIComponent(returnTo)}`}
               className="text-atp-gold hover:underline font-medium text-sm"
             >
               {t('signInInstead') || 'Sign in instead'}
