@@ -78,7 +78,9 @@ export class MembershipCartMiddleware {
       const validation = atpMembershipService.validateMembership(activeMembership ?? null);
       
       // Calculate service discounts
-      const serviceDiscounts = this.calculateServiceDiscounts(cart.lines, activeMembership ?? null);
+      const serviceDiscounts = validation.isValid && validation.isActive
+        ? this.calculateServiceDiscounts(cart.lines, activeMembership ?? null)
+        : [];
       
       // Determine free delivery eligibility
       const freeDelivery = this.isEligibleForFreeDelivery(activeMembership ?? null, validation);
@@ -206,37 +208,9 @@ export class MembershipCartMiddleware {
     serviceDiscounts: CartServiceDiscount[],
     freeDelivery: boolean
   ): Cart {
-    // Calculate total discount amount
-    const totalDiscountAmount = serviceDiscounts.reduce(
-      (sum, discount) => sum + discount.discountAmount,
-      0
-    );
-
-    // Calculate new subtotal
-    const originalSubtotal = parseFloat(cart.cost.subtotalAmount.amount);
-    const newSubtotal = Math.max(0, originalSubtotal - totalDiscountAmount);
-
-    // Calculate delivery savings (for display purposes)
-    const deliverySavings = freeDelivery ? MEMBERSHIP_CONFIG.STANDARD_DELIVERY_COST : 0;
-
-    // Calculate new total (subtotal + tax - delivery if free)
-    const originalTotal = parseFloat(cart.cost.totalAmount.amount);
-    const newTotal = Math.max(0, originalTotal - totalDiscountAmount - deliverySavings);
-
-    return {
-      ...cart,
-      cost: {
-        ...cart.cost,
-        subtotalAmount: {
-          ...cart.cost.subtotalAmount,
-          amount: newSubtotal.toFixed(2)
-        },
-        totalAmount: {
-          ...cart.cost.totalAmount,
-          amount: newTotal.toFixed(2)
-        }
-      }
-    };
+    // Eligibility estimates must never overwrite Shopify's payable amounts.
+    // Shopify applies discounts and delivery rules at cart/checkout level.
+    return cart;
   }
 
   /**

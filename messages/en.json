@@ -142,6 +142,7 @@
       "originalTotal": "Original Total:",
       "memberPrice": "Member Price:",
       "youSave": "You Save:",
+      "memberCheckoutNote": "These are your current cart amounts. Review membership discounts and shipping at checkout using your membership account.",
       "subtotalLabel": "Subtotal:",
       "shippingLabel": "Shipping:",
       "taxesLabel": "Taxes:",
