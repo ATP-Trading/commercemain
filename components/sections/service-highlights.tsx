@@ -79,7 +79,7 @@ export default function ServiceHighlights() {
         t("supplements.benefit4"),
         t("supplements.benefit5"),
       ],
-      image: "/supplements-thai.jpg",
+      image: "/images/supplements-studio.png",
       link: "/collections/amazing-thai-products",
       gradient: "from-emerald-400 via-green-500 to-teal-600",
     },
@@ -96,7 +96,7 @@ export default function ServiceHighlights() {
         t("beauty.benefit4"),
         t("beauty.benefit5"),
       ],
-      image: "/supplements-thai.jpg",
+      image: "/images/skincare-studio.png",
       link: "/collections/amazing-thai-products",
       gradient: "from-rose-400 via-pink-500 to-purple-600",
     },
@@ -289,7 +289,7 @@ export default function ServiceHighlights() {
                 />
               ) : (
                 <m.div
-                  className="relative h-96 rounded-3xl overflow-hidden shadow-2xl"
+                  className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
                   style={parallax.style}
                   whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
                   transition={transitions.normal}
@@ -298,12 +298,10 @@ export default function ServiceHighlights() {
                     src={currentService.image}
                     alt={currentService.title}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-t ${currentService.gradient} opacity-20`}
-                  />
+
                 </m.div>
               )}
 
