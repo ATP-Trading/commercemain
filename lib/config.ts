@@ -4,8 +4,8 @@ import { getSiteUrl } from "./site-url";
 export const config = {
   baseUrl: getSiteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   shopify: {
-    domain: process.env.SHOPIFY_STORE_DOMAIN || 'hydrogen-preview.myshopify.com',
-    accessToken: process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || '3b580e70970c4528da70c98e097c2fa0',
+    domain: process.env.SHOPIFY_STORE_DOMAIN || '',
+    accessToken: process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || '',
     apiVersion: process.env.SHOPIFY_API_VERSION || '2026-01',
     customerAccountAccessToken: process.env.SHOPIFY_CUSTOMER_ACCOUNT_ACCESS_TOKEN,
   },
@@ -40,7 +40,7 @@ export function validateEnvironmentVariables() {
 
   if (missing.length > 0) {
     console.warn(`⚠️  Missing required environment variables: ${missing.join(', ')}`)
-    console.warn('🚀 Using Shopify demo store for development. Please set up your .env.local file.')
+    console.warn('Shopify requests are disabled until the required environment variables are configured.')
     console.warn('📝 Create .env.local with your store credentials when ready for production.')
     return false
   }
@@ -53,7 +53,7 @@ export function validateEnvironmentVariables() {
     return false
   }
 
-  console.log(`✅ Connected to Shopify store: ${domain}`)
+  console.log(`✅ Shopify configuration present for: ${domain}`)
   return true
 }
 

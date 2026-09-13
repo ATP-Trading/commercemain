@@ -1,7 +1,6 @@
 import 'server-only'
 import { isEmsPromotion } from '@/lib/publication-policy'
 
-import { createStorefrontApiClient } from '@shopify/storefront-api-client'
 import { TAGS } from "@/lib/constants"
 import { isShopifyError } from "@/lib/type-guards"
 import { ensureStartsWith } from "@/lib/utils"
@@ -12,12 +11,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies, headers as requestHeaders } from "next/headers"
 import { config } from "@/lib/config"
 
-// Initialize Shopify Storefront API Client
-const storefrontClient = createStorefrontApiClient({
-  storeDomain: config.shopify.domain!,
-  apiVersion: config.shopify.apiVersion as any,
-  publicAccessToken: config.shopify.accessToken!,
-})
 import {
   Cart,
   Collection,
@@ -119,8 +112,7 @@ export async function shopifyFetch<T>({
   try {
     // Check if environment variables are properly configured
     if (!isEnvValid) {
-      console.warn('[Shopify] Environment variables not configured. Using demo store fallback.')
-      console.warn('[Shopify] Please create .env.local with your store credentials.')
+      throw new Error('Shopify environment variables are missing or invalid')
     }
 
     console.log(`[Shopify] Making request to: ${endpoint}`)
