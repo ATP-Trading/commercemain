@@ -190,8 +190,8 @@ function ATPCartModal() {
                           }`}
                       >
                         {isRTL
-                          ? "وفر حتى 20% على طلبك بالكامل مع عضوية ATP"
-                          : "Save up to 20% on your entire order with ATP Membership"}
+                          ? "وفر 15% على المشتريات المؤهلة مع عضوية ATP"
+                          : "Save 15% on eligible purchases with ATP Membership"}
                       </p>
                       <Link href="/atp-membership" onClick={closeCart}>
                         <Badge className="bg-atp-gold text-atp-black text-xs hover:bg-atp-gold/90">

@@ -1,21 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * Instagram Graph API Route
- * 
- * Fetches recent posts from your Instagram Business/Creator account.
- * 
- * Setup Requirements:
- * 1. Create a Meta Developer App: https://developers.facebook.com/apps
- * 2. Add Instagram Graph API product
- * 3. Connect an Instagram Business or Creator account
- * 4. Generate a long-lived access token
- * 5. Set INSTAGRAM_ACCESS_TOKEN in your .env.local
- * 
- * The access token needs to be refreshed every 60 days.
- * Consider implementing a token refresh mechanism for production.
- */
-
+// Read-only feed for the Instagram account configured on the server.
 export interface InstagramPost {
   id: string;
   caption?: string;
@@ -43,90 +28,46 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '12'), 25);
-    const forceRefresh = searchParams.get('refresh') === 'true';
-
-    // Check cache
-    const now = Date.now();
-    if (!forceRefresh && cachedPosts && (now - cacheTimestamp) < CACHE_DURATION) {
-      return NextResponse.json({
-        posts: cachedPosts.slice(0, limit),
-        cached: true,
-        cacheAge: Math.round((now - cacheTimestamp) / 1000),
-      });
-    }
-
-    const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
-    
-    if (!accessToken) {
-      // Return demo data if no token is configured
-      console.warn('INSTAGRAM_ACCESS_TOKEN not configured - returning demo data');
-      return NextResponse.json({
-        posts: getDemoInstagramPosts(limit),
-        demo: true,
-        message: 'Configure INSTAGRAM_ACCESS_TOKEN for real data',
-      });
-    }
-
-    // Fetch from Instagram Graph API
-    const fields = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp';
-    const apiUrl = `https://graph.instagram.com/me/media?fields=${fields}&limit=${limit}&access_token=${accessToken}`;
-
-    const response = await fetch(apiUrl, {
-      next: { revalidate: 300 }, // Cache at edge for 5 minutes
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Instagram API error:', errorData);
-      
-      // Return cached data if available, even if stale
-      if (cachedPosts) {
-        return NextResponse.json({
-          posts: cachedPosts.slice(0, limit),
-          cached: true,
-          stale: true,
-          error: 'Using stale cache due to API error',
-        });
-      }
-
-      // Fall back to demo data
-      return NextResponse.json({
-        posts: getDemoInstagramPosts(limit),
-        demo: true,
-        error: 'Instagram API error - using demo data',
-      });
-    }
-
-    const data: InstagramApiResponse = await response.json();
-    
-    // Update cache
-    cachedPosts = data.data;
-    cacheTimestamp = now;
-
-    return NextResponse.json({
-      posts: data.data,
-      cached: false,
-    });
-
-  } catch (error) {
-    console.error('Instagram fetch error:', error);
-    
-    // Return demo data on error
-    return NextResponse.json({
-      posts: getDemoInstagramPosts(12),
-      demo: true,
-      error: 'Failed to fetch Instagram posts',
-    });
+  const requestedLimit = Number(new URL(request.url).searchParams.get('limit') || 12);
+  const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(25, Math.floor(requestedLimit))) : 12;
+  const forceRefresh = new URL(request.url).searchParams.get('refresh') === 'true';
+  const now = Date.now();
+  const fallback = (details: Record<string, unknown>) => NextResponse.json({
+    posts: cachedPosts?.slice(0, limit) || [],
+    cached: Boolean(cachedPosts),
+    stale: Boolean(cachedPosts),
+    ...details,
+  });
+  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
+  if (!accessToken) return fallback({ error: 'Instagram connection is not configured' });
+  if (!forceRefresh && cachedPosts && now - cacheTimestamp < CACHE_DURATION) {
+    return NextResponse.json({ posts: cachedPosts.slice(0, limit), cached: true });
   }
-}
-
-/**
- * Demo Instagram posts for development/preview
- * Using empty media_url to trigger CSS placeholder in component
- */
-function getDemoInstagramPosts(_limit: number): InstagramPost[] {
-  return [];
+  try {
+    const fields = 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp';
+    const apiUrl = new URL('https://graph.instagram.com/me/media');
+    apiUrl.searchParams.set('fields', fields);
+    apiUrl.searchParams.set('limit', '25');
+    apiUrl.searchParams.set('access_token', accessToken);
+    const response = await fetch(apiUrl.toString(), { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+    const data = await response.json();
+    if (!response.ok || data.error) {
+      // Numeric diagnostics only: never return provider messages, URLs or tokens.
+      const diagnostics = {
+        upstreamStatus: response.status,
+        ...(typeof data.error?.code === 'number' ? { errorCode: data.error.code } : {}),
+        ...(typeof data.error?.error_subcode === 'number' ? { errorSubcode: data.error.error_subcode } : {}),
+      };
+      console.warn('Instagram API request failed', diagnostics);
+      return fallback({ error: 'Instagram connection failed', ...diagnostics });
+    }
+    if (!Array.isArray(data.data)) return fallback({ error: 'Instagram response was invalid' });
+    cachedPosts = (data as InstagramApiResponse).data;
+    cacheTimestamp = now;
+    return NextResponse.json({ posts: cachedPosts.slice(0, limit), cached: false });
+  } catch {
+    // Exceptions may contain request URLs with credentials; do not serialize them.
+    console.warn('Instagram request could not be completed');
+    return fallback({ error: 'Instagram request could not be completed' });
+  }
 }

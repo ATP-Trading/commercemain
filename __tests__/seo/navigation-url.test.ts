@@ -25,3 +25,13 @@ describe('store navigation destinations', () => {
     expect(localizeNavigationPath('/ar/collections/skincare', 'ar')).toBe('/ar/collections/skincare');
   });
 });
+
+describe('Shopify checkout host menu links', () => {
+  it.each(['/', '/en', '/ar', '/ar/'])('routes homepage %s back to the localized storefront', path => {
+    expect(localizeNavigationPath(normalizeNavigationUrl(`https://checkout.atpgroupservices.ae${path}`), 'ar')).toBe(path.endsWith('/') ? '/ar/' : '/ar');
+  });
+  it.each(['/checkouts/cn/example', '/cart/c/abc', '/customer_authentication/login'])('preserves actual checkout destination %s', path => {
+    const url = `https://checkout.atpgroupservices.ae${path}`;
+    expect(normalizeNavigationUrl(url)).toBe(url);
+  });
+});

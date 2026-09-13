@@ -134,7 +134,7 @@
       "startShopping": "Start Shopping",
       "itemCount": "{count} {count, plural, =1 {item} other {items}}",
       "unlockMemberBenefits": "Unlock Member Benefits",
-      "memberBenefitsDescription": "Save up to 20% on your entire order, enjoy free shipping, and access exclusive member perks.",
+      "memberBenefitsDescription": "Save 15% on eligible purchases, enjoy free shipping, and access exclusive member perks.",
       "cartItems": "Cart Items",
       "qtyLabel": "Qty:",
       "saveAmount": "Save {amount}",

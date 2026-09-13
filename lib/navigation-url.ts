@@ -4,6 +4,11 @@ export function normalizeNavigationUrl(value?: string | null): string {
   if (!value) return "";
   try {
     const url = new URL(value);
+    // Shopify menus can use the checkout host for their storefront home link.
+    // Only normalize its homepage; real checkout/account URLs stay external.
+    if (url.hostname === "checkout.atpgroupservices.ae" && /^\/(?:en|ar)?\/?$/.test(url.pathname)) {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
     if (!storefrontHosts.has(url.hostname)) return value;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {

@@ -70,7 +70,7 @@ export function InstagramFeed({ limit = 8, className }: InstagramFeedProps) {
           setIsDemo(data.demo || false);
         }
         if (data.error) {
-          console.warn('Instagram API:', data.error);
+          console.warn('Instagram API:', data.error, { status: data.upstreamStatus, code: data.errorCode, subcode: data.errorSubcode });
         }
       } catch (err) {
         console.error('Failed to fetch Instagram posts:', err);
@@ -172,7 +172,7 @@ export function InstagramFeed({ limit = 8, className }: InstagramFeedProps) {
             )}
             whileHover={{ x: isRTL ? -5 : 5 }}
           >
-            <span>@atpgroupservices</span>
+            <span>@atp_trading</span>
             <ExternalLink className="w-4 h-4" />
           </m.a>
         </m.div>
@@ -427,7 +427,7 @@ export function InstagramFeed({ limit = 8, className }: InstagramFeedProps) {
                     <Instagram className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">atpgroupservices</p>
+                    <p className="font-semibold text-sm">atp_trading</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(selectedPost.timestamp).toLocaleDateString(
                         isRTL ? 'ar-AE' : 'en-AE',

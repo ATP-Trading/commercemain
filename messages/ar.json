@@ -134,7 +134,7 @@
       "startShopping": "ابدأ التسوق",
       "itemCount": "{count} {count, plural, =1 {منتج} other {منتجات}}",
       "unlockMemberBenefits": "احصل على مزايا العضوية",
-      "memberBenefitsDescription": "وفر حتى 20% على طلبك بالكامل، واستمتع بالشحن المجاني، واحصل على امتيازات حصرية للأعضاء.",
+      "memberBenefitsDescription": "وفر 15% على المشتريات المؤهلة، واستمتع بالشحن المجاني، واحصل على امتيازات حصرية للأعضاء.",
       "cartItems": "عناصر السلة",
       "qtyLabel": "الكمية:",
       "saveAmount": "وفر {amount}",
