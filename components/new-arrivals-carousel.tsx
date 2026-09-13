@@ -46,6 +46,7 @@ export function NewArrivalsCarousel({
   locale,
 }: NewArrivalsCarouselProps) {
   const t = useTranslations("homepage");
+  const tActions = useTranslations("productActions");
   const tProduct = useTranslations("product");
   const shouldReduceMotion = useReducedMotion();
 
@@ -286,7 +287,7 @@ export function NewArrivalsCarousel({
                       "absolute top-4 z-20 p-2 rounded-full glass opacity-0 group-hover:opacity-100 transition-opacity",
                       isRTL ? "left-4" : "right-4"
                     )}
-                    aria-label="Add to wishlist"
+                    aria-label={tActions("addToWishlist")}
                   >
                     <Heart className="w-4 h-4 text-atp-white" />
                   </button>
@@ -320,7 +321,7 @@ export function NewArrivalsCarousel({
                           handleQuickView(product);
                         }}
                         className="p-2 rounded-full glass-gold opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Quick view"
+                        aria-label={tActions("quickView")}
                       >
                         <Eye className="w-4 h-4 text-atp-black" />
                       </button>

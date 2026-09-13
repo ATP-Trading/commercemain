@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
@@ -43,6 +44,7 @@ export function LuxuryProductCard({
   enable3DTilt = true,
   showRating = true,
 }: LuxuryProductCardProps) {
+  const tActions = useTranslations("productActions");
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -216,7 +218,7 @@ export function LuxuryProductCard({
                   "max-md:opacity-100 max-md:translate-y-0"
                 )}
                 whileTap={{ scale: 0.9 }}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                aria-label={isWishlisted ? tActions("removeFromWishlist") : tActions("addToWishlist")}
               >
                 <Heart
                   className={cn(
@@ -313,7 +315,7 @@ export function LuxuryProductCard({
                         "hover:bg-[var(--atp-gold)]"
                       )}
                       whileTap={{ scale: 0.95 }}
-                      aria-label="Quick view"
+                      aria-label={tActions("quickView")}
                     >
                       <Eye className="w-4 h-4" />
                     </m.button>
@@ -389,7 +391,7 @@ export function LuxuryProductCard({
                   "max-md:opacity-100 max-md:translate-y-0"
                 )}
                 whileTap={{ scale: 0.9 }}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                aria-label={isWishlisted ? tActions("removeFromWishlist") : tActions("addToWishlist")}
               >
                 <Heart
                   className={cn(
@@ -486,7 +488,7 @@ export function LuxuryProductCard({
                         "hover:bg-[var(--atp-gold)]"
                       )}
                       whileTap={{ scale: 0.95 }}
-                      aria-label="Quick view"
+                      aria-label={tActions("quickView")}
                     >
                       <Eye className="w-4 h-4" />
                     </m.button>

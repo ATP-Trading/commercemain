@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
 
 interface CartLayoutProps {
   children: React.ReactNode
@@ -12,7 +11,6 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'common' })
 
   const isArabic = locale === 'ar'
   
@@ -25,7 +23,7 @@ export async function generateMetadata({
     : 'Review your shopping cart and proceed to checkout. Enjoy exclusive member discounts and free delivery.'
 
   return {
-    title,
+    title: { absolute: title },
     description,
     robots: {
       index: false, // Don't index cart pages

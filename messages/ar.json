@@ -216,7 +216,7 @@
     "securePayment": "دفع آمن",
     "securePaymentDesc": "معاملات محمية 100٪",
     "freeShipping": "شحن مجاني",
-    "freeShippingDesc": "للطلبات فوق 250 درهم",
+    "freeShippingDesc": "لطلبات الإمارات فوق 250 درهم؛ وتوصيل طلبات المنتجات مجاني للأعضاء ذوي العضوية السارية",
     "easyReturns": "إرجاع سهل",
     "easyReturnsDesc": "الإرجاع وفق شروط سياسة الاسترداد"
   },
@@ -225,6 +225,11 @@
     "search": "بحث",
     "cart": "السلة",
     "account": "حسابي"
+  },
+  "productActions": {
+    "addToWishlist": "أضف إلى المفضلة",
+    "removeFromWishlist": "إزالة من المفضلة",
+    "quickView": "عرض سريع"
   },
   "quickView": {
     "close": "إغلاق",

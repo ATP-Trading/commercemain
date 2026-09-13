@@ -216,7 +216,7 @@
     "securePayment": "Secure Payment",
     "securePaymentDesc": "100% protected transactions",
     "freeShipping": "Free Shipping",
-    "freeShippingDesc": "On orders over AED 250",
+    "freeShippingDesc": "UAE orders over AED 250; active members enjoy free delivery on product orders",
     "easyReturns": "Easy Returns",
     "easyReturnsDesc": "Returns subject to our refund policy"
   },
@@ -225,6 +225,11 @@
     "search": "Search",
     "cart": "Cart",
     "account": "Account"
+  },
+  "productActions": {
+    "addToWishlist": "Add to wishlist",
+    "removeFromWishlist": "Remove from wishlist",
+    "quickView": "Quick view"
   },
   "quickView": {
     "close": "Close",
