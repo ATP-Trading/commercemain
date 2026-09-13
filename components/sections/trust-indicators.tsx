@@ -44,7 +44,14 @@ const staggerContainer = {
 };
 
 export default function TrustIndicators({ locale }: TrustIndicatorsProps) {
+  // Lab testing statement confirmed by the store owner, who holds supporting evidence.
   const trustFeatures = [
+    {
+      icon: "M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 006 21h12a1.7 1.7 0 001.5-2.5L14 9V3M8 14h8",
+      title: locale === "ar" ? "مفحوصة مخبريًا" : "Lab Tested",
+      description: "",
+      showSymbol: false,
+    },
     {
       icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z",
       title: locale === "ar" ? "شحن مجاني" : "Free shipping",
@@ -76,7 +83,7 @@ export default function TrustIndicators({ locale }: TrustIndicatorsProps) {
     >
       <div className="container-premium">
         <m.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12"
           variants={staggerContainer}
         >
           {trustFeatures.map((feature, index) => (
@@ -111,9 +118,9 @@ export default function TrustIndicators({ locale }: TrustIndicatorsProps) {
                     </>
                   )}
                 </p>
-              ) : (
+              ) : feature.description ? (
                 <p className="text-atp-charcoal/70 text-sm sm:text-base">{feature.description}</p>
-              )}
+              ) : null}
             </m.div>
           ))}
         </m.div>
