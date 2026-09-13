@@ -1,5 +1,7 @@
 "use server"
 
+import { getLocale } from "next-intl/server"
+import { localizeCheckoutUrl } from "@/lib/cart/checkout-locale"
 import { TAGS } from "@/lib/constants"
 import {
   addToCart,
@@ -195,7 +197,7 @@ export async function getCheckoutUrl(): Promise<string> {
     }
   }
   
-  return checkoutUrl
+  return localizeCheckoutUrl(checkoutUrl, await getLocale())
 }
 
 /**

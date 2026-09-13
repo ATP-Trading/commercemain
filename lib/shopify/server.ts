@@ -1,4 +1,5 @@
 import 'server-only'
+import { getLocale } from 'next-intl/server'
 import { isEmsPromotion } from '@/lib/publication-policy'
 
 import { TAGS } from "@/lib/constants"
@@ -212,7 +213,7 @@ export async function createCart(
     const hasLines = lines && lines.length > 0;
     const res = await shopifyFetch<ShopifyCreateCartOperation>({
       query: createCartMutation,
-      variables: hasLines ? { input: { lines } } : undefined
+      variables: { lineItems: hasLines ? lines : [], language: (await getLocale()) === "ar" ? "AR" : "EN" }
     } as any); // Type workaround for optional variables
 
     const cart = reshapeCart(res.body.data.cartCreate.cart);
@@ -245,6 +246,7 @@ export async function addToCart(
     query: addToCartMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       lines
     }
   });
@@ -257,6 +259,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
     query: removeFromCartMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       lineIds
     }
   });
@@ -272,6 +275,7 @@ export async function updateCart(
     query: editCartItemsMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       lines
     }
   });
@@ -298,6 +302,7 @@ export async function updateCartBuyerIdentity(
     query: updateCartBuyerIdentityMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       buyerIdentity,
     },
   })
@@ -322,7 +327,7 @@ export async function getCart(): Promise<Cart | undefined> {
 
   const res = await shopifyFetch<ShopifyCartOperation>({
     query: getCartQuery,
-    variables: { cartId }
+    variables: { cartId, language: (await getLocale()) === "ar" ? "AR" : "EN" }
   });
 
   // Old carts becomes `null` when you checkout.
