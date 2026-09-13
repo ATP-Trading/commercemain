@@ -1,23 +1,24 @@
 import type React from "react"
 
 import Collections from "@/components/layout/search/collections"
-import Footer from "@/components/layout/footer"
 import { sorting } from "@/lib/constants"
 import ChildrenWrapper from "./children-wrapper"
 import { Suspense } from "react"
 import SearchLayoutClient from "./search-layout-client"
 
-export default function SearchLayout({
+export default async function SearchLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
 
+  const { locale } = await params;
   return (
     <SearchLayoutClient sorting={sorting}>
-      <Collections />
+      <Collections locale={locale} />
       <ChildrenWrapper>{children}</ChildrenWrapper>
-      <Footer />
     </SearchLayoutClient>
   )
 }

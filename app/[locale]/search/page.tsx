@@ -10,7 +10,7 @@ export default async function SearchPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // Await the params and searchParams
-  const searchParams = await props.searchParams;
+  const searchParams = (await props.searchParams) || {};
   const params = await props.params;
 
   const { sort, q: searchQuery } = searchParams as {
