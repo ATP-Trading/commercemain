@@ -83,7 +83,12 @@ export function AtpMembershipSignup({
     errorHandling.clearErrors();
 
     const result = await errorHandling.handleAsyncError(async () => {
-      return await purchaseMembership(customer.id);
+      try {
+        return await purchaseMembership(customer.id);
+      } catch (error) {
+        onSignupError?.(error instanceof Error ? error : new Error('Signup failed'));
+        throw error;
+      }
     });
 
     if (result) {
@@ -166,6 +171,7 @@ export function AtpMembershipSignup({
               error={error}
               onRetry={errorHandling.retry}
               onDismiss={() => errorHandling.clearError(index)}
+              dismissLabel={t('dismissError')}
             />
           ))}
         </div>
