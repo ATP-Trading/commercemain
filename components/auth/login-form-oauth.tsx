@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useCustomerOAuth } from '@/hooks/use-customer-oauth'
 import { Loader2, Mail, ArrowRight, ShieldCheck } from 'lucide-react'
-import Link from 'next/link'
+import { Link } from '@/src/i18n/navigation'
 import { useTranslations } from 'next-intl'
 
 /**

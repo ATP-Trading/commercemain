@@ -306,6 +306,9 @@
     "securePaymentDescription": "100% Secure Payment"
   },
 "auth": {
+    "backToHome": "Back to Home",
+    "newToAtp": "New to ATP Trading?",
+    "exploreMembershipBenefits": "Explore ATP Membership Benefits",
     "signIn": "Sign In",
     "signInDescription": "Enter your email and password to access your account",
     "signInDescriptionOAuth": "Sign in securely with a one-time code sent to your email",
