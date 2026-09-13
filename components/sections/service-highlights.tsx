@@ -48,16 +48,6 @@ interface ServiceHighlight {
   link: string;
   gradient: string;
   badge?: string;
-  stats: {
-    duration: string;
-    sessions: string;
-    rating: number;
-  };
-  testimonial?: {
-    text: string;
-    author: string;
-    role: string;
-  };
   // For EMS section
   hasComparison?: boolean;
   beforeImage?: string;
@@ -92,17 +82,6 @@ export default function ServiceHighlights() {
       image: "/supplements-thai.jpg",
       link: "/collections/amazing-thai-products",
       gradient: "from-emerald-400 via-green-500 to-teal-600",
-      badge: t("supplements.badge"),
-      stats: {
-        duration: t("supplements.duration"),
-        sessions: t("supplements.sessions"),
-        rating: 4.9,
-      },
-      testimonial: {
-        text: t("supplements.testimonialText"),
-        author: t("supplements.testimonialAuthor"),
-        role: t("supplements.testimonialRole"),
-      },
     },
     {
       id: "beauty",
@@ -120,17 +99,6 @@ export default function ServiceHighlights() {
       image: "/supplements-thai.jpg",
       link: "/collections/amazing-thai-products",
       gradient: "from-rose-400 via-pink-500 to-purple-600",
-      badge: t("beauty.badge"),
-      stats: {
-        duration: t("beauty.duration"),
-        sessions: t("beauty.sessions"),
-        rating: 4.8,
-      },
-      testimonial: {
-        text: t("beauty.testimonialText"),
-        author: t("beauty.testimonialAuthor"),
-        role: t("beauty.testimonialRole"),
-      },
     },
 
 
