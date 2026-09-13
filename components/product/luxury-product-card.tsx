@@ -54,7 +54,7 @@ export function LuxuryProductCard({
     featuredImage,
     priceRange,
     availableForSale = true,
-    rating = 4.5,
+    rating,
     reviewCount = 0,
   } = product;
 
@@ -129,8 +129,8 @@ export function LuxuryProductCard({
   // Generate star rating
   const renderStars = () => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+    const fullStars = Math.floor(rating ?? 0);
+    const hasHalfStar = (rating ?? 0) % 1 >= 0.5;
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
@@ -330,7 +330,7 @@ export function LuxuryProductCard({
               )}
             >
               {/* Rating */}
-              {showRating && reviewCount > 0 && (
+              {showRating && typeof rating === "number" && Number.isFinite(rating) && rating >= 0 && rating <= 5 && reviewCount > 0 && (
                 <div
                   className={cn(
                     "flex items-center gap-1.5",
@@ -503,7 +503,7 @@ export function LuxuryProductCard({
               )}
             >
               {/* Rating */}
-              {showRating && reviewCount > 0 && (
+              {showRating && typeof rating === "number" && Number.isFinite(rating) && rating >= 0 && rating <= 5 && reviewCount > 0 && (
                 <div
                   className={cn(
                     "flex items-center gap-1.5",

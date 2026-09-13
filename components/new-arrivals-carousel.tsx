@@ -124,7 +124,7 @@ export function NewArrivalsCarousel({
               {t("premium")}
             </m.span>
 
-            <m.h1
+            <m.h2
               className={cn(
                 "text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif italic text-atp-white leading-tight tracking-tight",
                 isRTL && "text-right font-arabic"
@@ -132,7 +132,7 @@ export function NewArrivalsCarousel({
               variants={fadeUpVariants}
             >
               {isRTL ? "منتجاتنا الجديدة" : "New Arrivals"}
-            </m.h1>
+            </m.h2>
 
 
 

@@ -33,29 +33,8 @@ export default function CollectionPageClient({
   // This fixes the issue where products don't show on first mobile navigation
   const isVisible = useAnimateOnMount(50);
 
-  // Prepare stats data
-  const stats = [
-    {
-      value: products?.length || 0,
-      suffix: "+",
-      label: t("premiumProducts"),
-    },
-    {
-      value: 100,
-      suffix: "%",
-      label: t("naturalIngredients"),
-    },
-    {
-      value: 98,
-      suffix: "%",
-      label: t("customerSatisfaction") || "Satisfaction",
-    },
-    {
-      value: 10,
-      suffix: "K+",
-      label: t("happyCustomers") || "Happy Customers",
-    },
-  ];
+  // Display only the actual catalog count; no inferred customer or ingredient claims.
+  const stats = [{ value: products.length, suffix: "", label: t("premiumProducts") }];
 
   return (
     <>
@@ -64,7 +43,7 @@ export default function CollectionPageClient({
         data={{
           name: collection.title,
           description: collection.description,
-          url: `https://www.atpgroupservices.ae/collections/${collection.handle}`,
+          url: `https://www.atpgroupservices.ae/${locale}/collections/${collection.handle}`,
         }}
       />
 

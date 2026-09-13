@@ -208,19 +208,7 @@ function ProductCard({
                 />
               </div>
 
-              {/* Rating Stars (placeholder) */}
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${i < 4
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
-                      }`}
-                  />
-                ))}
-                <span className="text-xs text-gray-500 ml-1">(4.0)</span>
-              </div>
+
             </div>
           </div>
         </div>

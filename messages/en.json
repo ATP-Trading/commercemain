@@ -154,7 +154,7 @@
         "fastDelivery": "Fast Delivery",
         "deliveryTime": "2-4 business days",
         "easyReturns": "Easy Returns",
-        "returnPolicy": "30-day policy"
+        "returnPolicy": "See return policy"
       }
     }
   },
@@ -217,7 +217,7 @@
     "freeShipping": "Free Shipping",
     "freeShippingDesc": "On orders over AED 250",
     "easyReturns": "Easy Returns",
-    "easyReturnsDesc": "30-day money back guarantee"
+    "easyReturnsDesc": "Returns subject to our refund policy"
   },
   "mobileNav": {
     "home": "Home",
@@ -361,7 +361,7 @@
     "confirmPassword": "Confirm Password",
     "registrationFailed": "Registration failed",
     "joinMembership": "Join ATP Membership",
-    "membershipTrialOffer": "Start with a 30-day free trial and save up to 20% on all products",
+    "membershipTrialOffer": "Explore ATP membership benefits and eligible savings",
     "agreeToThe": "I agree to the",
     "termsOfService": "Terms of Service",
     "and": "and",

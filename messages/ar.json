@@ -154,7 +154,7 @@
         "fastDelivery": "توصيل سريع",
         "deliveryTime": "2-4 أيام عمل",
         "easyReturns": "إرجاع سهل",
-        "returnPolicy": "سياسة 30 يوم"
+        "returnPolicy": "اطّلع على سياسة الإرجاع"
       }
     }
   },
@@ -217,7 +217,7 @@
     "freeShipping": "شحن مجاني",
     "freeShippingDesc": "للطلبات فوق 250 درهم",
     "easyReturns": "إرجاع سهل",
-    "easyReturnsDesc": "ضمان استرداد المال لمدة 30 يوم"
+    "easyReturnsDesc": "الإرجاع وفق شروط سياسة الاسترداد"
   },
   "mobileNav": {
     "home": "الرئيسية",
@@ -361,7 +361,7 @@
     "confirmPassword": "تأكيد كلمة المرور",
     "registrationFailed": "فشل التسجيل",
     "joinMembership": "انضم إلى عضوية ATP",
-    "membershipTrialOffer": "ابدأ بتجربة مجانية لمدة 30 يومًا ووفر حتى 20٪ على جميع المنتجات",
+    "membershipTrialOffer": "تعرّف على مزايا عضوية ATP والتوفير على المشتريات المؤهلة",
     "agreeToThe": "أوافق على",
     "termsOfService": "شروط الخدمة",
     "and": "و",
