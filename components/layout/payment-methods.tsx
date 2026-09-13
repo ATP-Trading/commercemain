@@ -98,7 +98,7 @@ export default function PaymentMethods({
             <div
               key={index}
               className="bg-neutral-700 rounded-md animate-pulse"
-              style={{ width: 38, height: 24 }}
+              style={{ width: 48, height: 30 }}
             />
           ))}
         </div>
@@ -151,7 +151,7 @@ export default function PaymentMethods({
                   data-payment-method={method.name}
                   title={method.name}
                 >
-                  <IconComponent width={38} height={24} />
+                  <IconComponent width={48} height={30} />
                 </m.div>
               );
             })}
