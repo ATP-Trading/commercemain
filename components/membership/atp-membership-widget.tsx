@@ -91,9 +91,7 @@ export function AtpMembershipWidget({
                 <DirhamSymbol size={14} />
                 <span>/year</span>
               </span>
-              <span className="text-muted-foreground flex items-center gap-1">
-                • Save 500+ <DirhamSymbol size={12} />
-              </span>
+
             </div>
             <Button size="sm" className="atp-button-gold" asChild>
               <Link href="/atp-membership">Join Now</Link>

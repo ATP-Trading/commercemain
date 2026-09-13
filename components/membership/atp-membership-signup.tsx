@@ -228,7 +228,7 @@ export function AtpMembershipSignup({
             {/* Value Proposition */}
             <div className="bg-green-50 p-4 rounded-lg">
               <p className="text-green-800 font-medium text-sm flex items-center gap-1">
-                {t('saveUpTo')} 500+ <DirhamSymbol size={14} /> {t('annuallyWithBenefits')}
+                {t('savingsMessage')}
               </p>
               <p className="text-green-600 text-xs mt-1">
                 {t('roiMessage')}

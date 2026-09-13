@@ -106,8 +106,7 @@ export default function MembershipPage({ params }: MembershipPageProps) {
               <strong>Annual Investment:</strong> Only 99 د.إ per year
             </p>
             <p className="text-sm text-gray-500">
-              Membership pays for itself after just a few bookings. 
-              Save up to 500+ د.إ annually with member benefits.
+              Savings depend on your eligible purchases and use of membership benefits.
             </p>
           </div>
         </div>
