@@ -156,7 +156,7 @@ export function MembershipSignupCta({
           {!customer && (
             <p className="text-xs text-center text-gray-500">
               <Link
-                href="/account/login"
+                href="/login"
                 className="text-atp-gold hover:underline"
               >
                 {t('logIn')}

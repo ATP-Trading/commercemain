@@ -13,6 +13,8 @@ import { MembershipError, MembershipErrorCode } from '../../lib/errors/membershi
 vi.mock('../../hooks/use-atp-membership', () => ({ useAtpMembership: vi.fn() }));
 vi.mock('../../hooks/use-customer', () => ({ useCustomer: vi.fn() }));
 vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/en/atp-membership'
 }));
@@ -85,12 +87,13 @@ describe('Membership signup', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('requires login before purchasing', () => {
+  it.each(['en', 'ar'] as const)('requires login and preserves %s in the login link', (locale) => {
     vi.mocked(useCustomer).mockReturnValue({ customer: null } as any);
-    setup();
-    expect(signupButton()).toBeDisabled();
-    expect(screen.getByRole('link', { name: en.membership.logIn })).toBeInTheDocument();
-    fireEvent.click(signupButton());
+    const { messages } = setup(locale);
+    const button = screen.getByRole('button', { name: new RegExp(messages.signupTitle + '.*99') });
+    expect(button).toBeDisabled();
+    expect(screen.getByRole('link', { name: messages.logIn })).toHaveAttribute('href', '/' + locale + '/login');
+    fireEvent.click(button);
     expect(purchase).not.toHaveBeenCalled();
   });
 
@@ -104,7 +107,7 @@ describe('Membership signup', () => {
     vi.mocked(useAtpMembership).mockReturnValue({ membership: { id: 'mem-123', status: 'active' }, isLoading: false, purchaseMembership: purchase } as any);
     setup();
     expect(screen.getByText(en.membership.alreadyMember)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: en.membership.viewDashboard })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: en.membership.viewDashboard })).toHaveAttribute('href', '/en/account/membership');
     expect(screen.queryByRole('button', { name: /Join ATP Membership.*99/ })).not.toBeInTheDocument();
   });
 });
