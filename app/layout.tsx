@@ -80,13 +80,6 @@ export const metadata = {
   verification: {
     google: "your-google-verification-code",
   },
-  alternates: {
-    canonical: baseUrl,
-    languages: {
-      en: baseUrl,
-      ar: `${baseUrl}/ar`,
-    },
-  },
   generator: "v0.app",
 };
 
@@ -139,10 +132,6 @@ export default async function RootLayout({
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
         <link rel="shortcut icon" href="/images/favicon.ico" />
 
-        {/* Hreflang tags for SEO */}
-        <link rel="alternate" hrefLang="en" href={`${baseUrl}/en`} />
-        <link rel="alternate" hrefLang="ar" href={`${baseUrl}/ar`} />
-        <link rel="alternate" hrefLang="x-default" href={`${baseUrl}/en`} />
       </head>
       <body>
         <DirectionProvider direction={direction}>

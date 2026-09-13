@@ -64,7 +64,7 @@ export default function CollectionPageClient({
         data={{
           name: collection.title,
           description: collection.description,
-          url: `https://atpgroupservices.ae/collections/${collection.handle}`,
+          url: `https://www.atpgroupservices.ae/collections/${collection.handle}`,
         }}
       />
 

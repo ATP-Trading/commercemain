@@ -17,6 +17,7 @@ export async function generateMetadata(props: {
   if (!collection) return notFound()
 
   return {
+    alternates: { canonical: `/${params.locale}/collections/${collection.handle}` },
     title: collection.seo?.title || collection.title,
     description: collection.seo?.description || collection.description || `${collection.title} products`,
   }

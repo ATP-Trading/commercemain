@@ -19,13 +19,13 @@ import { Suspense } from "react";
 // Helper function to generate rich meta descriptions
 const generateMetaDescription = (product: any, locale: "en" | "ar") => {
   const price = `${product.priceRange.minVariantPrice.currencyCode} ${product.priceRange.minVariantPrice.amount}`;
-  const availability = product.availableForSale 
-    ? (locale === "ar" ? "متوفر" : "In Stock") 
+  const availability = product.availableForSale
+    ? (locale === "ar" ? "متوفر" : "In Stock")
     : (locale === "ar" ? "غير متوفر" : "Out of Stock");
-  
+
   const baseDesc = getLocalizedProductDescription(product, locale);
   const truncated = baseDesc.slice(0, 120);
-  
+
   return locale === "ar"
     ? `${truncated}... | ${price} | ${availability} | شحن مجاني للإمارات`
     : `${truncated}... | ${price} | ${availability} | Free UAE Shipping`;
@@ -73,17 +73,13 @@ export async function generateMetadata(props: {
       },
     },
     alternates: {
-      canonical: `https://atpgroupservices.ae/${params.locale}/product/${params.handle}`,
-      languages: {
-        'en': `https://atpgroupservices.ae/en/product/${params.handle}`,
-        'ar': `https://atpgroupservices.ae/ar/product/${params.handle}`,
-      },
+      canonical: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
     },
     openGraph: url
       ? {
           title: product.seo.title || title,
           description: product.seo.description || generateMetaDescription(product, params.locale as "en" | "ar"),
-          url: `https://atpgroupservices.ae/${params.locale}/product/${params.handle}`,
+          url: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
           type: 'website',
           images: [
             {
@@ -122,7 +118,7 @@ export default async function ProductPage(props: {
     description: localizedDescription,
     image: product.images.map((img: Image) => img.url),
     sku: product.id, // Use product ID as SKU fallback
-    url: `https://atpgroupservices.ae/${params.locale}/product/${params.handle}`,
+    url: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
     price: product.priceRange.minVariantPrice.amount,
     priceCurrency: product.priceRange.minVariantPrice.currencyCode,
     availability: product.availableForSale ? "InStock" as const : "OutOfStock" as const,
@@ -130,17 +126,17 @@ export default async function ProductPage(props: {
   };
 
   const breadcrumbItems = [
-    { 
-      name: params.locale === "ar" ? "الرئيسية" : "Home", 
-      url: `https://atpgroupservices.ae/${params.locale}` 
+    {
+      name: params.locale === "ar" ? "الرئيسية" : "Home",
+      url: `https://www.atpgroupservices.ae/${params.locale}`
     },
-    { 
-      name: params.locale === "ar" ? "المنتجات" : "Products", 
-      url: `https://atpgroupservices.ae/${params.locale}/collections` 
+    {
+      name: params.locale === "ar" ? "المنتجات" : "Products",
+      url: `https://www.atpgroupservices.ae/${params.locale}/search`
     },
-    { 
-      name: localizedTitle, 
-      url: productSchemaData.url 
+    {
+      name: localizedTitle,
+      url: productSchemaData.url
     }
   ];
 

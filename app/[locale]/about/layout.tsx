@@ -32,10 +32,10 @@ export async function generateMetadata({
       description,
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
-      url: `https://atpgroupservices.ae/${locale}/about`,
+      url: `https://www.atpgroupservices.ae/${locale}/about`,
       siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
       images: [{
-        url: 'https://atpgroupservices.ae/og-about.jpg',
+        url: 'https://www.atpgroupservices.ae/og-about.jpg',
         width: 1200,
         height: 630,
         alt: title,
@@ -45,13 +45,13 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: ['https://atpgroupservices.ae/og-about.jpg'],
+      images: ['https://www.atpgroupservices.ae/og-about.jpg'],
     },
     alternates: {
-      canonical: `https://atpgroupservices.ae/${locale}/about`,
+      canonical: `https://www.atpgroupservices.ae/${locale}/about`,
       languages: {
-        en: 'https://atpgroupservices.ae/en/about',
-        ar: 'https://atpgroupservices.ae/ar/about',
+        en: 'https://www.atpgroupservices.ae/en/about',
+        ar: 'https://www.atpgroupservices.ae/ar/about',
       },
     },
   }

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
 import { defaultSort, sorting } from "@/lib/constants";
 import CollectionHero from "@/components/collection/collection-hero";
@@ -17,14 +18,12 @@ export async function generateMetadata(props: {
     const collection = await getCollection(params.handle, localeForApi);
     
     if (!collection) {
-        return {
-            title: "Collection Not Found",
-            description: "The requested collection could not be found.",
-        };
+        notFound();
     }
 
     return {
-        title: collection.title,
+        alternates: { canonical: `/${params.locale}/collections/${collection.handle}` },
+        title: collection.seo?.title || collection.title,
         description: collection.description || `Shop ${collection.title} at ATP Group Services`,
         openGraph: {
             title: collection.title,
@@ -38,7 +37,7 @@ export default async function CollectionPage(props: {
     params: Promise<{ handle: string; locale: string }>;
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const searchParams = await props.searchParams;
+    const searchParams = (await props.searchParams) || {};
     const params = await props.params;
 
     const { sort } = searchParams as { [key: string]: string };
@@ -60,11 +59,7 @@ export default async function CollectionPage(props: {
     ]);
 
     if (!collection) {
-        return (
-            <div className="container-premium section-padding text-center">
-                <h1 className="text-3xl font-serif">Collection Not Found</h1>
-            </div>
-        );
+        notFound();
     }
 
     const isRTL = params.locale === 'ar';

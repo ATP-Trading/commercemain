@@ -1,8 +1,8 @@
+import { getSiteUrl } from "./site-url";
+
 // Server-side configuration
 export const config = {
-  baseUrl: process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  baseUrl: getSiteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   shopify: {
     domain: process.env.SHOPIFY_STORE_DOMAIN || 'hydrogen-preview.myshopify.com',
     accessToken: process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || '3b580e70970c4528da70c98e097c2fa0',

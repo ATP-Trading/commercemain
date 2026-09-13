@@ -28,10 +28,10 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       ? ["EMS", "عافية", "بشرة", "مكملات", "مياه قلوية", "دبي", "الإمارات", "تدريب EMS", "عناية بالبشرة"]
       : ["EMS training", "wellness", "skincare", "supplements", "alkaline water", "Dubai", "UAE", "fitness", "health"],
     alternates: {
-      canonical: `https://atpgroupservices.ae/${locale}`,
+      canonical: `https://www.atpgroupservices.ae/${locale}`,
       languages: {
-        'en': 'https://atpgroupservices.ae/en',
-        'ar': 'https://atpgroupservices.ae/ar',
+        'en': 'https://www.atpgroupservices.ae/en',
+        'ar': 'https://www.atpgroupservices.ae/ar',
       },
     },
     openGraph: {
@@ -39,12 +39,12 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       description: isAr
         ? "حلول العافية المتميزة والتكنولوجيا المتقدمة في الإمارات"
         : "Premium wellness and technology solutions in UAE",
-      url: `https://atpgroupservices.ae/${locale}`,
+      url: `https://www.atpgroupservices.ae/${locale}`,
       type: 'website',
       siteName: isAr ? "مجموعة ATP" : "ATP Group Services",
       locale: isAr ? 'ar_AE' : 'en_AE',
       images: [{
-        url: 'https://atpgroupservices.ae/og-image.jpg',
+        url: 'https://www.atpgroupservices.ae/og-image.jpg',
         width: 1200,
         height: 630,
         alt: isAr ? "مجموعة ATP للخدمات" : "ATP Group Services",
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       description: isAr
         ? "حلول العافية المتميزة والتكنولوجيا المتقدمة"
         : "Premium wellness and technology solutions",
-      images: ['https://atpgroupservices.ae/og-image.jpg'],
+      images: ['https://www.atpgroupservices.ae/og-image.jpg'],
     },
     robots: {
       index: true,
@@ -87,7 +87,7 @@ export default async function HomePage({ params }: HomePageProps) {
         type="WebSite"
         data={{
           name: "ATP Group Services - Authentic Thai Wellness meets German Fitness",
-          url: `https://atpgroupservices.ae/${locale}`,
+          url: `https://www.atpgroupservices.ae/${locale}`,
           description: t('siteDescription'),
         }}
       />

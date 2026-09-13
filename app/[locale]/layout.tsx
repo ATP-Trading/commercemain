@@ -64,13 +64,6 @@ export async function generateMetadata({
   return {
     title: t('siteTitle'),
     description: t('siteDescription'),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: {
-        en: "/en",
-        ar: "/ar",
-      },
-    },
     openGraph: {
       locale: locale === "ar" ? "ar_AE" : "en_AE",
     },

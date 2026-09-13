@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getCollectionProducts } from "@/lib/shopify/server";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
@@ -6,7 +7,7 @@ import {
   UAECities,
   LocationServices,
 } from "@/lib/programmatic-seo/data";
-import { getCategoryProducts, generateLocationMetadata, generateLocationStructuredData } from "@/lib/programmatic-seo/utils";
+import { generateLocationMetadata, generateLocationStructuredData } from "@/lib/programmatic-seo/utils";
 import ProductGridItems from "@/components/layout/product-grid-items";
 import { Grid } from "@/components/grid";
 
@@ -61,7 +62,10 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const isAr = locale === "ar";
 
   // Fetch products for this service
-  const products = await getCategoryProducts([serviceData.collection], locale);
+  const products = await getCollectionProducts({
+    collection: serviceData.collection,
+    locale: { language: locale, country: "AE" },
+  });
 
   // Generate structured data
   const structuredData = generateLocationStructuredData(

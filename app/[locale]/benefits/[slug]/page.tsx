@@ -33,7 +33,7 @@ export async function generateMetadata({
     ? `${benefit.benefitAr} | ATP Group`
     : benefit.metaTitle;
   const description = isAr ? benefit.descriptionAr : benefit.metaDescription;
-  const url = `https://atpgroupservices.ae/${locale}/benefits/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/benefits/${slug}`;
 
   return {
     title,
@@ -41,8 +41,8 @@ export async function generateMetadata({
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/benefits/${slug}`,
-        ar: `https://atpgroupservices.ae/ar/benefits/${slug}`,
+        en: `https://www.atpgroupservices.ae/en/benefits/${slug}`,
+        ar: `https://www.atpgroupservices.ae/ar/benefits/${slug}`,
       },
     },
     openGraph: {
@@ -61,7 +61,7 @@ function generateBenefitStructuredData(
   locale: string
 ) {
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/benefits/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/benefits/${slug}`;
 
   return {
     "@context": "https://schema.org",
@@ -75,14 +75,14 @@ function generateBenefitStructuredData(
         author: {
           "@type": "Organization",
           name: "ATP Group Services",
-          url: "https://atpgroupservices.ae",
+          url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
           name: "ATP Group Services",
           logo: {
             "@type": "ImageObject",
-            url: "https://atpgroupservices.ae/logo.png",
+            url: "https://www.atpgroupservices.ae/logo.png",
           },
         },
         datePublished: new Date().toISOString(),
@@ -96,13 +96,13 @@ function generateBenefitStructuredData(
             "@type": "ListItem",
             position: 1,
             name: isAr ? "الرئيسية" : "Home",
-            item: `https://atpgroupservices.ae/${locale}`,
+            item: `https://www.atpgroupservices.ae/${locale}`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: isAr ? "الفوائد" : "Benefits",
-            item: `https://atpgroupservices.ae/${locale}/benefits`,
+            item: `https://www.atpgroupservices.ae/${locale}/benefits`,
           },
           {
             "@type": "ListItem",

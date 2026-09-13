@@ -1,4 +1,5 @@
 "use client"
+import { normalizeNavigationUrl, localizeNavigationPath } from "@/lib/navigation-url";
 
 import { Dialog, Transition } from "@headlessui/react"
 import Link from "next/link"
@@ -72,14 +73,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
     },
   ]
 
-  const normalizeMenuUrl = (url?: string | null) => {
-    if (!url) return ""
-    try {
-      return new URL(url).pathname
-    } catch {
-      return url
-    }
-  }
+  const normalizeMenuUrl = normalizeNavigationUrl;
 
   const translationKeyByHandle: Record<string, string> = {
     "atp-membership": "atpMembership",
@@ -165,16 +159,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
     return urlPath || "/"
   }
 
-  const withLocale = (path: string) => {
-    if (path.startsWith("http") || path.startsWith("mailto:") || path.startsWith("#")) {
-      return path
-    }
-    if (path.startsWith(`/${locale}`)) {
-      return path
-    }
-    const normalized = path.startsWith("/") ? path : `/${path}`
-    return `/${locale}${normalized}`
-  }
+  const withLocale = (path: string) => localizeNavigationPath(path, locale);
 
   const iconByHandle: Record<string, typeof HomeIcon> = {
     home: HomeIcon,

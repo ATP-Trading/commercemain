@@ -33,7 +33,7 @@ export async function generateMetadata({
     ? `${data.optionAAr} vs ${data.optionBAr} | أيهما أفضل؟ | ATP Group`
     : data.metaTitle;
   const description = isAr ? data.descriptionAr : data.description;
-  const url = `https://atpgroupservices.ae/${locale}/compare/${comparison}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/compare/${comparison}`;
 
   return {
     title,
@@ -41,8 +41,8 @@ export async function generateMetadata({
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/compare/${comparison}`,
-        ar: `https://atpgroupservices.ae/ar/compare/${comparison}`,
+        en: `https://www.atpgroupservices.ae/en/compare/${comparison}`,
+        ar: `https://www.atpgroupservices.ae/ar/compare/${comparison}`,
       },
     },
     openGraph: {
@@ -61,7 +61,7 @@ function generateComparisonStructuredData(
   locale: string
 ) {
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/compare/${comparison}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/compare/${comparison}`;
 
   return {
     "@context": "https://schema.org",
@@ -77,14 +77,14 @@ function generateComparisonStructuredData(
         author: {
           "@type": "Organization",
           name: "ATP Group Services",
-          url: "https://atpgroupservices.ae",
+          url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
           name: "ATP Group Services",
           logo: {
             "@type": "ImageObject",
-            url: "https://atpgroupservices.ae/logo.png",
+            url: "https://www.atpgroupservices.ae/logo.png",
           },
         },
         datePublished: new Date().toISOString(),
@@ -98,13 +98,13 @@ function generateComparisonStructuredData(
             "@type": "ListItem",
             position: 1,
             name: isAr ? "الرئيسية" : "Home",
-            item: `https://atpgroupservices.ae/${locale}`,
+            item: `https://www.atpgroupservices.ae/${locale}`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: isAr ? "المقارنات" : "Comparisons",
-            item: `https://atpgroupservices.ae/${locale}/compare`,
+            item: `https://www.atpgroupservices.ae/${locale}/compare`,
           },
           {
             "@type": "ListItem",
