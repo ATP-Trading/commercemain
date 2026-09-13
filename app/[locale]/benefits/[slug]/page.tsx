@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -16,7 +18,7 @@ interface BenefitsPageProps {
 
 // Generate static params for all benefits
 export function generateStaticParams() {
-  return Object.keys(BenefitData).map((slug) => ({ slug }));
+  return Object.keys(BenefitData).filter((slug) => !isEmsPromotion(slug)).map((slug) => ({ slug }));
 }
 
 // Generate metadata
@@ -24,13 +26,14 @@ export async function generateMetadata({
   params,
 }: BenefitsPageProps): Promise<Metadata> {
   const { slug, locale } = await params;
+  if (slug === "ems-weight-loss") return inactiveServiceMetadata(locale, `/benefits/${slug}`);
   const benefit = BenefitData[slug];
 
   if (!benefit) return {};
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${benefit.benefitAr} | ATP Group`
+    ? `${benefit.benefitAr} | ATP Trading`
     : benefit.metaTitle;
   const description = isAr ? benefit.descriptionAr : benefit.metaDescription;
   const url = `https://www.atpgroupservices.ae/${locale}/benefits/${slug}`;
@@ -74,19 +77,17 @@ function generateBenefitStructuredData(
         url,
         author: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           logo: {
             "@type": "ImageObject",
             url: "https://www.atpgroupservices.ae/logo.png",
           },
         },
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
         articleSection: isAr ? "الفوائد الصحية" : "Health Benefits",
       },
       {
@@ -135,6 +136,7 @@ function generateBenefitStructuredData(
 export default async function BenefitsPage({ params }: BenefitsPageProps) {
   const { slug, locale: rawLocale } = await params;
   const locale = (rawLocale === "ar" ? "ar" : "en") as "en" | "ar";
+  if (slug === "ems-weight-loss") return <InactiveServicePage locale={locale} />;
 
   // Set locale for static rendering
   setRequestLocale(locale);

@@ -1,7 +1,7 @@
 import { AccountDashboard } from '@/components/account/account-dashboard';
 
 export const metadata = {
-  title: 'My Account | ATP Group Services',
+  title: 'My Account | ATP Trading',
   description: 'Manage your profile, orders, and membership.',
 };
 

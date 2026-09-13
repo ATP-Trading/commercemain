@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
 import { getCollectionProducts } from "@/lib/shopify/server";
 import { notFound } from "next/navigation";
@@ -25,6 +27,7 @@ export function generateStaticParams() {
 
   for (const service of LocationServices) {
     for (const city of UAECities) {
+      if (isInactiveLocation(service.slug, city.slug)) continue;
       params.push({
         service: service.slug,
         city: city.slug,
@@ -40,12 +43,14 @@ export async function generateMetadata({
   params,
 }: LocationPageProps): Promise<Metadata> {
   const { service, city, locale } = await params;
+  if (LocationServices.some(s => s.slug === service) && UAECities.some(c => c.slug === city) && isInactiveLocation(service, city)) return inactiveServiceMetadata(locale, `/${service}/${city}`);
   return generateLocationMetadata(service, city, locale);
 }
 
 export default async function LocationPage({ params }: LocationPageProps) {
   const { service, city, locale: rawLocale } = await params;
   const locale = (rawLocale === "ar" ? "ar" : "en") as "en" | "ar";
+  if (LocationServices.some(s => s.slug === service) && UAECities.some(c => c.slug === city) && isInactiveLocation(service, city)) return <InactiveServicePage locale={locale} />;
 
   // Set locale for static rendering
   setRequestLocale(locale);
@@ -76,7 +81,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   );
 
   // Get nearby cities (exclude current city)
-  const nearbyCities = UAECities.filter((c) => c.slug !== city).slice(0, 3);
+  const nearbyCities = UAECities.filter((c) => c.country === "AE" && c.slug !== city).slice(0, 3);
 
   return (
     <>

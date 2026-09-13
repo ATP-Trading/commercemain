@@ -1,15 +1,18 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { Link } from "@/src/i18n/navigation";
 
 export function WelcomeToast() {
+  const locale = useLocale();
+  const isAr = locale === "ar";
   useEffect(() => {
     // ignore if screen height is too small
     if (window.innerHeight < 650) return;
     if (!document.cookie.includes("welcome-toast=2")) {
-      toast("🌟 Welcome to ATP Group Services!", {
+      toast(isAr ? "مرحبًا بك في ATP Trading" : "Welcome to ATP Trading", {
         id: "welcome-toast",
         duration: Number.POSITIVE_INFINITY,
         onDismiss: () => {
@@ -17,15 +20,14 @@ export function WelcomeToast() {
         },
         description: (
           <>
-            Discover premium wellness products, advanced technology solutions,
-            and Transform Plus agricultural formulas.{" "}
+            {isAr ? "تصفح منتجاتنا المتاحة داخل الإمارات. " : "Browse our products available within the UAE. "}
             <Link
               href="/atp-membership"
               className="text-atp-gold hover:underline font-semibold"
             >
-              Join ATP Membership
+              {isAr ? "استكشف عضوية ATP" : "Explore ATP Membership"}
             </Link>{" "}
-            for exclusive benefits and save up to 15% on all products.
+
           </>
         ),
         style: {
@@ -35,7 +37,7 @@ export function WelcomeToast() {
         },
       });
     }
-  }, []);
+  }, [isAr]);
 
   return null;
 }

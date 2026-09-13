@@ -20,10 +20,10 @@ export async function generateMetadata({ params }: MembershipPageProps): Promise
   const t = await getTranslations({ locale: params.locale, namespace: 'membership' });
   
   return {
-    title: `${t('title')} - ATP Group Services`,
+    title: `${t('title')} - ATP Trading`,
     description: t('subtitle'),
     openGraph: {
-      title: `${t('title')} - ATP Group Services`,
+      title: `${t('title')} - ATP Trading`,
       description: t('subtitle'),
       type: 'website',
     },

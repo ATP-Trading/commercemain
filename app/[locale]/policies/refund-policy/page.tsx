@@ -14,12 +14,12 @@ export async function generateMetadata({
   const isArabic = locale === 'ar';
 
   const title = isArabic
-    ? 'سياسة الاسترداد | مجموعة ATP للخدمات'
-    : 'Refund Policy | ATP Group Services';
+    ? 'سياسة الاسترداد | ATP Trading'
+    : 'Refund Policy | ATP Trading';
 
   const description = isArabic
-    ? 'سياسة الاسترداد والإرجاع الخاصة بمجموعة ATP للخدمات. تعرف على شروط وإجراءات الإرجاع والاسترداد.'
-    : 'Refund and Return Policy for ATP Group Services. Learn about our return and refund terms and procedures.';
+    ? 'سياسة الاسترداد والإرجاع الخاصة بATP Trading. تعرف على شروط وإجراءات الإرجاع والاسترداد.'
+    : 'Refund and Return Policy for ATP Trading. Learn about our return and refund terms and procedures.';
 
   return {
     title,
@@ -30,7 +30,7 @@ export async function generateMetadata({
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
       url: `https://atpgroupservices.com/${locale}/policies/refund-policy`,
-      siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
+      siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
     },
     alternates: {
       canonical: `https://atpgroupservices.com/${locale}/policies/refund-policy`,

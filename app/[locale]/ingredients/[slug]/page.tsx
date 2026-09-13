@@ -31,7 +31,7 @@ export async function generateMetadata({
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${ingredient.nameAr} | الدليل الكامل | ATP Group`
+    ? `${ingredient.nameAr} | الدليل الكامل | ATP Trading`
     : ingredient.metaTitle;
   const description = isAr
     ? ingredient.descriptionAr
@@ -77,19 +77,17 @@ function generateIngredientStructuredData(
         url,
         author: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           logo: {
             "@type": "ImageObject",
             url: "https://www.atpgroupservices.ae/logo.png",
           },
         },
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
         articleSection: isAr ? "المكونات" : "Ingredients",
         about: {
           "@type": "Thing",

@@ -1,3 +1,4 @@
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy"
 import { getCollections, getPages, getProducts } from "@/lib/shopify/server"
 import { baseUrl, validateEnvironmentVariables } from "@/lib/utils"
 import { CategoryData, UAECities, LocationServices, BenefitData, IngredientData } from "@/lib/programmatic-seo/data"
@@ -46,21 +47,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date().toISOString()
   
   // Category Pages (5 categories)
-  const categoryRoutes = Object.keys(CategoryData).flatMap((slug) => [
+  const categoryRoutes = Object.keys(CategoryData).filter((slug) => !isEmsPromotion(slug)).flatMap((slug) => [
     { url: `${baseUrl}/en/category/${slug}`, lastModified },
     { url: `${baseUrl}/ar/category/${slug}`, lastModified },
   ])
 
   // Location Pages (5 services × 8 cities = 40 pages per language)
   const locationRoutes = LocationServices.flatMap((service) =>
-    UAECities.flatMap((city) => [
+    UAECities.filter((city) => !isInactiveLocation(service.slug, city.slug)).flatMap((city) => [
       { url: `${baseUrl}/en/${service.slug}/${city.slug}`, lastModified },
       { url: `${baseUrl}/ar/${service.slug}/${city.slug}`, lastModified },
     ])
   )
 
   // Benefits Pages
-  const benefitsRoutes = Object.keys(BenefitData).flatMap((slug) => [
+  const benefitsRoutes = Object.keys(BenefitData).filter((slug) => !isEmsPromotion(slug)).flatMap((slug) => [
     { url: `${baseUrl}/en/benefits/${slug}`, lastModified },
     { url: `${baseUrl}/ar/benefits/${slug}`, lastModified },
   ])
@@ -72,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   // Comparison Pages
-  const comparisonRoutes = Object.keys(ComparisonData).flatMap((slug) => [
+  const comparisonRoutes = Object.keys(ComparisonData).filter((slug) => !isEmsPromotion(slug)).flatMap((slug) => [
     { url: `${baseUrl}/en/compare/${slug}`, lastModified },
     { url: `${baseUrl}/ar/compare/${slug}`, lastModified },
   ])
@@ -93,5 +94,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...comparisonRoutes,
   ]
 
-  return [...routesMap, ...fetchedRoutes, ...programmaticRoutes]
+  return [...routesMap, ...fetchedRoutes, ...programmaticRoutes].filter((route) => !isEmsPromotion(route.url))
 }

@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion } from "@/lib/publication-policy";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
@@ -11,6 +13,7 @@ export async function generateMetadata(props: {
     params: Promise<{ handle: string; locale: string }>;
 }): Promise<Metadata> {
     const params = await props.params;
+  if (isEmsPromotion(params.handle)) return inactiveServiceMetadata(params.locale, `/collections/${params.handle}`);
     const localeForApi = params.locale === 'ar'
         ? { language: 'AR', country: 'AE' }
         : { language: 'EN', country: 'AE' };
@@ -24,10 +27,10 @@ export async function generateMetadata(props: {
     return {
         alternates: { canonical: `/${params.locale}/collections/${collection.handle}` },
         title: collection.seo?.title || collection.title,
-        description: collection.description || `Shop ${collection.title} at ATP Group Services`,
+        description: collection.description || `Shop ${collection.title} at ATP Trading`,
         openGraph: {
             title: collection.title,
-            description: collection.description || `Shop ${collection.title} at ATP Group Services`,
+            description: collection.description || `Shop ${collection.title} at ATP Trading`,
             images: collection.image ? [{ url: collection.image.url }] : [],
         },
     };
@@ -39,6 +42,7 @@ export default async function CollectionPage(props: {
 }) {
     const searchParams = (await props.searchParams) || {};
     const params = await props.params;
+  if (isEmsPromotion(params.handle)) return <InactiveServicePage locale={params.locale} />;
 
     const { sort } = searchParams as { [key: string]: string };
     const { sortKey, reverse } =

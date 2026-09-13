@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -16,7 +18,7 @@ interface ComparisonPageProps {
 
 // Generate static params for all comparisons
 export function generateStaticParams() {
-  return Object.keys(ComparisonData).map((comparison) => ({ comparison }));
+  return Object.keys(ComparisonData).filter((slug) => !isEmsPromotion(slug)).map((comparison) => ({ comparison }));
 }
 
 // Generate metadata
@@ -24,13 +26,14 @@ export async function generateMetadata({
   params,
 }: ComparisonPageProps): Promise<Metadata> {
   const { comparison, locale } = await params;
+  if (comparison === "ems-vs-gym") return inactiveServiceMetadata(locale, `/compare/${comparison}`);
   const data = ComparisonData[comparison];
 
   if (!data) return {};
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${data.optionAAr} vs ${data.optionBAr} | أيهما أفضل؟ | ATP Group`
+    ? `${data.optionAAr} vs ${data.optionBAr} | أيهما أفضل؟ | ATP Trading`
     : data.metaTitle;
   const description = isAr ? data.descriptionAr : data.description;
   const url = `https://www.atpgroupservices.ae/${locale}/compare/${comparison}`;
@@ -76,19 +79,17 @@ function generateComparisonStructuredData(
         url,
         author: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           logo: {
             "@type": "ImageObject",
             url: "https://www.atpgroupservices.ae/logo.png",
           },
         },
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
         articleSection: isAr ? "المقارنات" : "Comparisons",
       },
       {
@@ -137,6 +138,7 @@ function generateComparisonStructuredData(
 export default async function ComparisonPage({ params }: ComparisonPageProps) {
   const { comparison, locale: rawLocale } = await params;
   const locale = (rawLocale === "ar" ? "ar" : "en") as "en" | "ar";
+  if (comparison === "ems-vs-gym") return <InactiveServicePage locale={locale} />;
 
   // Set locale for static rendering
   setRequestLocale(locale);

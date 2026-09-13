@@ -10,7 +10,7 @@ export function generateCategoryMetadata(slug: string, locale: string): Metadata
   if (!category) return {};
 
   const isAr = locale === "ar";
-  const title = isAr ? `${category.nameAr} | ATP Group` : category.metaTitle;
+  const title = isAr ? `${category.nameAr} | ATP Trading` : category.metaTitle;
   const description = isAr ? category.descriptionAr : category.metaDescription;
   const url = `https://www.atpgroupservices.ae/${locale}/category/${slug}`;
 
@@ -54,11 +54,11 @@ export function generateLocationMetadata(
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${serviceData.nameAr} في ${cityData.nameAr} | ATP Group`
+    ? `${serviceData.nameAr} في ${cityData.nameAr} | ATP Trading`
     : `${serviceData.name} in ${cityData.name} | Professional ${serviceData.name} Near You`;
   const description = isAr
-    ? `ابحث عن ${serviceData.nameAr} في ${cityData.nameAr}. ATP Group تقدم ${serviceData.nameAr} الاحترافي مع توصيل سريع في ${cityData.nameAr}.`
-    : `Looking for ${serviceData.name} in ${cityData.name}? ATP Group offers professional ${serviceData.name} with fast delivery in ${cityData.name}.`;
+    ? `ابحث عن ${serviceData.nameAr} في ${cityData.nameAr}. ATP Trading تقدم ${serviceData.nameAr} الاحترافي مع توصيل سريع في ${cityData.nameAr}.`
+    : `Looking for ${serviceData.name} in ${cityData.name}? ATP Trading offers professional ${serviceData.name} with fast delivery in ${cityData.name}.`;
   const url = `https://www.atpgroupservices.ae/${locale}/${service}/${city}`;
 
   return {
@@ -201,17 +201,11 @@ export function generateLocationStructuredData(
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "LocalBusiness",
-        "@id": `${url}/#localbusiness`,
-        name: `ATP Group Services - ${isAr ? serviceData.nameAr : serviceData.name}`,
+        "@type": "CollectionPage",
+        "@id": `${url}/#collection`,
+        name: `ATP Trading - ${isAr ? serviceData.nameAr : serviceData.name}`,
         description: `${isAr ? serviceData.nameAr : serviceData.name} in ${isAr ? cityData.nameAr : cityData.name}`,
         url,
-        telephone: "+971-4-XXX-XXXX",
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: cityData.name,
-          addressCountry: "AE",
-        },
         areaServed: {
           "@type": "City",
           name: cityData.name,

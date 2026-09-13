@@ -6,7 +6,7 @@
  * Animated empty cart state with staggered reveal.
  * Uses FloatingElement for the cart icon and MagneticButton for CTA.
  * 
- * Part of ATP Group Services luxury e-commerce redesign.
+ * Part of ATP Trading luxury e-commerce redesign.
  */
 
 import { m, useReducedMotion } from "framer-motion";

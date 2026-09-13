@@ -6,7 +6,7 @@
  * Animated progress bar showing distance to free shipping threshold.
  * Uses spring physics for smooth animations.
  * 
- * Part of ATP Group Services luxury e-commerce redesign.
+ * Part of ATP Trading luxury e-commerce redesign.
  */
 
 import { m, useReducedMotion } from "framer-motion";

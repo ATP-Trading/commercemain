@@ -13,7 +13,7 @@ import {
   FaSnapchatGhost,
 } from "react-icons/fa";
 
-const SITE_NAME = "ATP Group Services";
+const SITE_NAME = "ATP Trading";
 
 export default function Footer() {
   const locale = useLocale();
@@ -73,7 +73,7 @@ export default function Footer() {
               <div className="relative w-16 h-16 flex items-center justify-center">
                 <Image
                   src="/images/atp_logo-removebg-preview.png"
-                  alt="ATP Group Services Logo"
+                  alt="ATP Trading Logo"
                   width={64}
                   height={64}
                   className="object-contain filter brightness-0 invert hover:scale-105 transition-transform duration-200"
@@ -167,7 +167,7 @@ export default function Footer() {
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-neutral-400"
           >
             <p>
-              © {currentYear} atpgroupservices. {t('allRightsReserved')}.
+              © {currentYear} {SITE_NAME}. {t('allRightsReserved')}.
             </p>
             <div
               className="flex items-center gap-4"

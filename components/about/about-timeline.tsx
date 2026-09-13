@@ -24,8 +24,8 @@ const milestones: Milestone[] = [
     year: "2010",
     title: "Founded in Dubai",
     titleAr: "تأسست في دبي",
-    description: "ATP Group Services was established with a vision to bring premium wellness solutions to the UAE market.",
-    descriptionAr: "تأسست خدمات مجموعة ATP برؤية لجلب حلول العافية المتميزة إلى سوق الإمارات.",
+    description: "ATP Trading was established with a vision to bring premium wellness solutions to the UAE market.",
+    descriptionAr: "تأسست ATP Trading برؤية لجلب حلول العافية المتميزة إلى سوق الإمارات.",
   },
   {
     year: "2013",

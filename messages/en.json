@@ -13,7 +13,7 @@
     "contactInformation": "Contact Information",
     "termsOfService": "Terms of Service",
     "weAccept": "We Accept",
-    "siteTitle": "ATP Group Services",
+    "siteTitle": "ATP Trading",
     "siteDescription": "Premium wellness and technology solutions with exclusive ATP membership benefits",
     "paymentUnavailable": "Payment methods temporarily unavailable",
     "cachedPaymentMethods": "Showing cached payment methods"
@@ -159,7 +159,7 @@
     }
   },
   "hero": {
-    "welcomeToATP": "Welcome to ATP",
+    "welcomeToATP": "Welcome to ATP Trading",
     "authenticThaiWellness": "Authentic Thai Wellness",
     "transformYourWellbeing": "Transform Your Wellbeing",
     "amazingThaiProducts": "Amazing Thai Products",
@@ -179,11 +179,11 @@
     "heroSubtitle": "where we bring you a premium selection of natural food-supplements, cosmetics and personal care, and advanced water filtration & soil solutions. All our products are carefully sourced from Thailand with the highest quality standards, to support a healthier and better lifestyle.",
     "exploreAtpMembership": "Explore ATP Membership",
     "learnOurStory": "Learn Our Story",
-    "membershipBenefit1": "ATP Group Services Membership",
+    "membershipBenefit1": "ATP Trading Membership",
     "membershipBenefit2": "15% Discount on all premium services",
     "membershipBenefit3": "Free Delivery on all product orders",
     "membershipBenefit4": "Exclusive access to wellness programs",
-    "membershipBenefit5": "Priority booking for EMS training",
+    "membershipBenefit5": "Product and membership support",
     "trustedMembers": "100+ Members",
     "yearsExperience": "2+ Years",
     "premiumProducts": "50+ Products",
@@ -340,8 +340,8 @@
     "noAccount": "Don't have an account?",
     "signUpHere": "Sign up here",
     "createAccount": "Create Your Account",
-    "createAccountDescription": "Join ATP Group Services and unlock exclusive wellness benefits",
-    "oauthSignupDescription": "Join ATP Group Services with secure, passwordless authentication",
+    "createAccountDescription": "Join ATP Trading and unlock exclusive wellness benefits",
+    "oauthSignupDescription": "Join ATP Trading with secure, passwordless authentication",
     "benefitSecure": "Secure & passwordless",
     "benefitQuick": "Quick one-click sign in",
     "benefitExclusive": "Exclusive member benefits",
@@ -562,23 +562,8 @@
       "testimonialText": "The yoga sessions have brought incredible peace and strength to my life.",
       "testimonialAuthor": "James K.",
       "testimonialRole": "Wellness Practitioner"
-    },
-    "ems": {
-      "title": "EMS Training Sessions",
-      "subtitle": "Electrical Muscle Stimulation - German Precision Technology",
-      "description": "Experience revolutionary fitness training with our German-engineered EMS (Electrical Muscle Stimulation) systems. Our certified trainers guide you through personalized sessions that deliver maximum muscle activation and results in just 20 minutes - equivalent to 3 hours of traditional training.",
-      "badge": "Revolutionary",
-      "benefit1": "20-minute sessions = 3 hours traditional workout equivalent",
-      "benefit2": "Certified EMS trainer supervision and guidance",
-      "benefit3": "Personalized intensity levels for your fitness goals",
-      "benefit4": "Accelerated muscle development and strength building",
-      "benefit5": "Low-impact training perfect for injury recovery",
-      "duration": "20 min",
-      "sessions": "2x per week",
-      "testimonialText": "The EMS training sessions are incredible! I achieved more muscle definition in 2 months than I did in 2 years of regular gym workouts. The trainers are amazing and the technology is fascinating.",
-      "testimonialAuthor": "David R.",
-      "testimonialRole": "ATP EMS Member"
     }
+
   },
   "gallery": {
     "expandImage": "View fullscreen",

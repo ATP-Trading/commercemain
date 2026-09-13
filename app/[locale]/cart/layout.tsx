@@ -17,8 +17,8 @@ export async function generateMetadata({
   const isArabic = locale === 'ar'
   
   const title = isArabic 
-    ? 'سلة التسوق | مجموعة ATP للخدمات'
-    : 'Shopping Cart | ATP Group Services'
+    ? 'سلة التسوق | ATP Trading'
+    : 'Shopping Cart | ATP Trading'
   
   const description = isArabic
     ? 'راجع سلة التسوق الخاصة بك وتابع إلى الدفع. استمتع بخصومات الأعضاء الحصرية والتوصيل المجاني.'

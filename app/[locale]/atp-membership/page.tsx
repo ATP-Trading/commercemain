@@ -23,18 +23,18 @@ export async function generateMetadata({ params }: AtpMembershipPageProps): Prom
   const t = await getTranslations({ locale, namespace: 'membership' });
 
   return {
-    title: `${t('title')} - ATP Group Services`,
+    title: `${t('title')} - ATP Trading`,
     description: t('subtitle'),
     keywords: 'ATP membership, wellness membership, UAE, premium services, discounts, free delivery',
     openGraph: {
-      title: `${t('title')} - ATP Group Services`,
+      title: `${t('title')} - ATP Trading`,
       description: t('subtitle'),
       type: 'website',
       locale,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${t('title')} - ATP Group Services`,
+      title: `${t('title')} - ATP Trading`,
       description: t('subtitle'),
     },
   };

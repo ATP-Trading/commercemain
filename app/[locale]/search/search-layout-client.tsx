@@ -136,7 +136,6 @@ export default function SearchLayoutClient({
                   {[
                     "Skincare",
                     "Supplements",
-                    "EMS Equipment",
                     "Water Technology",
                     "Soil Solutions",
                   ].map((type) => (

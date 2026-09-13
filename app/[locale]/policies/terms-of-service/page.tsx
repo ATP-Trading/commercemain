@@ -14,12 +14,12 @@ export async function generateMetadata({
   const isArabic = locale === 'ar';
 
   const title = isArabic
-    ? 'شروط الخدمة | مجموعة ATP للخدمات'
-    : 'Terms of Service | ATP Group Services';
+    ? 'شروط الخدمة | ATP Trading'
+    : 'Terms of Service | ATP Trading';
 
   const description = isArabic
-    ? 'شروط الخدمة الخاصة بمجموعة ATP للخدمات. تعرف على الشروط والأحكام المتعلقة باستخدام خدماتنا.'
-    : 'Terms of Service for ATP Group Services. Learn about the terms and conditions for using our services.';
+    ? 'شروط الخدمة الخاصة بATP Trading. تعرف على الشروط والأحكام المتعلقة باستخدام خدماتنا.'
+    : 'Terms of Service for ATP Trading. Learn about the terms and conditions for using our services.';
 
   return {
     title,
@@ -30,7 +30,7 @@ export async function generateMetadata({
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
       url: `https://atpgroupservices.com/${locale}/policies/terms-of-service`,
-      siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
+      siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
     },
     alternates: {
       canonical: `https://atpgroupservices.com/${locale}/policies/terms-of-service`,

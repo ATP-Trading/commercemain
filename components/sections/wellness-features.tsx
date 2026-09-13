@@ -318,7 +318,7 @@ export default function WellnessFeatures() {
             </h3>
 
             <p className="text-atp-white/70 mb-8 max-w-2xl mx-auto">
-              Join ATP Group Services and unlock exclusive access to premium
+              Join ATP Trading and unlock exclusive access to premium
               wellness solutions with special member pricing and benefits.
             </p>
 

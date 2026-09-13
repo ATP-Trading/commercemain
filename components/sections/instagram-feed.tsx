@@ -1,9 +1,10 @@
 "use client";
+import { isEmsPromotion } from "@/lib/publication-policy";
 
 /**
  * InstagramFeed Component
  * 
- * Award-winning Instagram feed integration for ATP Group Services.
+ * Award-winning Instagram feed integration for ATP Trading.
  * Features:
  * - Responsive grid layout (2/3/4 columns)
  * - Hover effects with caption reveal
@@ -65,7 +66,7 @@ export function InstagramFeed({ limit = 8, className }: InstagramFeedProps) {
         const data = await response.json();
         
         if (data.posts) {
-          setPosts(data.posts);
+          setPosts(data.posts.filter((post: InstagramPost) => !isEmsPromotion(post.caption || "")));
           setIsDemo(data.demo || false);
         }
         if (data.error) {
@@ -122,6 +123,8 @@ export function InstagramFeed({ limit = 8, className }: InstagramFeedProps) {
       transition: { duration: 0.4, ease: easing.smooth }
     },
   };
+
+  if (!loading && posts.length === 0) return null;
 
   return (
     <section className={cn("section-padding bg-atp-light-gray overflow-hidden", className)}>

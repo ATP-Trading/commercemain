@@ -20,7 +20,7 @@ const cairo = Cairo({
   variable: "--font-cairo",
 });
 
-const SITE_NAME = "ATP Group Services";
+const SITE_NAME = "ATP Trading";
 
 export const metadata = {
   metadataBase: new URL(baseUrl),
@@ -67,7 +67,7 @@ export const metadata = {
         url: `${baseUrl}/opengraph-image.png`,
         width: 1200,
         height: 630,
-        alt: "ATP Group Services - Premium Wellness & Technology",
+        alt: "ATP Trading - Premium Wellness & Technology",
       },
     ],
   },

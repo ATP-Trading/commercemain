@@ -290,7 +290,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                     <div className="relative w-8 h-8 flex items-center justify-center">
                       <Image
                         src="/images/atp_logo-removebg-preview.png"
-                        alt="ATP Group Services"
+                        alt="ATP Trading"
                         width={32}
                         height={32}
                         className="object-contain filter brightness-0 invert"

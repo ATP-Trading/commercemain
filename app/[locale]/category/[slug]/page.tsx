@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -17,7 +19,7 @@ interface CategoryPageProps {
 
 // Generate static params for all categories
 export function generateStaticParams() {
-  return Object.keys(CategoryData).map((slug) => ({ slug }));
+  return Object.keys(CategoryData).filter((slug) => !isEmsPromotion(slug)).map((slug) => ({ slug }));
 }
 
 // Generate metadata
@@ -25,12 +27,14 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug, locale } = await params;
+  if (slug === "ems-training") return inactiveServiceMetadata(locale, `/category/${slug}`);
   return generateCategoryMetadata(slug, locale);
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug, locale: rawLocale } = await params;
   const locale = (rawLocale === "ar" ? "ar" : "en") as "en" | "ar";
+  if (slug === "ems-training") return <InactiveServicePage locale={locale} />;
 
   // Set locale for static rendering
   setRequestLocale(locale);

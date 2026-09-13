@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: MembershipSignupPageProps): P
   const isArabic = locale === 'ar';
   
   const title = isArabic
-    ? 'انضم إلى عضوية ATP | مجموعة ATP للخدمات'
-    : 'Join ATP Membership | ATP Group Services';
+    ? 'انضم إلى عضوية ATP | ATP Trading'
+    : 'Join ATP Membership | ATP Trading';
   
   const description = isArabic
     ? 'انضم إلى عضوية ATP واستمتع بخصومات حصرية بنسبة 15% وتوصيل مجاني وفوائد حصرية للأعضاء. فقط 99 درهم سنوياً.'

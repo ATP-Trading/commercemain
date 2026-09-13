@@ -1,3 +1,4 @@
+import { filterPromotedMenu } from "@/lib/publication-policy";
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
@@ -18,7 +19,7 @@ export async function Navbar() {
 
   try {
     // Pass locale to get translated menu items from Shopify via @inContext directive
-    menuItems = await getMenuItems(menuHandle, { language: locale });
+    menuItems = filterPromotedMenu(await getMenuItems(menuHandle, { language: locale }));
   } catch (error) {
     console.warn('[Navbar] Failed to fetch Shopify menu:', error);
   }
@@ -29,7 +30,6 @@ export async function Navbar() {
   const atpMembershipText = t('atpMembership');
   const skincareSupplementsText = t('skincareSupplements');
   const waterSoilTechText = t('waterSoilTechnology');
-  const emsTrainingText = t('emsTraining');
   const aboutUsText = t('aboutUs');
   const contactUsText = t('contactUs');
 
@@ -37,7 +37,6 @@ export async function Navbar() {
     { title: atpMembershipText, path: `/${locale}/atp-membership`, handle: "atp-membership" },
     { title: skincareSupplementsText, path: `/${locale}/collections/skincare-supplements`, handle: "skincare-supplements" },
     { title: waterSoilTechText, path: `/${locale}/water-soil-technology`, handle: "water-soil-technology" },
-    { title: emsTrainingText, path: `/${locale}/ems`, handle: "ems-training" },
     { title: aboutUsText, path: `/${locale}/about`, handle: "about" },
     { title: contactUsText, path: `/${locale}/contact`, handle: "contact" },
   ];
@@ -58,7 +57,7 @@ export async function Navbar() {
               <div className="relative h-8 w-16 sm:h-10 sm:w-20 md:h-12 md:w-24 transition-all duration-500 group-hover:scale-105">
                 <Image
                   src="/images/atp_logo-removebg-preview.png"
-                  alt="ATP Group Services"
+                  alt="ATP Trading"
                   fill
                   className="object-contain filter brightness-0 invert group-hover:brightness-75 transition-all duration-500"
                   priority

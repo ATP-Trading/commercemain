@@ -13,7 +13,7 @@
     "contactInformation": "معلومات التواصل",
     "termsOfService": "شروط الخدمة",
     "weAccept": "نقبل",
-    "siteTitle": "مجموعة ATP للخدمات",
+    "siteTitle": "ATP Trading",
     "siteDescription": "حلول العافية المتميزة والتكنولوجيا المتقدمة مع فوائد العضوية الحصرية لـ ATP",
     "paymentUnavailable": "طرق الدفع غير متاحة مؤقتًا",
     "cachedPaymentMethods": "عرض طرق الدفع المخزنة مؤقتًا"
@@ -159,7 +159,7 @@
     }
   },
   "hero": {
-    "welcomeToATP": "مرحبًا بكم في ATP",
+    "welcomeToATP": "مرحبًا بكم في ATP Trading",
     "authenticThaiWellness": "المنتجات التايلندية الاصلية",
     "transformYourWellbeing": "حوّل عافيتك",
     "amazingThaiProducts": "منتجات تايلاندية مذهلة",
@@ -183,7 +183,7 @@
     "membershipBenefit2": "خصم 15% على جميع الخدمات الممتازة",
     "membershipBenefit3": "توصيل مجاني على جميع طلبات المنتجات",
     "membershipBenefit4": "وصول حصري إلى برامج العافية",
-    "membershipBenefit5": "حجز مسبق لتدريب EMS",
+    "membershipBenefit5": "دعم المنتجات والعضوية",
     "trustedMembers": "+100 عضو",
     "yearsExperience": "+2 سنوات خبرة",
     "premiumProducts": "+50 منتج",
@@ -340,8 +340,8 @@
     "noAccount": "ليس لديك حساب؟",
     "signUpHere": "سجل هنا",
     "createAccount": "إنشاء حسابك",
-    "createAccountDescription": "انضم إلى مجموعة ATP واحصل على مزايا العافية الحصرية",
-    "oauthSignupDescription": "انضم إلى ATP Group Services مع مصادقة آمنة بدون كلمة مرور",
+    "createAccountDescription": "انضم إلى ATP Trading واحصل على مزايا العافية الحصرية",
+    "oauthSignupDescription": "انضم إلى ATP Trading مع مصادقة آمنة بدون كلمة مرور",
     "benefitSecure": "آمن وبدون كلمة مرور",
     "benefitQuick": "تسجيل دخول سريع بنقرة واحدة",
     "benefitExclusive": "مزايا العضو الحصرية",
@@ -562,23 +562,8 @@
       "testimonialText": "جلسات اليوجا أحضرت سلامًا وقوة لا تصدق إلى حياتي.",
       "testimonialAuthor": "جيمس ك.",
       "testimonialRole": "ممارس العافية"
-    },
-    "ems": {
-      "title": "جلسات تدريب EMS",
-      "subtitle": "تحفيز العضلات الكهربائي - تكنولوجيا الدقة الألمانية",
-      "description": "جرّب التدريب الثوري للياقة البدنية مع أنظمة EMS (التحفيز الكهربائي للعضلات) المصممة بالهندسة الألمانية. يرشدك المدربون المعتمدون عبر جلسات شخصية تقدم تنشيط العضلات الأقصى والنتائج في 20 دقيقة فقط - ما يعادل 3 ساعات من التدريب التقليدي.",
-      "badge": "ثوري",
-      "benefit1": "جلسات 20 دقيقة = ما يعادل تمرين تقليدي لمدة 3 ساعات",
-      "benefit2": "إشراف وإرشاد مدرب EMS معتمد",
-      "benefit3": "مستويات شدة شخصية لأهداف اللياقة الخاصة بك",
-      "benefit4": "تطوير العضلات المتسارع وبناء القوة",
-      "benefit5": "تدريب منخفض التأثير مثالي للتعافي من الإصابات",
-      "duration": "20 دقيقة",
-      "sessions": "مرتين في الأسبوع",
-      "testimonialText": "جلسات تدريب EMS رائعة! حققت تحديدًا عضليًا أكثر في شهرين مما حققته في عامين من التدريب العادي في صالة الألعاب الرياضية. المدربون رائعون والتكنولوجيا رائعة.",
-      "testimonialAuthor": "ديفيد ر.",
-      "testimonialRole": "عضو ATP EMS"
     }
+
   },
   "gallery": {
     "expandImage": "عرض بملء الشاشة",

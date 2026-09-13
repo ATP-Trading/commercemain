@@ -1,4 +1,5 @@
 import 'server-only'
+import { isEmsPromotion } from '@/lib/publication-policy'
 
 import { createStorefrontApiClient } from '@shopify/storefront-api-client'
 import { TAGS } from "@/lib/constants"
@@ -764,14 +765,14 @@ export async function getCollections(
       // Filter out the `hidden` collections.
       // Collections that start with `hidden-*` need to be hidden on the search page.
       ...reshapeCollections(shopifyCollections).filter(
-        (collection) => !collection.handle.startsWith('hidden')
+        (collection) => !collection.handle.startsWith('hidden') && !isEmsPromotion(collection.handle)
       )
     ];
 
     return collections;
   } catch (error) {
     console.warn('[Shopify] Using mock collections data due to error:', error)
-    return mockCollections
+    return mockCollections.filter((collection) => !isEmsPromotion(collection.handle))
   }
 }
 
@@ -993,7 +994,7 @@ export async function getProducts({
     return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
   } catch (error) {
     console.warn('[Shopify] Using mock products data due to error:', error)
-    return mockProducts
+    return mockProducts.filter((product) => !isEmsPromotion(`${product.handle} ${product.title}`))
   }
 }
 

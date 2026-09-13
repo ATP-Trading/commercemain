@@ -44,7 +44,7 @@ export function SignupFormOAuth() {
         <CardHeader className={`text-center ${isRTL ? "text-right" : ""}`}>
           <CardTitle className="text-2xl font-bold">{t('createAccount') || 'Create Account'}</CardTitle>
           <CardDescription className="text-base mt-2">
-            {t('oauthSignupDescription') || 'Join ATP Group Services with secure, passwordless authentication'}
+            {t('oauthSignupDescription') || 'Join ATP Trading with secure, passwordless authentication'}
           </CardDescription>
         </CardHeader>
 

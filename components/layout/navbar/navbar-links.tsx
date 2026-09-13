@@ -45,7 +45,6 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
     const atpMembershipText = t('atpMembership');
     const skincareSupplementsText = t('skincareSupplements');
     const waterSoilTechText = t('waterSoilTechnology');
-    const emsTrainingText = t('emsTraining');
     const aboutUsText = t('aboutUs');
     const contactUsText = t('contactUs');
 
@@ -164,11 +163,6 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
                     handle: "water-soil-technology",
                 },
                 {
-                    title: emsTrainingText,
-                    path: `/${locale}/ems`,
-                    handle: "ems-training",
-                },
-                {
                     title: aboutUsText,
                     path: `/${locale}/about`,
                     handle: "about",
@@ -185,7 +179,6 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
             atpMembershipText,
             skincareSupplementsText,
             waterSoilTechText,
-            emsTrainingText,
             aboutUsText,
             contactUsText,
         ]

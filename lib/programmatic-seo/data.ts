@@ -1,6 +1,6 @@
 /**
  * Programmatic SEO Data Types and Constants
- * ATP Group Services
+ * ATP Trading
  */
 
 import { Product } from "@/lib/shopify/types";
@@ -172,8 +172,8 @@ export const CategoryData: Record<string, CategoryPageData> = {
     nameAr: "تدريب EMS",
     description: "Professional Electrical Muscle Stimulation (EMS) training equipment and solutions for fitness enthusiasts and healthcare professionals in UAE. Our cutting-edge EMS technology delivers effective workouts in just 20 minutes.",
     descriptionAr: "معدات وحلول تدريب التحفيز العضلي الكهربائي (EMS) الاحترافية لمحبي اللياقة البدنية والمهنيين الصحيين في الإمارات. توفر تقنية EMS المتطورة لدينا تمارين فعالة في 20 دقيقة فقط.",
-    metaTitle: "EMS Training UAE | Professional EMS Equipment Dubai | ATP Group",
-    metaDescription: "Discover professional EMS training in UAE. Electrical Muscle Stimulation equipment for fitness, rehabilitation, and sports performance. Shop EMS devices at ATP Group Dubai.",
+    metaTitle: "EMS Training UAE | Professional EMS Equipment Dubai | ATP Trading",
+    metaDescription: "Discover professional EMS training in UAE. Electrical Muscle Stimulation equipment for fitness, rehabilitation, and sports performance. Shop EMS devices at ATP Trading Dubai.",
     products: ["ems", "ems-pro-one-suit"],
     benefits: [
       "20-minute full-body workouts",
@@ -228,7 +228,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
     nameAr: "منتجات العناية بالبشرة",
     description: "Premium skincare products featuring advanced ingredients like marine collagen, hyaluronic acid, and botanical extracts. Achieve radiant, healthy skin with our scientifically formulated products available in UAE.",
     descriptionAr: "منتجات العناية بالبشرة الفاخرة التي تحتوي على مكونات متقدمة مثل الكولاجين البحري وحمض الهيالورونيك والمستخلصات النباتية. احصلي على بشرة صحية ومشرقة مع منتجاتنا الم formulated علميًا المتوفرة في الإمارات.",
-    metaTitle: "Skincare Products UAE | Premium Beauty Products Dubai | ATP Group",
+    metaTitle: "Skincare Products UAE | Premium Beauty Products Dubai | ATP Trading",
     metaDescription: "Shop premium skincare products in UAE. Korean beauty, marine collagen, hyaluronic acid formulas. Free delivery in Dubai, Abu Dhabi & across UAE.",
     products: ["smone-brightening-cream", "dna-hya-facial-cleanser", "clear-plus-natural-facial-soap", "s-mone-sherbet-sunscreen-spf-50-pa"],
     benefits: [
@@ -276,7 +276,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
     nameAr: "المكملات الغذائية",
     description: "Premium health supplements including marine collagen, detox formulas, and antioxidant drinks. Science-backed formulations for wellness, beauty, and vitality. Available across UAE with free delivery.",
     descriptionAr: "مكملات صحية فاخرة تشمل الكولاجين البحري وصيغ الديتوكس ومشروبات مضادات الأكسدة. تركيبات مدعومة بالعلم للعافية والجمال والحيوية. متوفرة في جميع أنحاء الإمارات مع توصيل مجاني.",
-    metaTitle: "Health Supplements UAE | Collagen, Detox & Vitamins Dubai | ATP Group",
+    metaTitle: "Health Supplements UAE | Collagen, Detox & Vitamins Dubai | ATP Trading",
     metaDescription: "Buy premium health supplements in UAE. Marine collagen, detox, SOD enzyme, and antioxidant formulas. Free delivery in Dubai and across UAE.",
     products: ["mores-collagen", "phytovy-liv-detox", "sod-more"],
     benefits: [
@@ -324,7 +324,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
     nameAr: "تقنية المياه",
     description: "Advanced water filtration and alkaline water systems for homes and businesses in UAE. Transform your water quality with our 9-stage mineral alkaline water filters and purification solutions.",
     descriptionAr: "أنظمة ترشيح المياه المتقدمة ومياه القلوية للمنازل والشركات في الإمارات. حول جودة مياهك مع مرشحات المياه المعدنية القلوية ذات 9 مراحل وحلول التنقية لدينا.",
-    metaTitle: "Water Filtration UAE | Alkaline Water Systems Dubai | ATP Group",
+    metaTitle: "Water Filtration UAE | Alkaline Water Systems Dubai | ATP Trading",
     metaDescription: "Buy advanced water filtration systems in UAE. 9-stage alkaline water filters, mineral water technology. Free installation in Dubai, Abu Dhabi & across UAE.",
     products: ["alkamag-9-stage-mineral-alkaline-water-filter"],
     benefits: [
@@ -372,7 +372,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
     nameAr: "تقنية التربة",
     description: "Premium organic soil enhancers and fertilizers for agriculture and gardening in UAE. Our Transform Soil products improve crop yield, soil health, and plant vitality using natural, lab-tested formulas.",
     descriptionAr: "محسنات التربة العضوية الفاخرة والأسمدة للزراعة والبستنة في الإمارات. تحسن منتجات Transform Soil لدينا محصول المحاصيل وصحة التربة وحيوية النبات باستخدام صيغ طبيعية مختبرة في المختبر.",
-    metaTitle: "Organic Soil Enhancers UAE | Agricultural Solutions Dubai | ATP Group",
+    metaTitle: "Organic Soil Enhancers UAE | Agricultural Solutions Dubai | ATP Trading",
     metaDescription: "Buy premium soil enhancers and fertilizers in UAE. Organic soil solutions for farming and gardening. Lab-tested results. Delivery across UAE.",
     products: ["transform-soil-premium-organic-soil-enhancer-1-kg", "transform-plus-full-growth-cycle-agricultural-formula"],
     benefits: [
@@ -424,8 +424,8 @@ export const IngredientData: Record<string, IngredientPageData> = {
     scientificName: "Hyaluronan",
     description: "Hyaluronic acid is a powerful humectant that can hold up to 1000x its weight in water. It's naturally found in skin and helps maintain hydration, elasticity, and a youthful appearance.",
     descriptionAr: "حمض الهيالورونيك هو مادة رطبة قوية يمكنها الاحتفاظ بوزن يصل إلى 1000 ضعف وزنها في الماء. يوجد بشكل طبيعي في الجلد ويساعد على الحفاظ على الترطيب والمرونة والمظهر الشبابي.",
-    metaTitle: "Hyaluronic Acid Benefits | Skin Hydration Science | ATP Group",
-    metaDescription: "Learn about hyaluronic acid benefits for skin. Science-backed hydration, anti-aging properties. Find hyaluronic acid products at ATP Group Dubai.",
+    metaTitle: "Hyaluronic Acid Benefits | Skin Hydration Science | ATP Trading",
+    metaDescription: "Learn about hyaluronic acid benefits for skin. Science-backed hydration, anti-aging properties. Find hyaluronic acid products at ATP Trading Dubai.",
     benefits: [
       "Intense hydration - holds 1000x water weight",
       "Reduces fine lines and wrinkles",
@@ -453,8 +453,8 @@ export const IngredientData: Record<string, IngredientPageData> = {
     scientificName: "Hydrolyzed Fish Collagen",
     description: "Marine collagen is derived from fish and provides Type I and Type III collagen, which are essential for skin, hair, and nail health. It's more bioavailable than bovine or porcine collagen.",
     descriptionAr: "يستمد الكولاجين البحري من السمك ويوفر الكولاجين من النوع I والنوع III، وهي ضرورية لصحة الجلد والشعر والأظافر. إنه أكثر توفرًا بيولوجيًا من الكولاجين البقري أو الخنزير.",
-    metaTitle: "Marine Collagen Benefits | Skin & Hair Health | ATP Group",
-    metaDescription: "Discover marine collagen benefits for skin, hair, and nails. 10x more absorbable than bovine collagen. Shop marine collagen supplements at ATP Group.",
+    metaTitle: "Marine Collagen Benefits | Skin & Hair Health | ATP Trading",
+    metaDescription: "Discover marine collagen benefits for skin, hair, and nails. 10x more absorbable than bovine collagen. Shop marine collagen supplements at ATP Trading.",
     benefits: [
       "10,000mg per serving for maximum results",
       "Improves skin elasticity and hydration",
@@ -482,8 +482,8 @@ export const IngredientData: Record<string, IngredientPageData> = {
     scientificName: "Superoxide Dismutase",
     description: "SOD (Superoxide Dismutase) is a powerful antioxidant enzyme that neutralizes harmful free radicals at the cellular level. It helps protect DNA, supports immune function, and promotes longevity.",
     descriptionAr: "SOD (سوبرأوكسيد ديسميوتاز) هو إنزيم مضاد للأكسدة قوي يحيد الجذور الحرة الضارة على المستوى الخلوي. يساعد في حماية الحمض النووي، ويدعم وظيفة المناعة، ويعزز طول العمر.",
-    metaTitle: "SOD Enzyme Benefits | Cellular Antioxidant Defense | ATP Group",
-    metaDescription: "Learn about SOD enzyme benefits. Powerful antioxidant with ORAC 312,000. Cellular protection and anti-aging. Shop SOD supplements at ATP Group.",
+    metaTitle: "SOD Enzyme Benefits | Cellular Antioxidant Defense | ATP Trading",
+    metaDescription: "Learn about SOD enzyme benefits. Powerful antioxidant with ORAC 312,000. Cellular protection and anti-aging. Shop SOD supplements at ATP Trading.",
     benefits: [
       "Neutralizes free radicals at cellular level",
       "Protects DNA from oxidative damage",
@@ -511,8 +511,8 @@ export const IngredientData: Record<string, IngredientPageData> = {
     scientificName: "Plantago ovata",
     description: "Psyllium husk is a soluble fiber derived from the seeds of Plantago ovata. It's used for digestive health, detoxification, and weight management. It absorbs water and forms a gel-like substance that aids digestion.",
     descriptionAr: "قشر السيليوم هو ألياف قابلة للذوبان مستمدة من بذور Plantago ovata. يستخدم لصحة الجهاز الهضمي والديتوكس وإدارة الوزن. يمتص الماء ويشكل مادة تشبه الهلام تساعد في الهضم.",
-    metaTitle: "Psyllium Husk Benefits | Digestive Health & Detox | ATP Group",
-    metaDescription: "Discover psyllium husk benefits for digestion and detox. Natural fiber supplement. Shop PHYTOVY LIV detox at ATP Group Dubai.",
+    metaTitle: "Psyllium Husk Benefits | Digestive Health & Detox | ATP Trading",
+    metaDescription: "Discover psyllium husk benefits for digestion and detox. Natural fiber supplement. Shop PHYTOVY LIV detox at ATP Trading Dubai.",
     benefits: [
       "Relieves constipation naturally",
       "Binds intestinal toxins",
@@ -544,7 +544,7 @@ export const BenefitData: Record<string, BenefitPageData> = {
     productTypeAr: "تدريب EMS",
     description: "EMS training is scientifically proven to accelerate weight loss by activating multiple muscle groups simultaneously. A 20-minute EMS session burns calories equivalent to 3-4 hours of conventional training.",
     descriptionAr: "ثبت علميًا أن تدريب EMS يسرع فقدان الوزن عن طريق تنشيط مجموعات عضلية متعددة في وقت واحد. تحرق جلسة EMS لمدة 20 دقيقة سعرات حرارية تعادل 3-4 ساعات من التدريب التقليدي.",
-    metaTitle: "EMS Weight Loss | Burn Fat with Electrical Muscle Stimulation | ATP Group",
+    metaTitle: "EMS Weight Loss | Burn Fat with Electrical Muscle Stimulation | ATP Trading",
     metaDescription: "Lose weight faster with EMS training. 20 minutes = 3 hours gym workout. Scientifically proven fat burning. Book EMS sessions in Dubai.",
     scienceExplanation: "EMS activates up to 90% of muscle fibers simultaneously, including deep muscle layers that are difficult to target with conventional exercise. This creates a higher metabolic demand, leading to increased calorie burn both during and after the session (EPOC effect).",
     scienceExplanationAr: "ينشط EMS ما يصل إلى 90٪ من الألياف العضلية في وقت واحد، بما في ذلك طبقات العضلات العميقة التي يصعب استهدافها بالتمرين التقليدي. هذا يخلق طلبًا أيضيًا أعلى، مما يؤدي إلى زيادة حرق السعرات الحرارية أثناء الجلسة وبعدها (تأثير EPOC).",
@@ -607,8 +607,8 @@ export const BenefitData: Record<string, BenefitPageData> = {
     productTypeAr: "مكملات الكولاجين البحري",
     description: "Marine collagen supplements help restore skin's natural collagen levels, improving elasticity, reducing wrinkles, and promoting a radiant, youthful complexion from within.",
     descriptionAr: "تساعد مكملات الكولاجين البحري على استعادة مستويات الكولاجين الطبيعية في الجلد، وتحسين المرونة، وتقليل التجاعيد، وتعزيز بشرة مشرقة وشبابية من الداخل.",
-    metaTitle: "Collagen for Skin | Anti-Aging & Skin Elasticity | ATP Group",
-    metaDescription: "Discover how marine collagen improves skin health. Reduce wrinkles, boost elasticity, get glowing skin. Shop collagen supplements at ATP Group Dubai.",
+    metaTitle: "Collagen for Skin | Anti-Aging & Skin Elasticity | ATP Trading",
+    metaDescription: "Discover how marine collagen improves skin health. Reduce wrinkles, boost elasticity, get glowing skin. Shop collagen supplements at ATP Trading Dubai.",
     scienceExplanation: "After age 25, collagen production decreases by 1-2% annually. Marine collagen peptides are small enough to be absorbed into the bloodstream and reach the skin's dermis layer, where they stimulate fibroblasts to produce new collagen, elastin, and hyaluronic acid.",
     scienceExplanationAr: "بعد سن 25، ينخفض إنتاج الكولاجين بنسبة 1-2٪ سنويًا. ببتيدات الكولاجين البحري صغيرة بما يكفي لتتم امتصاصها في مجرى الدم والوصول إلى طبقة الأدمة في الجلد، حيث تحفز الخلايا الليفية لإنتاج كولاجين وإيلاستين وحمض الهيالورونيك الجديد.",
     benefits: [
@@ -670,8 +670,8 @@ export const BenefitData: Record<string, BenefitPageData> = {
     productTypeAr: "أنظمة ترشيح المياه",
     description: "Alkaline water with pH 8.5-9.5 helps neutralize acid in the body, improve hydration at the cellular level, and provide essential minerals for overall health and wellness.",
     descriptionAr: "المياه القلوية مع pH 8.5-9.5 تساعد على تحييد الحمض في الجسم، وتحسين الترطيب على المستوى الخلوي، وتوفير المعادن الأساسية للصحة والعافية العامة.",
-    metaTitle: "Alkaline Water Benefits | pH Balance & Hydration | ATP Group",
-    metaDescription: "Discover alkaline water benefits. Better hydration, pH balance, essential minerals. Shop alkaline water filters in Dubai, UAE at ATP Group.",
+    metaTitle: "Alkaline Water Benefits | pH Balance & Hydration | ATP Trading",
+    metaDescription: "Discover alkaline water benefits. Better hydration, pH balance, essential minerals. Shop alkaline water filters in Dubai, UAE at ATP Trading.",
     scienceExplanation: "Regular tap water has a pH around 7, while alkaline water has pH 8.5-9.5. The higher pH helps neutralize excess acid in the body. Additionally, the negative ORP (Oxidation Reduction Potential) acts as an antioxidant, while added minerals like calcium, magnesium, and potassium support various bodily functions.",
     scienceExplanationAr: "المياه العادية من الحنفية لها pH حوالي 7، بينما المياه القلوية لها pH 8.5-9.5. يساعد pH الأعلى على تحييد الحمض الزائد في الجسم. بالإضافة إلى ذلك، يعمل ORP السلبي (إمكانية الاختزال الأكسدة) كمضاد للأكسدة، بينما تدعم المعادن المضافة مثل الكالسيوم والمغنيسيوم والبوتاسيوم وظائف الجسم المختلفة.",
     benefits: [

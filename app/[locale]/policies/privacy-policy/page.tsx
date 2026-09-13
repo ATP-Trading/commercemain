@@ -14,12 +14,12 @@ export async function generateMetadata({
   const isArabic = locale === 'ar';
 
   const title = isArabic
-    ? 'سياسة الخصوصية | مجموعة ATP للخدمات'
-    : 'Privacy Policy | ATP Group Services';
+    ? 'سياسة الخصوصية | ATP Trading'
+    : 'Privacy Policy | ATP Trading';
 
   const description = isArabic
-    ? 'سياسة الخصوصية الخاصة بمجموعة ATP للخدمات. تعرف على كيفية جمع واستخدام وحماية معلوماتك الشخصية.'
-    : 'Privacy Policy for ATP Group Services. Learn how we collect, use, and protect your personal information.';
+    ? 'سياسة الخصوصية الخاصة بATP Trading. تعرف على كيفية جمع واستخدام وحماية معلوماتك الشخصية.'
+    : 'Privacy Policy for ATP Trading. Learn how we collect, use, and protect your personal information.';
 
   return {
     title,
@@ -30,7 +30,7 @@ export async function generateMetadata({
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
       url: `https://atpgroupservices.com/${locale}/policies/privacy-policy`,
-      siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
+      siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
     },
     alternates: {
       canonical: `https://atpgroupservices.com/${locale}/policies/privacy-policy`,

@@ -3,7 +3,7 @@
 /**
  * MegaMenu Component
  * 
- * Award-winning mega menu for ATP Group Services navigation.
+ * Award-winning mega menu for ATP Trading navigation.
  * Features:
  * - Full-width dropdown with categories and products
  * - Featured product spotlight
@@ -423,17 +423,5 @@ export const menuCategories: MenuCategory[] = [
       { title: "Agricultural", titleAr: "الزراعة", href: "/water-soil-technology?category=agricultural" },
     ],
   },
-  {
-    id: "ems-training",
-    title: "EMS Training",
-    titleAr: "تدريب EMS",
-    description: "German-engineered fitness technology",
-    descriptionAr: "تكنولوجيا اللياقة البدنية الألمانية",
-    href: "/ems",
-    subcategories: [
-      { title: "Personal Training", titleAr: "تدريب شخصي", href: "/ems?type=personal" },
-      { title: "Group Sessions", titleAr: "جلسات جماعية", href: "/ems?type=group" },
-      { title: "Equipment", titleAr: "المعدات", href: "/ems?type=equipment" },
-    ],
-  },
+
 ];

@@ -53,16 +53,14 @@ export function AboutHero() {
                             }`}
                         variants={fadeInUp}
                     >
-                        About ATP Group Services
+                        {isRTL ? "عن ATP Trading" : "About ATP Trading"}
                     </m.h1>
                     <m.p
                         className={`text-xl md:text-2xl text-atp-off-white max-w-4xl mx-auto leading-relaxed ${isRTL ? "font-arabic" : ""
                             }`}
                         variants={fadeInUp}
                     >
-                        Delivering innovative wellness solutions that nurture the mind,
-                        body, and spirit through premium experiences and cutting-edge
-                        technology.
+                        {isRTL ? "منتجات العناية بالبشرة والمكملات وتقنيات المياه والتربة داخل الإمارات." : "Skincare, supplements, and water and soil technology products within the UAE."}
                     </m.p>
                 </m.div>
             </div>

@@ -1,3 +1,4 @@
+import { isEmsPromotion } from "@/lib/publication-policy";
 // Client-safe types and functions
 import type {
   Cart,
@@ -226,7 +227,7 @@ export const reshapeProduct = (
 
   if (
     !product ||
-    (filterHiddenProducts && product.tags.includes(HIDDEN_PRODUCT_TAG))
+    (filterHiddenProducts && (product.tags.includes(HIDDEN_PRODUCT_TAG) || isEmsPromotion(`${product.handle} ${product.title}`)))
   ) {
     return undefined;
   }

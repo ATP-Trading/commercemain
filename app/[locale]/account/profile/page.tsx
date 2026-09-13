@@ -14,7 +14,7 @@ import { User, Mail, Phone, MapPin, ArrowLeft, Save } from "lucide-react";
 import { Link } from "@/src/i18n/navigation";
 
 export const metadata = {
-  title: "Profile Settings - ATP Group Services",
+  title: "Profile Settings - ATP Trading",
   description: "Manage your personal information and preferences.",
 };
 

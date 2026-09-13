@@ -3,7 +3,7 @@
 /**
  * BackToTop Component
  * 
- * Award-winning back-to-top button for ATP Group Services.
+ * Award-winning back-to-top button for ATP Trading.
  * Features:
  * - Smooth scroll with configurable threshold
  * - Elegant fade/slide animations

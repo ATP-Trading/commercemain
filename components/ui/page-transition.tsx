@@ -3,7 +3,7 @@
 /**
  * PageTransition Component
  * 
- * Award-winning page transition wrapper for ATP Group Services.
+ * Award-winning page transition wrapper for ATP Trading.
  * Uses Framer Motion for smooth enter/exit animations.
  * 
  * Note: In Next.js App Router, AnimatePresence cannot detect route changes

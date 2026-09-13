@@ -3,9 +3,9 @@ import { Link } from "@/src/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Create Account - ATP Group Services",
+  title: "Create Account - ATP Trading",
   description:
-    "Join ATP Group Services and unlock exclusive wellness benefits with our premium membership program.",
+    "Join ATP Trading and unlock exclusive wellness benefits with our premium membership program.",
 };
 
 export default function SignupPage() {

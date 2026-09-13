@@ -25,7 +25,7 @@ interface ATPWellnessHeroProps {
 export default function ATPWellnessHero({
   videoSrc,
   imageSrc = "/ATPBG.PNG",
-  imageAlt = "ATP Group Services - Luxury Wellness",
+  imageAlt = "ATP Trading - Luxury Wellness",
 }: ATPWellnessHeroProps) {
   const t = useTranslations("hero");
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -83,12 +83,6 @@ export default function ATPWellnessHero({
   const titleWords = t("welcomeToATP").split(" ");
   const subtitleWords = t("authenticThaiWellness").split(" ");
 
-  // Trust indicators
-  const trustIndicators = [
-    { icon: Users, label: t("trustedMembers") || "100+ Members", value: 100, suffix: "+" },
-    { icon: Award, label: t("yearsExperience") || "2+ Years", value: 2, suffix: "+" },
-    { icon: Shield, label: t("premiumProducts") || "50+ Products", value: 50, suffix: "+" },
-  ];
 
   return (
     <section
@@ -251,33 +245,6 @@ export default function ATPWellnessHero({
           <p className="text-base sm:text-lg md:text-xl text-white/60 leading-relaxed">
             {t("heroSubtitle")}
           </p>
-        </m.div>
-
-        {/* === TRUST INDICATORS === */}
-        <m.div
-          className="flex flex-wrap justify-center gap-6 sm:gap-8 md:gap-12 mb-10 sm:mb-14"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.9, ease: easing.smooth }}
-        >
-          {trustIndicators.map((indicator, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-2 sm:gap-3 text-white/70"
-            >
-              <indicator.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--atp-gold)]" />
-              <span className="text-sm sm:text-base font-medium">
-                <AnimatedCounter
-                  value={indicator.value}
-                  suffix={indicator.suffix}
-                  duration={2}
-                  delay={1 + index * 0.2}
-                  className="text-[var(--atp-gold)] font-semibold"
-                />
-                <span className="ml-1 text-white/60">{indicator.label.replace(/[\d,+]+/, "").trim()}</span>
-              </span>
-            </div>
-          ))}
         </m.div>
 
         {/* === CTA BUTTONS === */}

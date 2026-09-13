@@ -1,7 +1,7 @@
 /**
  * Enhanced Structured Data Component
  * 
- * Comprehensive Schema.org markup for ATP Group Services
+ * Comprehensive Schema.org markup for ATP Trading
  * Supports Product, FAQ, Review, LocalBusiness, Breadcrumb, Organization, and more
  * 
  * Following Google's structured data guidelines for rich results
@@ -30,40 +30,14 @@ interface StructuredDataProps {
   data: Record<string, unknown>;
 }
 
-// ATP Group Services Company Information
+// ATP Trading Company Information
 const ATP_COMPANY = {
-  name: "ATP Group Services",
-  legalName: "ATP Group Services LLC",
+  name: "ATP Trading",
   url: "https://www.atpgroupservices.ae",
-  logo: "https://www.atpgroupservices.ae/logo.png",
-  image: "https://www.atpgroupservices.ae/og-image.jpg",
-  description: "Premium wellness and technology solutions including EMS Training, Skincare, Supplements, and Water Technology with exclusive ATP membership benefits in UAE.",
-  foundingDate: "2010",
-  telephone: "+971-4-XXX-XXXX",
-  email: "info@atpgroupservices.ae",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Business Bay",
-    addressLocality: "Dubai",
-    addressRegion: "Dubai",
-    postalCode: "00000",
-    addressCountry: "AE",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: "25.1850",
-    longitude: "55.2553",
-  },
-  sameAs: [
-    "https://twitter.com/atpgroupservices",
-    "https://linkedin.com/company/atp-group-services",
-    "https://instagram.com/atpgroupservices",
-    "https://facebook.com/atpgroupservices",
-  ],
-  priceRange: "$$",
-  currenciesAccepted: "AED, USD",
-  paymentAccepted: "Cash, Credit Card, Tabby, Tamara",
-  areaServed: ["AE", "SA", "KW", "BH", "OM", "QA"],
+  logo: "https://www.atpgroupservices.ae/images/atp-logo.png",
+  image: "https://www.atpgroupservices.ae/images/atp-logo.png",
+  description: "Skincare, supplements, and water and soil technology products in the UAE.",
+  areaServed: ["AE"],
 };
 
 export function StructuredData({ type, data }: StructuredDataProps) {
@@ -82,7 +56,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
           "@type": "Organization",
           "@id": `${ATP_COMPANY.url}/#organization`,
           name: ATP_COMPANY.name,
-          legalName: ATP_COMPANY.legalName,
+
           url: ATP_COMPANY.url,
           logo: {
             "@type": "ImageObject",
@@ -92,17 +66,17 @@ export function StructuredData({ type, data }: StructuredDataProps) {
           },
           image: ATP_COMPANY.image,
           description: ATP_COMPANY.description,
-          foundingDate: ATP_COMPANY.foundingDate,
+
           contactPoint: {
             "@type": "ContactPoint",
-            telephone: ATP_COMPANY.telephone,
+
             contactType: "customer service",
-            email: ATP_COMPANY.email,
+
             availableLanguage: ["en", "ar"],
             areaServed: ATP_COMPANY.areaServed,
           },
-          address: ATP_COMPANY.address,
-          sameAs: ATP_COMPANY.sameAs,
+
+
           ...data,
         };
 
@@ -114,34 +88,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
           name: ATP_COMPANY.name,
           image: ATP_COMPANY.image,
           url: ATP_COMPANY.url,
-          telephone: ATP_COMPANY.telephone,
-          email: ATP_COMPANY.email,
-          address: ATP_COMPANY.address,
-          geo: ATP_COMPANY.geo,
-          priceRange: ATP_COMPANY.priceRange,
-          currenciesAccepted: ATP_COMPANY.currenciesAccepted,
-          paymentAccepted: ATP_COMPANY.paymentAccepted,
-          openingHoursSpecification: [
-            {
-              "@type": "OpeningHoursSpecification",
-              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Sunday"],
-              opens: "09:00",
-              closes: "21:00",
-            },
-            {
-              "@type": "OpeningHoursSpecification",
-              dayOfWeek: ["Friday"],
-              opens: "14:00",
-              closes: "21:00",
-            },
-            {
-              "@type": "OpeningHoursSpecification",
-              dayOfWeek: ["Saturday"],
-              opens: "10:00",
-              closes: "22:00",
-            },
-          ],
-          sameAs: ATP_COMPANY.sameAs,
+
           ...data,
         };
 
@@ -338,7 +285,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
           dateModified: data.dateModified || data.datePublished,
           author: {
             "@type": "Person",
-            name: data.authorName || "ATP Group Services",
+            name: data.authorName || "ATP Trading",
             url: data.authorUrl || ATP_COMPANY.url,
           },
           publisher: {
@@ -577,7 +524,7 @@ export function FAQStructuredData({ questions }: { questions: FAQItem[] }) {
 
 /**
  * LocalBusiness Schema Helper for UAE presence
- * Pre-configured with ATP Group Services UAE data
+ * Pre-configured with ATP Trading UAE data
  */
 interface LocalBusinessSchemaData {
   additionalType?: string;
@@ -602,39 +549,19 @@ export function LocalBusinessStructuredData(data?: LocalBusinessSchemaData) {
     name: ATP_COMPANY.name,
     image: ATP_COMPANY.image,
     url: ATP_COMPANY.url,
-    telephone: ATP_COMPANY.telephone,
-    email: ATP_COMPANY.email,
+
+
     description: ATP_COMPANY.description,
-    address: ATP_COMPANY.address,
-    geo: ATP_COMPANY.geo,
-    priceRange: ATP_COMPANY.priceRange,
-    currenciesAccepted: ATP_COMPANY.currenciesAccepted,
-    paymentAccepted: ATP_COMPANY.paymentAccepted,
+
+
+
+
+
     areaServed: ATP_COMPANY.areaServed.map((code) => ({
       "@type": "Country",
       name: code,
     })),
-    openingHoursSpecification: [
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Sunday"],
-        opens: "09:00",
-        closes: "21:00",
-      },
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Friday"],
-        opens: "14:00",
-        closes: "21:00",
-      },
-      {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Saturday"],
-        opens: "10:00",
-        closes: "22:00",
-      },
-    ],
-    sameAs: ATP_COMPANY.sameAs,
+
     ...(data?.aggregateRating && {
       aggregateRating: {
         "@type": "AggregateRating",

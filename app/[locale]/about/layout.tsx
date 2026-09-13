@@ -17,8 +17,8 @@ export async function generateMetadata({
   const isArabic = locale === 'ar'
   
   const title = isArabic 
-    ? 'عن مجموعة ATP للخدمات | حلول العافية المتميزة'
-    : 'About ATP Group Services | Premium Wellness Solutions'
+    ? 'عن ATP Trading | حلول العافية المتميزة'
+    : 'About ATP Trading | Premium Wellness Solutions'
   
   const description = isArabic
     ? 'اكتشف مهمتنا في تقديم حلول العافية المبتكرة التي تغذي العقل والجسم والروح من خلال تجارب متميزة وتقنية متطورة.'
@@ -33,7 +33,7 @@ export async function generateMetadata({
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
       url: `https://www.atpgroupservices.ae/${locale}/about`,
-      siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
+      siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
       images: [{
         url: 'https://www.atpgroupservices.ae/og-about.jpg',
         width: 1200,

@@ -6,7 +6,7 @@
  * "You might also like" section for cart upselling.
  * Displays complementary products to items in cart.
  * 
- * Part of ATP Group Services luxury e-commerce redesign.
+ * Part of ATP Trading luxury e-commerce redesign.
  */
 
 import { m, AnimatePresence, useReducedMotion } from "framer-motion";

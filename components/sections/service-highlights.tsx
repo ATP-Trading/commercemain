@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { TabsWithIndicator, Tab } from "@/components/ui/tab-indicator";
 import { ComparisonSlider } from "@/components/ui/comparison-slider";
@@ -70,6 +70,7 @@ export default function ServiceHighlights() {
   const [activeService, setActiveService] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const t = useTranslations("services");
+  const locale = useLocale();
 
   // Parallax for hero images
   const parallax = useParallaxHero();
@@ -132,37 +133,7 @@ export default function ServiceHighlights() {
       },
     },
 
-    {
-      id: "ems",
-      icon: Zap,
-      title: t("ems.title"),
-      subtitle: t("ems.subtitle"),
-      description: t("ems.description"),
-      benefits: [
-        t("ems.benefit1"),
-        t("ems.benefit2"),
-        t("ems.benefit3"),
-        t("ems.benefit4"),
-        t("ems.benefit5"),
-      ],
-      image: "/ems-training-facility.png",
-      link: "/ems",
-      gradient: "from-orange-400 via-red-500 to-pink-600",
-      badge: t("ems.badge"),
-      stats: {
-        duration: t("ems.duration"),
-        sessions: t("ems.sessions"),
-        rating: 4.7,
-      },
-      testimonial: {
-        text: t("ems.testimonialText"),
-        author: t("ems.testimonialAuthor"),
-        role: t("ems.testimonialRole"),
-      },
-      hasComparison: true,
-      beforeImage: "/ems-before.jpg",
-      afterImage: "/ems-after.jpg",
-    },
+
   ];
 
   // Create tabs for TabsWithIndicator
@@ -325,37 +296,8 @@ export default function ServiceHighlights() {
                 ))}
               </m.div>
 
-              {/* Stats with AnimatedCounter */}
-              <div className="grid grid-cols-3 gap-6">
-                <div className="text-center glass rounded-xl p-4">
-                  <Timer className="w-6 h-6 text-atp-gold mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-white">
-                    {currentService.stats.duration}
-                  </div>
-                  <div className="text-atp-white/60 text-sm">{t("duration")}</div>
-                </div>
-                <div className="text-center glass rounded-xl p-4">
-                  <TrendingUp className="w-6 h-6 text-atp-gold mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-white">
-                    {currentService.stats.sessions}
-                  </div>
-                  <div className="text-atp-white/60 text-sm">{t("frequency")}</div>
-                </div>
-                <div className="text-center glass rounded-xl p-4">
-                  <Star className="w-6 h-6 text-atp-gold mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-white">
-                    <AnimatedCounter
-                      value={currentService.stats.rating}
-                      decimals={1}
-                      duration={1.5}
-                    />
-                  </div>
-                  <div className="text-atp-white/60 text-sm">{t("rating")}</div>
-                </div>
-              </div>
-
               {/* CTA */}
-              <Link href={currentService.link}>
+              <Link href={`/${locale}${currentService.link}`}>
                 <Button
                   size="lg"
                   className={`bg-gradient-to-r ${currentService.gradient} text-white hover:shadow-lg hover:shadow-current/25 transition-all duration-300 group border-0`}
@@ -397,36 +339,7 @@ export default function ServiceHighlights() {
                 </m.div>
               )}
 
-              {/* Testimonial with RevealText */}
-              {currentService.testimonial && (
-                <m.div
-                  className="glass rounded-2xl p-6 border border-white/10"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.3 }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gradient-to-r from-atp-gold to-yellow-500 rounded-full flex items-center justify-center">
-                        <Users className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-atp-white/90 italic mb-3">
-                        "{currentService.testimonial.text}"
-                      </p>
-                      <div>
-                        <div className="text-white font-semibold">
-                          {currentService.testimonial.author}
-                        </div>
-                        <div className="text-atp-white/60 text-sm">
-                          {currentService.testimonial.role}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </m.div>
-              )}
+
             </div>
           </div>
         </m.div>

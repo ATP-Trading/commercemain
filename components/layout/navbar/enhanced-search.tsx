@@ -235,22 +235,6 @@ export default function EnhancedSearch({
       suggestions.push({ query: `${query} equipment`, category: "Technology" });
     }
 
-    // EMS Training related
-    if (
-      lowerQuery.includes("ems") ||
-      lowerQuery.includes("training") ||
-      lowerQuery.includes("fitness")
-    ) {
-      suggestions.push({
-        query: `${query} training program`,
-        category: "EMS Training",
-      });
-      suggestions.push({
-        query: `${query} certification`,
-        category: "EMS Training",
-      });
-    }
-
     // General product suggestions if no specific category matches
     if (suggestions.length === 0) {
       suggestions.push(

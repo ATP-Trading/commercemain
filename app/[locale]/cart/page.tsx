@@ -1,7 +1,7 @@
 import { CartPageContent } from '@/components/cart/cart-page-content';
 
 export const metadata = {
-  title: 'Shopping Cart | ATP Group Services',
+  title: 'Shopping Cart | ATP Trading',
   description: 'Review your items and proceed to checkout.',
 };
 

@@ -3,7 +3,7 @@ import { Link } from "@/src/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Sign In - ATP Group Services",
+  title: "Sign In - ATP Trading",
   description:
     "Sign in to your ATP account to access exclusive member benefits and manage your wellness journey.",
 };
@@ -26,7 +26,7 @@ export default function LoginPage() {
 
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            New to ATP Group Services?
+            New to ATP Trading?
           </p>
           <Link
             href="/atp-membership"

@@ -12,8 +12,8 @@ export const ComparisonData: Record<string, ComparisonPageData> = {
     optionBAr: "الصالة الرياضية التقليدية",
     description: "Compare EMS training vs traditional gym workouts. Discover why Electrical Muscle Stimulation is 3x more effective for fitness, weight loss, and muscle building in less time.",
     descriptionAr: "قارن بين تدريب EMS والتدريب التقليدي في الصالة الرياضية. اكتشف لماذا التحفيز العضلي الكهربائي أكثر فعالية 3 مرات للياقة البدنية وفقدان الوزن وبناء العضلات في وقت أقل.",
-    metaTitle: "EMS vs Gym | Which is Better for Fitness? | ATP Group",
-    metaDescription: "EMS vs traditional gym: Compare effectiveness, time, results. EMS is 3x more effective in 20 minutes vs 3 hours gym. Find out which is best for you at ATP Group.",
+    metaTitle: "EMS vs Gym | Which is Better for Fitness? | ATP Trading",
+    metaDescription: "EMS vs traditional gym: Compare effectiveness, time, results. EMS is 3x more effective in 20 minutes vs 3 hours gym. Find out which is best for you at ATP Trading.",
     introText: "Choosing between EMS training and traditional gym workouts? Both have their benefits, but EMS technology offers unique advantages that make it 3x more effective in just 20 minutes. Let's compare them side by side.",
     introTextAr: "هل تختار بين تدريب EMS والتدريب التقليدي في الصالة الرياضية؟ كلاهما له فوائده، لكن تقنية EMS توفر مزايا فريدة تجعلها أكثر فعالية 3 مرات في 20 دقيقة فقط. دعنا نقارن بينهما جنبًا إلى جنب.",
     comparisonPoints: [
@@ -151,8 +151,8 @@ export const ComparisonData: Record<string, ComparisonPageData> = {
     optionBAr: "الكولاجين البقري",
     description: "Compare marine collagen vs bovine collagen. Discover why marine collagen is 1.5x more bioavailable, better absorbed, and ideal for skin, hair, and nail health.",
     descriptionAr: "قارن بين الكولاجين البحري والكولاجين البقري. اكتشف لماذا الكولاجين البحري أكثر توفرًا بيولوجيًا بنسبة 1.5x، ويمتص بشكل أفضل، ومثالي لصحة الجلد والشعر والأظافر.",
-    metaTitle: "Marine Collagen vs Bovine | Which is Better? | ATP Group",
-    metaDescription: "Marine vs bovine collagen comparison. Marine is 1.5x more bioavailable, smaller peptides, better for skin. Shop premium marine collagen at ATP Group Dubai.",
+    metaTitle: "Marine Collagen vs Bovine | Which is Better? | ATP Trading",
+    metaDescription: "Marine vs bovine collagen comparison. Marine is 1.5x more bioavailable, smaller peptides, better for skin. Shop premium marine collagen at ATP Trading Dubai.",
     introText: "When choosing collagen supplements, the source matters. Marine collagen (from fish) and bovine collagen (from cows) have different absorption rates and benefits. Let's break down the differences.",
     introTextAr: "عند اختيار مكملات الكولاجين، المصدر مهم. الكولاجين البحري (من السمك) والكولاجين البقري (من الأبقار) لهما معدلات امتصاص وفوائد مختلفة. دعنا نحلل الاختلافات.",
     comparisonPoints: [
@@ -273,8 +273,8 @@ export const ComparisonData: Record<string, ComparisonPageData> = {
     optionBAr: "المياه العادية",
     description: "Compare alkaline water vs regular tap water. Discover the benefits of pH-balanced water with essential minerals and negative ORP for better hydration.",
     descriptionAr: "قارن بين المياه القلوية والمياه العادية من الحنفية. اكتشف فوائد المياه المتوازنة pH مع المعادن الأساسية وORP السلبي للترطيب الأفضل.",
-    metaTitle: "Alkaline Water vs Regular | Benefits Compared | ATP Group",
-    metaDescription: "Alkaline water vs regular water: pH 8.5-9.5, essential minerals, better hydration. Shop alkaline water filters at ATP Group Dubai, UAE.",
+    metaTitle: "Alkaline Water vs Regular | Benefits Compared | ATP Trading",
+    metaDescription: "Alkaline water vs regular water: pH 8.5-9.5, essential minerals, better hydration. Shop alkaline water filters at ATP Trading Dubai, UAE.",
     introText: "Is alkaline water worth the investment? Let's compare alkaline water (pH 8.5-9.5) with regular tap water (pH 7) to understand the real differences in hydration, minerals, and health benefits.",
     introTextAr: "هل المياه القلوية تستحق الاستثمار؟ دعنا نقارن بين المياه القلوية (pH 8.5-9.5) والمياه العادية من الحنفية (pH 7) لفهم الاختلافات الحقيقية في الترطيب والمعادن والفوائد الصحية.",
     comparisonPoints: [

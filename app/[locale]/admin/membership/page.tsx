@@ -4,8 +4,8 @@ import { AdminLayout } from '@/components/admin/admin-layout';
 import { AdminMembershipDashboard } from '@/components/admin/admin-membership-dashboard';
 
 export const metadata: Metadata = {
-  title: 'Membership Admin Dashboard - ATP Group Services',
-  description: 'Administrative dashboard for managing ATP Group Services memberships',
+  title: 'Membership Admin Dashboard - ATP Trading',
+  description: 'Administrative dashboard for managing ATP Trading memberships',
 };
 
 export default function AdminMembershipPage() {

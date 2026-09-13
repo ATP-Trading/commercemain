@@ -14,7 +14,7 @@ import { formatDirhamAmount } from "@/lib/utils";
 import { DirhamSymbol } from "@/components/icons/dirham-symbol";
 
 export const metadata = {
-  title: "Order History - ATP Group Services",
+  title: "Order History - ATP Trading",
   description: "View your complete order history and track shipments.",
 };
 

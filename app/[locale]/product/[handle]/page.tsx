@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion } from "@/lib/publication-policy";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -41,6 +43,7 @@ export async function generateMetadata(props: {
   params: Promise<{ handle: string; locale: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
+  if (isEmsPromotion(params.handle)) return inactiveServiceMetadata(params.locale, `/product/${params.handle}`);
 
   // Shopify Translate & Adapt already provides the correct localized handle in the URL
   // So we use params.handle directly with the appropriate language context
@@ -62,7 +65,7 @@ export async function generateMetadata(props: {
   );
 
   return {
-    title: product.seo.title || `${title} | ATP Group Services`,
+    title: product.seo.title || `${title} | ATP Trading`,
     description: product.seo.description || generateMetaDescription(product, params.locale as "en" | "ar"),
     robots: {
       index: indexable,
@@ -98,6 +101,7 @@ export default async function ProductPage(props: {
   params: Promise<{ handle: string; locale: string }>;
 }) {
   const params = await props.params;
+  if (isEmsPromotion(params.handle)) return <InactiveServicePage locale={params.locale} />;
 
   // Shopify Translate & Adapt already provides the correct localized handle in the URL
   // So we use params.handle directly with the appropriate language context
@@ -122,7 +126,7 @@ export default async function ProductPage(props: {
     price: product.priceRange.minVariantPrice.amount,
     priceCurrency: product.priceRange.minVariantPrice.currencyCode,
     availability: product.availableForSale ? "InStock" as const : "OutOfStock" as const,
-    brand: "ATP Group Services", // Company brand
+    brand: "ATP Trading", // Company brand
   };
 
   const breadcrumbItems = [
