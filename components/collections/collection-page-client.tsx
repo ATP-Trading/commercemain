@@ -4,7 +4,6 @@ import { m, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Grid } from "@/components/grid";
 import ProductGridItems from "@/components/layout/product-grid-items";
-import CollectionStats from "@/components/collection/collection-stats";
 import { StructuredData } from "@/components/structured-data";
 import { staggerSlow, fadeInUp, getAccessibleVariants } from "@/lib/animations";
 import { useAnimateOnMount } from "@/hooks/use-animate-on-mount";
@@ -33,8 +32,6 @@ export default function CollectionPageClient({
   // This fixes the issue where products don't show on first mobile navigation
   const isVisible = useAnimateOnMount(50);
 
-  // Display only the actual catalog count; no inferred customer or ingredient claims.
-  const stats = [{ value: products.length, suffix: "", label: t("premiumProducts") }];
 
   return (
     <>
@@ -48,7 +45,9 @@ export default function CollectionPageClient({
       />
 
       {/* Stats Section */}
-      <CollectionStats stats={stats} isRTL={isRTL} />
+      <p className="bg-atp-off-white py-6 text-center" dir={isRTL ? "rtl" : "ltr"}>
+        <span className="font-bold">{products.length.toLocaleString(locale)}</span>{" "}{t("premiumProducts")}
+      </p>
 
       {/* Products Section */}
       <section className="bg-atp-white py-16 md:py-24">

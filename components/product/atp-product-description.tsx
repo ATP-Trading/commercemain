@@ -21,7 +21,7 @@ import {
   getLocalizedProductDescription,
   getLocalizedProductDescriptionHtml,
 } from "@/lib/shopify/i18n-queries";
-import { Award, Leaf, Shield, Star } from "lucide-react";
+import { Award, Leaf, Star } from "lucide-react";
 import { VariantSelector } from "./variant-selector";
 import { QuantitySelector, QuantityProvider } from "./quantity-selector";
 import { StickyAddToCart } from "./sticky-add-to-cart";
@@ -136,7 +136,7 @@ export function ATPProductDescription({
                     currencyCode={price.currencyCode}
                   />
                 </span>
-                <span className="text-sm text-muted-foreground">/year</span>
+                <span className="text-sm text-muted-foreground">{locale === "ar" ? "/سنة" : "/year"}</span>
               </div>
             </div>
           )}
@@ -177,48 +177,7 @@ export function ATPProductDescription({
             />
           </div>
 
-          {/* Product Quality Indicators */}
-          <div
-            className={`flex flex-wrap gap-2 mb-4 ${isRTL ? "flex-row-reverse justify-end" : ""
-              }`}
-          >
-            {isWellnessProduct && (
-              <>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Shield className="w-3 h-3" />
-                  {t('labTested')}
-                </div>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Leaf className="w-3 h-3" />
-                  {t('naturalIngredients')}
-                </div>
-              </>
-            )}
-            {isTechProduct && (
-              <>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Award className="w-3 h-3" />
-                  {t('germanEngineering')}
-                </div>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Shield className="w-3 h-3" />
-                  {t('professionalGrade')}
-                </div>
-              </>
-            )}
-          </div>
+
         </div>
 
         {/* Variant Selector (only show if there are actual variants with options) */}

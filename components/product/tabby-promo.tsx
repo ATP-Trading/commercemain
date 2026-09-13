@@ -23,7 +23,12 @@ export function TabbyPromo({
   publicKey,
   merchantCode,
 }: TabbyPromoProps) {
+  const configuredKey = publicKey.trim();
+  const validPrice = Number(price);
+  const canRender = Boolean(configuredKey) && Number.isFinite(validPrice) && validPrice > 0;
+
   useEffect(() => {
+    if (!canRender) return;
     // Check if Tabby script is already loaded
     const existingScript = document.querySelector(
       'script[src="https://checkout.tabby.ai/tabby-promo.js"]'
@@ -76,7 +81,7 @@ export function TabbyPromo({
           price: numericPrice,
           lang: locale === "ar" ? "ar" : "en",
           installmentsCount,
-          publicKey: publicKey,
+          publicKey: configuredKey,
           merchantCode: merchantCode,
         });
       }
@@ -101,7 +106,9 @@ export function TabbyPromo({
         }
       };
     }
-  }, [price, currencyCode, locale, publicKey, merchantCode]);
+  }, [price, currencyCode, locale, configuredKey, merchantCode, canRender]);
+
+  if (!canRender) return null;
 
   return (
     <>

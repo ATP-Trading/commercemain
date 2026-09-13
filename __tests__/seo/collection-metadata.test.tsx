@@ -14,8 +14,14 @@ describe('collection indexing', () => {
     getCollection.mockResolvedValue({ handle: 'translated-handle', title: 'Collection', description: '', seo: { title: 'Custom SEO title' } });
     const metadata = await generateMetadata({ params: Promise.resolve({ locale: 'ar', handle: 'requested-handle' }) });
     expect(metadata.alternates?.canonical).toBe('/ar/collections/translated-handle');
-    expect(metadata.title).toBe('Custom SEO title');
+    expect(metadata.title).toBe('Collection');
     expect(getCollection).toHaveBeenCalledWith('requested-handle', { language: 'AR', country: 'AE' });
+  });
+  it('preserves a translated Arabic SEO title', async () => {
+    getCollection.mockResolvedValue({ handle: 'skincare', title: 'العناية بالبشرة', seo: { title: 'منتجات العناية بالبشرة في الإمارات' } });
+    const metadata = await generateMetadata({ params: Promise.resolve({ locale: 'ar', handle: 'skincare' }) });
+    expect(metadata.title).toBe('منتجات العناية بالبشرة في الإمارات');
+    expect(metadata.description).toBe('تسوّق العناية بالبشرة لدى ATP Trading');
   });
   it('points the older search collection route at the same canonical', async () => {
     getCollection.mockResolvedValue({ handle: 'skincare', title: 'Skincare' });

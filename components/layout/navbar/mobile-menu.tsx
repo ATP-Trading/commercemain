@@ -302,7 +302,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                   <button
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-600 text-white hover:bg-gray-800 hover:border-yellow-400 transition-all duration-300"
                     onClick={closeMobileMenu}
-                    aria-label={t('closeSearch')}
+                    aria-label={isRTL ? 'إغلاق القائمة' : 'Close menu'}
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>

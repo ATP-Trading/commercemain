@@ -24,13 +24,21 @@ export async function generateMetadata(props: {
         notFound();
     }
 
+    const seoTitle = collection.seo?.title;
+    const title = params.locale === 'ar' && !/\p{Script=Arabic}/u.test(seoTitle || '')
+        ? collection.title
+        : seoTitle || collection.title;
+    const description = collection.description || (params.locale === 'ar'
+        ? `تسوّق ${collection.title} لدى ATP Trading`
+        : `Shop ${collection.title} at ATP Trading`);
+
     return {
         alternates: { canonical: `/${params.locale}/collections/${collection.handle}` },
-        title: collection.seo?.title || collection.title,
-        description: collection.description || `Shop ${collection.title} at ATP Trading`,
+        title,
+        description,
         openGraph: {
             title: collection.title,
-            description: collection.description || `Shop ${collection.title} at ATP Trading`,
+            description,
             images: collection.image ? [{ url: collection.image.url }] : [],
         },
     };

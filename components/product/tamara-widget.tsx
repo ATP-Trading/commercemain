@@ -30,15 +30,19 @@ export function TamaraWidget({
   badgePosition = "right",
 }: TamaraWidgetProps) {
   const widgetRef = useRef<HTMLDivElement>(null);
-  const configSetRef = useRef(false);
+
+  const configuredKey = publicKey.trim();
+  const validPrice = Number(price);
+  const canRender = Boolean(configuredKey) && Number.isFinite(validPrice) && validPrice > 0;
 
   useEffect(() => {
+    if (!canRender) return;
     // Set global config only once
-    if (!configSetRef.current) {
+    {
       window.tamaraWidgetConfig = {
         lang: locale,
         country: countryCode,
-        publicKey: publicKey,
+        publicKey: configuredKey,
         css: `:host {
           --font-primary: inherit !important;
           --font-secondary: inherit !important;
@@ -52,7 +56,6 @@ export function TamaraWidget({
           badgeRatio: 1.2,
         },
       };
-      configSetRef.current = true;
     }
 
     // Check if Tamara script is already loaded
@@ -88,12 +91,12 @@ export function TamaraWidget({
         }
       };
     }
-  }, [locale, countryCode, publicKey]);
+  }, [locale, countryCode, configuredKey, canRender]);
 
   // Parse price - remove currency symbols and commas
   const cleanPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
 
-  if (!cleanPrice || cleanPrice <= 0) {
+  if (!canRender) {
     return null;
   }
 
