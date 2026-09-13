@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Crown } from "lucide-react";
 import clsx from "clsx";
@@ -100,6 +101,10 @@ function SubmitButton({
 
 export function ATPAddToCart({ product }: { product: Product }) {
   const { addCartItem } = useCart();
+  const { isRTL } = useRTL();
+  const [failed, setFailed] = useState(false);
+  const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
   const { isActive: isMember } = useAtpMembership();
   const { calculateServiceDiscount } = useMembershipDiscount();
   const { showNotification } = useCartNotification();
@@ -114,6 +119,8 @@ export function ATPAddToCart({ product }: { product: Product }) {
       : 0;
 
   const handleAddToCart = async () => {
+    if (submitting.current) return;
+    setFailed(false);
     console.log("🛒 Add to cart clicked!", {
       selectedVariant,
       product,
@@ -127,6 +134,8 @@ export function ATPAddToCart({ product }: { product: Product }) {
         quantity
       );
 
+      submitting.current = true;
+      setPending(true);
       try {
         // Add the item multiple times based on selected quantity
         for (let i = 0; i < quantity; i++) {
@@ -163,6 +172,10 @@ export function ATPAddToCart({ product }: { product: Product }) {
         showNotification(cartItem);
       } catch (error) {
         console.error("❌ Error adding item to cart:", error);
+        setFailed(true);
+      } finally {
+        submitting.current = false;
+        setPending(false);
       }
     } else {
       console.error("❌ No variant selected");
@@ -176,12 +189,15 @@ export function ATPAddToCart({ product }: { product: Product }) {
         await handleAddToCart();
       }}
     >
+      <fieldset disabled={pending} aria-busy={pending}>
       <SubmitButton
         availableForSale={availableForSale}
         selectedVariantId={selectedVariantId}
         isMember={isMember}
         memberSavings={memberSavings}
       />
+      </fieldset>
+      {failed && <p role="alert" className="mt-3 text-sm text-red-600">{isRTL ? "لم تكتمل الإضافة. راجع سلتك قبل المحاولة مجددًا." : "The addition did not complete. Check your cart before trying again."}</p>}
     </form>
   );
 }

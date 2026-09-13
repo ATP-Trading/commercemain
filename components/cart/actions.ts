@@ -239,16 +239,15 @@ export async function addToCartOptimistic(
   customerId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await addToCart([{ merchandiseId, quantity }])
-    updateTag(TAGS.cart)
-    
-    // If customer ID is provided, apply membership benefits
+    // The membership action owns the mutation as well as benefit calculation.
     if (customerId) {
       const { addToCartWithMembership } = await import('./membership-cart-actions')
-      // This will revalidate the cart with membership benefits applied
-      await addToCartWithMembership(merchandiseId, quantity, customerId)
+      const result = await addToCartWithMembership(merchandiseId, quantity, customerId)
+      return { success: result.success, ...(result.error ? { error: result.error } : {}) }
     }
-    
+    await addToCart([{ merchandiseId, quantity }])
+    updateTag(TAGS.cart)
+
     return { success: true }
   } catch (e) {
     console.error('Error adding to cart:', e)
@@ -261,15 +260,14 @@ export async function removeFromCartOptimistic(
   customerId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await removeFromCart([lineId])
-    updateTag(TAGS.cart)
-    
-    // If customer ID is provided, refresh membership benefits
     if (customerId) {
       const { removeFromCartWithMembership } = await import('./membership-cart-actions')
-      await removeFromCartWithMembership(lineId, customerId)
+      const result = await removeFromCartWithMembership(lineId, customerId)
+      return { success: result.success, ...(result.error ? { error: result.error } : {}) }
     }
-    
+    await removeFromCart([lineId])
+    updateTag(TAGS.cart)
+
     return { success: true }
   } catch (e) {
     console.error('Error removing from cart:', e)
@@ -313,6 +311,12 @@ export async function updateCartQuantityOptimistic(
       return { success: false, error: 'Invalid cart item data' }
     }
 
+    if (customerId) {
+      const { updateCartQuantityWithMembership } = await import('./membership-cart-actions')
+      const result = await updateCartQuantityWithMembership(actualLineId, actualMerchandiseId, quantity, customerId)
+      return { success: result.success, ...(result.error ? { error: result.error } : {}) }
+    }
+
     if (quantity === 0) {
       await removeFromCart([actualLineId])
     } else {
@@ -327,11 +331,6 @@ export async function updateCartQuantityOptimistic(
 
     updateTag(TAGS.cart)
     
-    // If customer ID is provided, refresh membership benefits
-    if (customerId) {
-      const { updateCartQuantityWithMembership } = await import('./membership-cart-actions')
-      await updateCartQuantityWithMembership(actualLineId, actualMerchandiseId, quantity, customerId)
-    }
     
     return { success: true }
   } catch (e) {
