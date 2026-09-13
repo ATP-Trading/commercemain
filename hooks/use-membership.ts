@@ -21,6 +21,7 @@ export function useMembership() {
     discountRate: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -41,15 +42,17 @@ export function useMembership() {
 
       if (!isLoggedIn || !customer?.id) {
         resetMembership()
+        setError(null)
         setIsLoading(false)
         return
       }
 
       setIsLoading(true)
+      setError(null)
 
       try {
         const response = await fetch(
-          `/api/membership/status?customerId=${encodeURIComponent(customer.id)}`,
+          '/api/membership/status',
           {
             credentials: 'include',
             cache: 'no-store',
@@ -77,6 +80,7 @@ export function useMembership() {
       } catch (error) {
         console.warn('[useMembership] Failed to load membership status:', error)
         if (!cancelled) {
+          setError("membership-unavailable")
           resetMembership()
         }
       } finally {
@@ -117,6 +121,7 @@ export function useMembership() {
   return {
     membership,
     isLoading,
+    error,
     applyMemberDiscount,
     getMemberPrice,
     isMember: membership.isActive && membership.tier !== null,

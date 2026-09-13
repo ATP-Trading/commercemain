@@ -159,7 +159,7 @@ function isValidCartItem(item: CartItem): boolean {
 
 export function CartPageContent() {
     const { cart, updateCartItem } = useCart();
-    const { membership, isMember } = useMembership();
+    const { membership, isMember, isLoading: membershipLoading, error: membershipError } = useMembership();
     const { t: tCart } = useTranslations("cart");
     const { t: tProduct } = useTranslations("product");
     const { t: tMembership } = useTranslations("membership");
@@ -314,7 +314,7 @@ export function CartPageContent() {
                         {/* Cart Items Column */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Member Benefits Banner */}
-                            {!isMember && (
+                            {!isMember && !membershipLoading && !membershipError && (
                                 <m.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -522,6 +522,7 @@ export function CartPageContent() {
                                 </div>
                                 
                                 <div className="p-6 space-y-5">
+                                    {membershipError && <p role="status" className="text-sm text-neutral-400">{tCart("page.membershipUnavailable")}</p>}
                                     {isMember && <p className="text-sm text-neutral-400">{tCart("page.memberCheckoutNote")}</p>}
 
                                     {/* Summary Lines */}
@@ -604,7 +605,7 @@ function CheckoutButton({ isMember, t }: { isMember: boolean; t: Translator }) {
             ) : (
                 <div className="flex items-center justify-center gap-2">
                     {isMember && <Crown className="w-4 h-4" />}
-                    {isMember ? t("page.premiumCheckout") : t("proceedToCheckout")}
+                    {t("proceedToCheckout")}
                 </div>
             )}
         </Button>
