@@ -1,3 +1,4 @@
+import { safeReturnPath } from '@/lib/auth/return-path'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getTokens,
@@ -40,7 +41,7 @@ async function handleLogout(request: NextRequest) {
 
     // Get returnTo from query params or default to home
     const { searchParams } = new URL(request.url)
-    const returnTo = searchParams.get('returnTo') || '/'
+    const returnTo = safeReturnPath(searchParams.get('returnTo'), '/')
 
     console.log('[Auth/Logout] Logout complete, redirecting to:', returnTo)
 
