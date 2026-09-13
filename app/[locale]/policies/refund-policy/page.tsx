@@ -29,14 +29,14 @@ export async function generateMetadata({
       description,
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
-      url: `https://atpgroupservices.com/${locale}/policies/refund-policy`,
+      url: `https://www.atpgroupservices.ae/${locale}/policies/refund-policy`,
       siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
     },
     alternates: {
-      canonical: `https://atpgroupservices.com/${locale}/policies/refund-policy`,
+      canonical: `https://www.atpgroupservices.ae/${locale}/policies/refund-policy`,
       languages: {
-        en: 'https://atpgroupservices.com/en/policies/refund-policy',
-        ar: 'https://atpgroupservices.com/ar/policies/refund-policy',
+        en: 'https://www.atpgroupservices.ae/en/policies/refund-policy',
+        ar: 'https://www.atpgroupservices.ae/ar/policies/refund-policy',
       },
     },
   };

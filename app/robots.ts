@@ -1,60 +1,11 @@
+import type { MetadataRoute } from 'next';
 import { baseUrl } from '@/lib/utils';
 
-export default function robots() {
+export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/_next/',
-          '/private/',
-          '/debug-*',
-          '/test-*',
-          '/auth/',
-          '/account/',
-          '/cart/',
-          '/checkout/',
-          '/login',
-          '/signup',
-          '/*.json$',
-          '/search?*',
-        ],
-        crawlDelay: 1,
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/auth/',
-          '/account/',
-          '/cart/',
-          '/checkout/',
-          '/login',
-          '/signup',
-        ],
-      },
-      {
-        userAgent: 'Googlebot-Image',
-        allow: '/',
-      },
-      {
-        userAgent: 'Googlebot-Mobile',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/auth/',
-          '/account/',
-          '/cart/',
-          '/checkout/',
-        ],
-      },
-    ],
+    // Account/debug pages must be crawlable for their noindex headers to be read.
+    // Keep rendering assets accessible and use the same rules for Googlebot.
+    rules: { userAgent: '*', allow: '/', disallow: ['/api/', '/trpc/'] },
     sitemap: `${baseUrl}/sitemap.xml`,
     host: baseUrl,
   };

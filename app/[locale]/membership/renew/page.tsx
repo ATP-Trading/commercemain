@@ -11,17 +11,18 @@ import { getTranslations } from 'next-intl/server';
 import { MembershipRenewalFlow } from './membership-renewal-flow';
 
 interface RenewalPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     membershipId?: string;
     customerId?: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: RenewalPageProps): Promise<Metadata> {
-  const t = await getTranslations({ locale: params.locale, namespace: 'membership.renewal' });
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'membership.renewal' });
   
   return {
     title: t('meta.title'),
@@ -29,14 +30,16 @@ export async function generateMetadata({ params }: RenewalPageProps): Promise<Me
   };
 }
 
-export default function RenewalPage({ params, searchParams }: RenewalPageProps) {
+export default async function RenewalPage({ params, searchParams }: RenewalPageProps) {
+  const { locale } = await params;
+  const { membershipId, customerId } = await searchParams;
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         <MembershipRenewalFlow
-          membershipId={searchParams.membershipId}
-          customerId={searchParams.customerId}
-          locale={params.locale}
+          membershipId={membershipId}
+          customerId={customerId}
+          locale={locale}
         />
       </div>
     </div>

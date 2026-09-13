@@ -1,98 +1,46 @@
-import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy"
-import { getCollections, getPages, getProducts } from "@/lib/shopify/server"
-import { baseUrl, validateEnvironmentVariables } from "@/lib/utils"
-import { CategoryData, UAECities, LocationServices, BenefitData, IngredientData } from "@/lib/programmatic-seo/data"
-import { ComparisonData } from "@/lib/programmatic-seo/comparison-data"
-import type { MetadataRoute } from "next"
+import { isEmsPromotion, isInactiveLocation } from '@/lib/publication-policy';
+import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
+import { getSitemapResources, type SitemapResource } from '@/lib/shopify/sitemap';
+import { baseUrl, validateEnvironmentVariables } from '@/lib/utils';
+import { CategoryData, UAECities, LocationServices, BenefitData, IngredientData } from '@/lib/programmatic-seo/data';
+import { ComparisonData } from '@/lib/programmatic-seo/comparison-data';
+import type { MetadataRoute } from 'next';
 
-type Route = {
-  url: string
-  lastModified: string
-}
-
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic';
+const locales = ['en', 'ar'] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  validateEnvironmentVariables()
-
-  const routesMap = [""].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString(),
-  }))
-
-  const collectionsPromise = getCollections().then((collections) =>
-    collections.map((collection) => ({
-      url: `${baseUrl}${collection.path}`,
-      lastModified: collection.updatedAt,
-    })),
-  )
-
-  const productsPromise = getProducts({
-    locale: { language: 'en', country: 'AE' }
-  }).then((products) =>
-    products.map((product) => ({
-      url: `${baseUrl}/product/${product.handle}`,
-      lastModified: product.updatedAt,
-    })),
-  )
-
-  const pagesPromise = getPages().then((pages) =>
-    pages.map((page) => ({
-      url: `${baseUrl}/${page.handle}`,
-      lastModified: page.updatedAt,
-    })),
-  )
-
-  // Programmatic SEO Pages
-  const lastModified = new Date().toISOString()
-  
-  // Category Pages (5 categories)
-  const categoryRoutes = Object.keys(CategoryData).filter((slug) => !isEmsPromotion(slug)).flatMap((slug) => [
-    { url: `${baseUrl}/en/category/${slug}`, lastModified },
-    { url: `${baseUrl}/ar/category/${slug}`, lastModified },
-  ])
-
-  // Location Pages (5 services × 8 cities = 40 pages per language)
-  const locationRoutes = LocationServices.flatMap((service) =>
-    UAECities.filter((city) => !isInactiveLocation(service.slug, city.slug)).flatMap((city) => [
-      { url: `${baseUrl}/en/${service.slug}/${city.slug}`, lastModified },
-      { url: `${baseUrl}/ar/${service.slug}/${city.slug}`, lastModified },
-    ])
-  )
-
-  // Benefits Pages
-  const benefitsRoutes = Object.keys(BenefitData).filter((slug) => !isEmsPromotion(slug)).flatMap((slug) => [
-    { url: `${baseUrl}/en/benefits/${slug}`, lastModified },
-    { url: `${baseUrl}/ar/benefits/${slug}`, lastModified },
-  ])
-
-  // Ingredients Pages
-  const ingredientsRoutes = Object.keys(IngredientData).flatMap((slug) => [
-    { url: `${baseUrl}/en/ingredients/${slug}`, lastModified },
-    { url: `${baseUrl}/ar/ingredients/${slug}`, lastModified },
-  ])
-
-  // Comparison Pages
-  const comparisonRoutes = Object.keys(ComparisonData).filter((slug) => !isEmsPromotion(slug)).flatMap((slug) => [
-    { url: `${baseUrl}/en/compare/${slug}`, lastModified },
-    { url: `${baseUrl}/ar/compare/${slug}`, lastModified },
-  ])
-
-  let fetchedRoutes: Route[] = []
-
-  try {
-    fetchedRoutes = (await Promise.all([collectionsPromise, productsPromise, pagesPromise])).flat()
-  } catch (error) {
-    throw JSON.stringify(error, null, 2)
+  validateEnvironmentVariables();
+  // Only implemented public pages: Shopify CMS handles do not have a catch-all route.
+  const paths = ['', '/about', '/contact', '/water-soil-technology',
+    '/policies/privacy-policy', '/policies/refund-policy', '/policies/terms-of-service'];
+  for (const [prefix, data] of Object.entries({ category: CategoryData, benefits: BenefitData,
+    ingredients: IngredientData, compare: ComparisonData })) {
+    paths.push(...Object.keys(data).filter(slug => !isEmsPromotion(slug)).map(slug => `/${prefix}/${slug}`));
   }
-
-  const programmaticRoutes = [
-    ...categoryRoutes,
-    ...locationRoutes,
-    ...benefitsRoutes,
-    ...ingredientsRoutes,
-    ...comparisonRoutes,
-  ]
-
-  return [...routesMap, ...fetchedRoutes, ...programmaticRoutes].filter((route) => !isEmsPromotion(route.url))
+  for (const service of LocationServices) {
+    paths.push(...UAECities.filter(city => !isInactiveLocation(service.slug, city.slug))
+      .map(city => `/${service.slug}/${city.slug}`));
+  }
+  // Omit lastModified when no actual content modification date is available.
+  const routes: MetadataRoute.Sitemap = paths.flatMap(path => locales.map(locale => ({ url: `${baseUrl}/${locale}${path}` })));
+  for (const kind of ['products', 'collections'] as const) {
+    const [en, ar] = await Promise.all([getSitemapResources(kind, 'EN'), getSitemapResources(kind, 'AR')]);
+    const catalogs = { en, ar };
+    const visible = (item: SitemapResource) => Boolean(item.handle) &&
+      !isEmsPromotion(`${item.handle} ${item.title}`) &&
+      (kind === 'products' ? !item.tags?.includes(HIDDEN_PRODUCT_TAG) : !item.handle.startsWith('hidden'));
+    const routePath = kind === 'products' ? 'product' : 'collections';
+    for (const locale of locales) {
+      for (const item of catalogs[locale].filter(visible)) {
+        routes.push({
+          url: `${baseUrl}/${locale}/${routePath}/${encodeURIComponent(item.handle)}`,
+          ...(item.updatedAt && Number.isFinite(Date.parse(item.updatedAt)) ? { lastModified: item.updatedAt } : {}),
+        });
+      }
+    }
+  }
+  const unique = [...new Map(routes.map(route => [route.url, route])).values()];
+  if (unique.length > 50_000) throw new Error('Sitemap exceeds 50,000 URLs; split into multiple sitemaps.');
+  return unique;
 }

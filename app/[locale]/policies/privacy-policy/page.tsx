@@ -29,14 +29,14 @@ export async function generateMetadata({
       description,
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
-      url: `https://atpgroupservices.com/${locale}/policies/privacy-policy`,
+      url: `https://www.atpgroupservices.ae/${locale}/policies/privacy-policy`,
       siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
     },
     alternates: {
-      canonical: `https://atpgroupservices.com/${locale}/policies/privacy-policy`,
+      canonical: `https://www.atpgroupservices.ae/${locale}/policies/privacy-policy`,
       languages: {
-        en: 'https://atpgroupservices.com/en/policies/privacy-policy',
-        ar: 'https://atpgroupservices.com/ar/policies/privacy-policy',
+        en: 'https://www.atpgroupservices.ae/en/policies/privacy-policy',
+        ar: 'https://www.atpgroupservices.ae/ar/policies/privacy-policy',
       },
     },
   };

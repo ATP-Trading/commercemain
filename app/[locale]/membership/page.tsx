@@ -11,13 +11,14 @@ import { getTranslations } from 'next-intl/server';
 import { AtpMembershipSignup } from '@/components/membership/atp-membership-signup';
 
 interface MembershipPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: MembershipPageProps): Promise<Metadata> {
-  const t = await getTranslations({ locale: params.locale, namespace: 'membership' });
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'membership' });
   
   return {
     title: `${t('title')} - ATP Trading`,
@@ -49,17 +50,7 @@ export default function MembershipPage({ params }: MembershipPageProps) {
       {/* Signup Section */}
       <div className="py-16">
         <div className="container mx-auto px-4 max-w-6xl">
-          <AtpMembershipSignup 
-            className="w-full"
-            onSignupSuccess={() => {
-              // Could redirect to success page or show confirmation
-              console.log('Membership signup successful');
-            }}
-            onSignupError={(error: Error) => {
-              // Could show error notification
-              console.error('Membership signup error:', error);
-            }}
-          />
+          <AtpMembershipSignup className="w-full" />
         </div>
       </div>
 
