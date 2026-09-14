@@ -7,7 +7,7 @@ const sources: Record<string, { title: string; url: string }[]> = {
   "marine-collagen-vs-bovine": [collagen, supplements],
   "alkaline-water-benefits": [water],
   "alkaline-water-vs-regular": [water],
-  "hyaluronic-acid": [supplements],
+  "hyaluronic-acid": [{ title: "PubChem: hyaluronic acid", url: "https://pubchem.ncbi.nlm.nih.gov/compound/Hyaluronic-Acid" }],
   "sod-enzyme": [{ title: "NCCIH: antioxidant supplements", url: "https://www.nccih.nih.gov/health/antioxidant-supplements-what-you-need-to-know" }],
   "psyllium-husk": [{ title: "MedlinePlus: psyllium", url: "https://www.medlineplus.gov/druginfo/meds/a601104.html" }],
 };
