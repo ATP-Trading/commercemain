@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { MembershipBadge } from "@/components/membership/membership-badge"
 import { UAE_DIRHAM_CODE } from "@/lib/constants"
 import { DirhamSymbol } from "@/components/icons/dirham-symbol"
-import { useMembershipDiscount } from "@/hooks/use-atp-membership"
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing"
 import { MEMBERSHIP_CONFIG } from "@/lib/constants/membership"
 import { useMembershipI18n } from "@/lib/utils/membership-i18n"
 import { useRTL } from "@/hooks/use-rtl"

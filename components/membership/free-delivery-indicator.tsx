@@ -11,7 +11,7 @@ import React from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Truck, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useMembershipDiscount } from "@/hooks/use-atp-membership"
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing"
 import { useMembershipI18n } from '@/lib/utils/membership-i18n';
 import { useRTL } from '@/hooks/use-rtl';
 import { cn } from '@/lib/utils';

@@ -3,7 +3,7 @@
 import { MemberPricing } from "./member-pricing";
 import { FreeDeliveryIndicator } from "./free-delivery-indicator";
 import { MembershipBadge } from "./membership-badge";
-import { useMembershipDiscount } from "@/hooks/use-atp-membership";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { UAE_DIRHAM_CODE } from "@/lib/constants";
 import { DirhamSymbol } from "@/components/icons/dirham-symbol";
 import { Card, CardContent } from "@/components/ui/card";

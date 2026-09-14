@@ -5,7 +5,8 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import { Crown } from "lucide-react";
 import clsx from "clsx";
 import { MembershipBadge } from "@/components/membership/membership-badge";
-import { useAtpMembership, useMembershipDiscount } from "@/hooks/use-atp-membership";
+import { useMembership } from "@/hooks/use-membership";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
 import { useTranslations } from "next-intl";
@@ -105,7 +106,7 @@ export function ATPAddToCart({ product }: { product: Product }) {
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
   const submitting = useRef(false);
-  const { isActive: isMember } = useAtpMembership();
+  const { isMember } = useMembership();
   const { calculateServiceDiscount } = useMembershipDiscount();
   const { showNotification } = useCartNotification();
   const { quantity } = useQuantity();

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrustBadges } from "@/components/ui/trust-badges";
 import { ProductReviews } from "@/components/reviews/product-reviews";
-import { useAtpMembership } from "@/hooks/use-atp-membership";
+import { useMembership } from "@/hooks/use-membership";
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
 import { useTranslations } from "next-intl";
@@ -37,7 +37,7 @@ export function ATPProductDescription({
   product: Product;
   locale: "en" | "ar";
 }) {
-  const { isActive: isMember } = useAtpMembership();
+  const { isMember } = useMembership();
   const t = useTranslations('product');
   const { isRTL } = useRTL();
   const { price, selectedVariant } = useSelectedVariant(product);

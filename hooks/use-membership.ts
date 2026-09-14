@@ -8,6 +8,7 @@ export type MembershipTier = "essential" | "premium" | "elite" | "atp" | null
 interface MembershipData {
   tier: MembershipTier
   isActive: boolean
+  source?: "appstle" | "merchant"
   expiresAt?: string
   discountRate: number
 }
@@ -70,6 +71,7 @@ export function useMembership() {
         if (data.isMember && data.membership) {
           setMembership({
             tier: data.tier,
+            source: data.membership.source,
             isActive: true,
             expiresAt: data.membership.expirationDate,
             discountRate: typeof data.discountRate === 'number' ? data.discountRate : 0,

@@ -36,3 +36,12 @@ describe('Membership status session binding', () => {
     expect((await GET()).status).toBe(503);
   });
 });
+
+it('recognizes a merchant-granted membership from server-owned tags', async () => {
+  auth.token.mockResolvedValue('session-token');
+  auth.query.mockResolvedValue({data:{customer:{id:'gid://shopify/Customer/123'}}});
+  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({data:{customer:{tags:['atp-member'],metafield:null}}})));
+  const data = await (await GET()).json();
+  expect(data).toMatchObject({isMember:true,discountRate:0.15,membership:{source:'merchant',status:'active'}});
+  expect(JSON.parse(vi.mocked(fetch).mock.calls.at(-1)![1]!.body as string).query).toContain('tags');
+});

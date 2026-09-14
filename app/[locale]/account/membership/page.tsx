@@ -10,10 +10,11 @@ export default function MembershipAccountPage() {
 }
 function MembershipStatus() {
  const ar = useLocale() === 'ar'
- const { isMember, isLoading, error } = useMembership()
+ const { membership, isMember, isLoading, error } = useMembership()
  return <section className="space-y-4 rounded-xl border border-neutral-700 bg-neutral-900 p-6">
   {isLoading ? <p role="status">{ar ? 'جارٍ التحقق من العضوية…' : 'Checking membership…'}</p> : error ? <p role="alert">{ar ? 'تعذر التحقق من حالة عضويتك حاليًا. يمكنك الاطلاع على المزايا والسعر أدناه.' : 'Your membership status is currently unavailable. You can still view benefits and pricing below.'}</p> : <p>{isMember ? (ar ? 'عضويتك في ATP فعّالة.' : 'Your ATP membership is active.') : (ar ? 'لا توجد عضوية فعّالة مرتبطة بحسابك حاليًا.' : 'There is no active membership associated with your account.')}</p>}
-  <p className="text-neutral-300">{ar ? 'تعرّف على مزايا عضوية ATP وسعرها وشروطها، واشترك من صفحة العضوية إذا ناسبتك.' : 'Explore ATP membership benefits, pricing and terms, and join from the membership page if it suits you.'}</p>
+  {isMember && membership.source === 'merchant' && <p className="text-atp-gold">{ar ? 'عضوية ممنوحة لك من ATP Trading.' : 'Membership granted to you by ATP Trading.'}</p>}
+  <p className="text-neutral-300">{isMember ? (ar ? 'استمتع بمزايا عضويتك. يمكنك الاطلاع على التفاصيل والشروط أدناه.' : 'Enjoy your membership benefits. View the details and terms below.') : ar ? 'تعرّف على مزايا عضوية ATP وسعرها وشروطها، واشترك من صفحة العضوية إذا ناسبتك.' : 'Explore ATP membership benefits, pricing and terms, and join from the membership page if it suits you.'}</p>
   <Button asChild className="min-h-12 w-full bg-atp-gold px-6 text-base font-semibold text-black hover:bg-atp-gold/90 sm:w-auto"><Link href="/product/atp-membership">{isMember ? (ar ? 'عرض مزايا العضوية' : 'View membership benefits') : (ar ? 'عرض العضوية والاشتراك' : 'View membership and join')}</Link></Button>
   <Link href="/contact" className="block text-atp-gold underline">{ar ? 'تواصل معنا بخصوص عضويتك' : 'Contact us about your membership'}</Link>
  </section>
