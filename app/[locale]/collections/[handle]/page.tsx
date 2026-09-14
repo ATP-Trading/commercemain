@@ -88,8 +88,12 @@ export default async function CollectionPage(props: {
 
     const isRTL = params.locale === 'ar';
 
-    // Hero image from Shopify collection, with fallback
-    const heroImage = collection.image ? {
+    const collectionArt: Record<string, string> = {
+        'amazing-thai-products': '/images/collection-supplements-care-coffee.jpg',
+        'water-soil-technology-solutions': '/images/collection-water-soil.jpg',
+    };
+    const editorialImage = collectionArt[canonicalHandle];
+    const heroImage = editorialImage ? { src: editorialImage, alt: collection.title } : collection.image ? {
         src: collection.image.url,
         alt: collection.image.altText || collection.title,
         mobileSrc: collection.image.url,
@@ -107,6 +111,7 @@ export default async function CollectionPage(props: {
                 subtitle={isRTL ? "مجموعة متميزة" : "Premium Collection"}
                 description={collection.description}
                 image={heroImage}
+                editorial={Boolean(editorialImage)}
                 isRTL={isRTL}
             />
 

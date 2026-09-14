@@ -25,8 +25,10 @@ function MembershipStatus() {
     {started && <div><dt className="text-neutral-400">{ar ? 'تاريخ بدء العضوية' : 'Member since'}</dt><dd className="mt-1 font-medium">{started}</dd></div>}
     <div><dt className="text-neutral-400">{ar ? 'موعد التجديد القادم' : 'Next renewal'}</dt><dd className="mt-1 font-medium">{renewal || (ar ? 'غير متاح حاليًا — راجع بوابة العضوية' : 'Currently unavailable — check your membership portal')}</dd></div>
    </dl>
+   <Button asChild className="min-h-12 w-full bg-atp-gold px-6 text-base font-semibold text-black hover:bg-atp-gold/90 sm:w-auto"><a href={`https://checkout.atpgroupservices.ae/customer_authentication/login?return_to=%2Fapps%2Fmemberships&locale=${ar ? 'ar' : 'en'}&ui_hint=full&region_country=AE`}>{ar ? 'إدارة اشتراكي' : 'Manage my subscription'}</a></Button>
+   <p className="text-neutral-300">{ar ? 'راجع التجديد ووسيلة الدفع أو خيارات الإلغاء في بوابة العضوية. قد يُطلب منك تسجيل الدخول بالبريد الذي اشتركت به.' : 'Review renewal, payment details or cancellation options in the membership portal. You may be asked to sign in with the email used for your subscription.'}</p>
    <details className="rounded-lg border border-neutral-600 p-4">
-    <summary className="min-h-12 cursor-pointer py-3 text-base font-semibold text-atp-gold">{ar ? 'إدارة الاشتراك والتجديد' : 'Manage subscription and renewal'}</summary>
+    <summary className="min-h-12 cursor-pointer py-3 text-base font-semibold text-atp-gold">{ar ? 'مساعدة في الوصول إلى اشتراكي' : 'Help accessing my subscription'}</summary>
     <div className="mt-3 space-y-3 text-neutral-300">
      <p>{ar ? 'افتح رسالة تأكيد العضوية التي وصلتك على بريدك، ثم اضغط رابط إدارة العضوية لعرض تفاصيل التجديد وتحديث وسيلة الدفع أو إلغاء الاشتراك.' : 'Open your membership confirmation email and follow the manage membership link to view renewal details, update your payment method or cancel your subscription.'}</p>
      <p>{ar ? 'إذا انتهت صلاحية الرابط أو لم تجد الرسالة، تواصل معنا لمساعدتك في الوصول إلى عضويتك.' : 'If the link has expired or you cannot find the email, contact us for help accessing your membership.'}</p>

@@ -19,7 +19,7 @@ it('shows real renewal for paid membership in English without offering a second 
  state.value = {isMember:true,isLoading:false,error:null,membership:{source:'appstle',startedAt:'2026-09-14T13:57:24Z',nextBillingDate:'2027-09-14T13:00:00Z'}}
  render(<MembershipAccountPage />)
  expect(screen.getByText('14 September 2027')).toBeInTheDocument()
- expect(screen.getByText('Manage subscription and renewal')).toBeInTheDocument()
+ expect(screen.getByRole('link', {name:'Manage my subscription'})).toHaveAttribute('href', 'https://checkout.atpgroupservices.ae/customer_authentication/login?return_to=%2Fapps%2Fmemberships&locale=en&ui_hint=full&region_country=AE')
  expect(screen.queryByText('View membership and join')).not.toBeInTheDocument()
 })
 it('does not show billing or renewal controls for a granted membership', () => {
@@ -28,4 +28,5 @@ it('does not show billing or renewal controls for a granted membership', () => {
  render(<MembershipAccountPage />)
  expect(screen.getByText('عضوية ممنوحة لك من ATP Trading.')).toBeInTheDocument()
  expect(screen.queryByText('موعد التجديد القادم')).not.toBeInTheDocument()
+ expect(screen.queryByRole('link', {name:'إدارة اشتراكي'})).not.toBeInTheDocument()
 })
