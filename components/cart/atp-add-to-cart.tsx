@@ -65,20 +65,6 @@ function SubmitButton({
 
   return (
     <div className={`space-y-3 ${isRTL ? "font-arabic" : ""}`}>
-      {/* Member savings indicator */}
-      {isMember && memberSavings && memberSavings > 0 && (
-        <div
-          className={`flex items-center justify-center gap-2 text-sm ${
-            isRTL ? "flex-row-reverse text-right" : ""
-          }`}
-        >
-          <MembershipBadge tier="premium" className="text-xs" />
-          <span className="text-atp-gold font-medium">
-            {t('saveMembership', { savings: memberSavings })}
-          </span>
-        </div>
-      )}
-
       <m.button
         type="submit"
         aria-label={t('addToCart')}

@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrustBadges } from "@/components/ui/trust-badges";
 import { ProductReviews } from "@/components/reviews/product-reviews";
-import { useMembership } from "@/hooks/use-membership";
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
 import { useTranslations } from "next-intl";
@@ -37,7 +36,6 @@ export function ATPProductDescription({
   product: Product;
   locale: "en" | "ar";
 }) {
-  const { isMember } = useMembership();
   const t = useTranslations('product');
   const { isRTL } = useRTL();
   const { price, selectedVariant } = useSelectedVariant(product);
@@ -224,13 +222,6 @@ export function ATPProductDescription({
         <div className="mb-6 border-b border-atp-light-gray pb-6">
           <TrustBadges variant="horizontal" />
         </div>
-
-        {/* Free Delivery Indicator for Members */}
-        {isMember && (
-          <div className="mb-6">
-            <FreeDeliveryIndicator variant="card" />
-          </div>
-        )}
 
         {/* Product Description - Structured Accordion Layout */}
         {(localizedDescriptionHtml || product.descriptionHtml) && (

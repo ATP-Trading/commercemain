@@ -31,7 +31,7 @@ export function EnhancedMemberPricing({
   productType = "service",
 }: EnhancedMemberPricingProps) {
   const t = useTranslations('membership');
-  const { hasActiveMembership, checkFreeDeliveryEligibility } =
+  const { hasActiveMembership, isLoading } =
     useMembershipDiscount();
   const price = Number.parseFloat(originalPrice);
 
@@ -46,12 +46,7 @@ export function EnhancedMemberPricing({
           showFreeDelivery={showFreeDelivery && productType === "product"}
         />
 
-        {/* Free delivery indicator for products */}
-        {showFreeDelivery &&
-          productType === "product" &&
-          checkFreeDeliveryEligibility() && (
-            <FreeDeliveryIndicator variant="inline" size="sm" />
-          )}
+
       </div>
     );
   }
@@ -68,7 +63,7 @@ export function EnhancedMemberPricing({
       </div>
 
       {/* Membership CTA */}
-      {showMembershipCTA && (
+      {showMembershipCTA && !isLoading && (
         <Card className="bg-atp-gold/5 border-atp-gold/20">
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
