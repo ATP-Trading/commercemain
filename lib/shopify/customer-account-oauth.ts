@@ -494,14 +494,14 @@ export async function queryCustomerAccountApi<T>(
       status: response.status,
       bodyPreview: text.substring(0, 200),
     })
-    throw new Error(`Customer Account API returned non-JSON response (${response.status}). This usually means the API endpoint is incorrect or the access token is invalid.`)
+    throw Object.assign(new Error('Customer Account API returned an invalid response'), { status: response.status })
   }
 
   const result = await response.json()
 
   if (!response.ok) {
     console.error('[CustomerAccountAPI] Request failed:', result)
-    throw new Error(result.errors?.[0]?.message || 'Customer Account API request failed')
+    throw Object.assign(new Error(result.errors?.[0]?.message || 'Customer Account API request failed'), { status: response.status })
   }
 
   return result

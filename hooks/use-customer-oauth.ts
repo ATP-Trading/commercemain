@@ -39,6 +39,7 @@ export function useCustomerOAuth(): UseCustomerOAuthReturn {
 
       const response = await fetch('/api/auth/status', {
         credentials: 'include',
+        cache: 'no-store',
       })
 
       if (!response.ok) {
@@ -46,6 +47,8 @@ export function useCustomerOAuth(): UseCustomerOAuthReturn {
       }
 
       const data = await response.json()
+
+      if (data.error) throw new Error('Unable to load account')
 
       setIsLoggedIn(data.isLoggedIn)
       setCustomer(data.customer)

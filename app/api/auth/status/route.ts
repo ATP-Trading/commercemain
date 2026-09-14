@@ -67,14 +67,7 @@ export async function GET() {
 
       if (errors?.length || !data?.customer) {
         console.error('[Auth/Status] Failed to fetch customer:', errors)
-        // Clear tokens since they're not working and return logged out state
-        // This prevents the redirect loop
-        await clearTokens()
-        return NextResponse.json({
-          isLoggedIn: false,
-          customer: null,
-          error: 'Failed to fetch customer data - tokens cleared',
-        })
+        return NextResponse.json({ error: 'Customer data temporarily unavailable' }, { status: 502, headers: { 'Cache-Control': 'private, no-store' } })
       }
 
       // Transform to a cleaner format
@@ -89,17 +82,14 @@ export async function GET() {
       return NextResponse.json({
         isLoggedIn: true,
         customer,
-      })
+      }, { headers: { 'Cache-Control': 'private, no-store' } })
     } catch (error) {
       console.error('[Auth/Status] Error fetching customer:', error)
-      // Clear tokens since they're not working and return logged out state
-      // This prevents the redirect loop
-      await clearTokens()
-      return NextResponse.json({
-        isLoggedIn: false,
-        customer: null,
-        error: error instanceof Error ? error.message : 'Failed to fetch customer data',
-      })
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+        await clearTokens()
+        return NextResponse.json({ isLoggedIn: false, customer: null }, { headers: { 'Cache-Control': 'private, no-store' } })
+      }
+      return NextResponse.json({ error: 'Customer data temporarily unavailable' }, { status: 502, headers: { 'Cache-Control': 'private, no-store' } })
     }
   } catch (error) {
     console.error('[Auth/Status] Error checking auth status:', error)

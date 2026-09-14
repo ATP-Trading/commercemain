@@ -22,7 +22,7 @@ export function AddressesManager() {
     {items.map(address => <article key={address.id} className="space-y-2 rounded-xl border border-neutral-700 bg-neutral-900 p-5">
       <h2 className="text-lg font-semibold">{address.firstName} {address.lastName}</h2>
       {address.id === defaultId && <p className="text-sm text-atp-gold">{ar ? 'العنوان الافتراضي' : 'Default address'}</p>}
-      {address.company && <p>{address.company}</p>}<p>{address.address1}</p>{address.address2 && <p>{address.address2}</p>}<p>{[address.city, address.province, address.zip, address.country].filter(Boolean).join('، ')}</p>{address.phoneNumber && <p dir="ltr">{address.phoneNumber}</p>}
+      {address.company && <p>{address.company}</p>}<p>{address.address1}</p>{address.address2 && <p>{address.address2}</p>}<p>{[address.city, address.province, address.zip, address.country].filter(Boolean).join('، ')}</p>{address.phoneNumber ? <p dir="ltr">{address.phoneNumber}</p> : <p className="text-amber-300">{ar ? 'أضف رقم التواصل لهذا العنوان قبل استخدامه للتوصيل.' : 'Add a contact number before using this address for delivery.'}</p>}
       <Button variant="outline" className="border-neutral-600 bg-neutral-900 text-white hover:bg-neutral-800 hover:text-white" disabled={loading || !!editing} onClick={() => { setEditing(address); setSaved(false) }}>{ar ? 'تعديل العنوان' : 'Edit address'}</Button>
     </article>)}
     {loading && <p role="status">{ar ? 'جارٍ تحميل العناوين…' : 'Loading addresses…'}</p>}
@@ -52,7 +52,7 @@ function AddressForm({ address, isDefault, onCancel, onSaved }: { address?: Addr
     ['firstName', ar ? 'الاسم الأول' : 'First name', 'given-name', true], ['lastName', ar ? 'اسم العائلة (اختياري)' : 'Last name (optional)', 'family-name', false],
     ['company', ar ? 'الشركة (اختياري)' : 'Company (optional)', 'organization', false], ['address1', ar ? 'المبنى والشارع' : 'Building and street', 'address-line1', true],
     ['address2', ar ? 'الشقة / تفاصيل إضافية (اختياري)' : 'Apartment / additional details (optional)', 'address-line2', false], ['city', ar ? 'المدينة / المنطقة' : 'City / area', 'address-level2', true],
-    ['zip', ar ? 'الرمز البريدي (اختياري)' : 'Postal code (optional)', 'postal-code', false], ['phoneNumber', ar ? 'رقم التواصل مع رمز الدولة (مطلوب)' : 'Contact number with country code (required)', 'tel', true],
+    ['phoneNumber', ar ? 'رقم التواصل مع رمز الدولة (مطلوب)' : 'Contact number with country code (required)', 'tel', true], ['zip', ar ? 'الرمز البريدي (اختياري)' : 'Postal code (optional)', 'postal-code', false],
   ] as const
   return <form onSubmit={save} className="space-y-5 rounded-xl border border-atp-gold bg-neutral-900 p-5">
     <h2 className="text-xl font-semibold">{address ? (ar ? 'تعديل العنوان' : 'Edit address') : (ar ? 'عنوان جديد' : 'New address')}</h2>
