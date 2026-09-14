@@ -92,7 +92,7 @@ export function MobileBottomNav() {
                                         "w-6 h-6 transition-colors duration-200",
                                         active
                                             ? "text-atp-gold"
-                                            : "text-gray-500 dark:text-gray-400"
+                                            : "text-neutral-300"
                                     )}
                                 />
 
@@ -126,10 +126,10 @@ export function MobileBottomNav() {
 
                             <span
                                 className={cn(
-                                    "text-[10px] mt-1 transition-colors duration-200",
+                                    "text-xs mt-1 font-medium transition-colors duration-200",
                                     active
                                         ? "text-atp-gold font-medium"
-                                        : "text-gray-500 dark:text-gray-400"
+                                        : "text-neutral-300"
                                 )}
                             >
                                 {t(item.labelKey)}
