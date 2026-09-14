@@ -22,7 +22,7 @@ export async function generateMetadata({
     : 'Privacy Policy for ATP Trading. Learn how we collect, use, and protect your personal information.';
 
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,

@@ -80,10 +80,9 @@ export class MembershipWebhookService {
     hmac.update(body, 'utf8');
     const calculatedSignature = hmac.digest('base64');
 
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'base64'),
-      Buffer.from(calculatedSignature, 'base64')
-    );
+    const received = Buffer.from(signature, 'base64');
+    const expected = Buffer.from(calculatedSignature, 'base64');
+    return received.length === expected.length && crypto.timingSafeEqual(received, expected);
   }
 
   /**

@@ -22,7 +22,7 @@ export async function generateMetadata({
     : 'Refund and Return Policy for ATP Trading. Learn about our return and refund terms and procedures.';
 
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,

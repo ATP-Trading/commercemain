@@ -1,134 +1,17 @@
-"use client";
-
-import { useRef } from "react";
-import Image from "next/image";
-import { m, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { 
-  heroFadeUp, 
-  staggerSlow, 
-  heroViewport, 
-  getAccessibleVariants 
-} from "@/lib/animations";
-
-interface CollectionHeroProps {
-  title: string;
-  subtitle?: string;
-  description?: string;
-  image: {
-    src: string;
-    alt: string;
-    mobileSrc?: string;
-  };
-  isRTL?: boolean;
-}
-
-export default function CollectionHero({
-  title,
-  subtitle,
-  description,
-  image,
-  isRTL = false,
-}: CollectionHeroProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const shouldReduceMotion = useReducedMotion();
-  
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
-
-  return (
-    <section 
-      ref={ref}
-      className="relative h-[90vh] min-h-[600px] w-full overflow-hidden bg-atp-black"
-      aria-label={title}
-    >
-      {/* Parallax Background */}
-      <m.div 
-        className="absolute inset-0 z-0"
-        style={{ y, scale }}
-      >
-        {/* Mobile Image - Hidden on Desktop */}
-        {image.mobileSrc && (
-          <div className="block lg:hidden relative w-full h-full">
-            <Image
-              src={image.mobileSrc}
-              alt={image.alt}
-              fill
-              priority
-              className="object-cover object-center"
-              sizes="100vw"
-            />
-          </div>
-        )}
-        
-        {/* Desktop Image - Hidden on Mobile if mobileSrc exists */}
-        <div className={cn(
-          "relative w-full h-full",
-          image.mobileSrc ? "hidden lg:block" : "block"
-        )}>
-          <Image
-            src={image.src}
-            alt={image.alt}
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-        </div>
-
-        {/* Gradient Overlays for Readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-atp-black/90 via-atp-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-atp-black/30 to-transparent" />
-      </m.div>
-
-      {/* Content Container */}
-      <m.div 
-        className={cn(
-          "relative z-10 h-full container mx-auto px-4 flex flex-col justify-end pb-24 md:pb-32",
-          isRTL ? "items-start text-right" : "items-start text-left"
-        )}
-        style={{ opacity }}
-        variants={staggerSlow}
-        initial="hidden"
-        whileInView="visible"
-        viewport={heroViewport}
-      >
-        <div className={cn(
-          "max-w-4xl flex flex-col gap-4",
-          isRTL ? "items-start text-right" : "items-start text-left"
-        )}>
-          {subtitle && (
-            <m.span 
-              className="text-atp-gold font-display font-medium tracking-wider uppercase text-sm md:text-base mb-2"
-              variants={getAccessibleVariants(heroFadeUp, shouldReduceMotion)}
-            >
-              {subtitle}
-            </m.span>
-          )}
-          
-          <m.h1 
-            className="font-display text-display md:text-hero text-atp-white leading-tight"
-            variants={getAccessibleVariants(heroFadeUp, shouldReduceMotion)}
-          >
-            {title}
-          </m.h1>
-
-          {description && (
-            <m.p 
-              className="text-atp-white/80 text-lg md:text-xl lg:text-2xl mt-4 max-w-2xl leading-relaxed font-light"
-              variants={getAccessibleVariants(heroFadeUp, shouldReduceMotion)}
-            >
-              {description}
-            </m.p>
-          )}
-        </div>
-      </m.div>
-    </section>
-  );
+'use client'
+import { useState } from 'react'
+import Image from 'next/image'
+interface CollectionHeroProps { title: string; subtitle?: string; description?: string; image: { src: string; alt: string; mobileSrc?: string }; isRTL?: boolean }
+export default function CollectionHero({ title, subtitle, description, image, isRTL = false }: CollectionHeroProps) {
+ const [expanded, setExpanded] = useState(false)
+ return <section dir={isRTL ? 'rtl' : 'ltr'} aria-label={title} className="relative isolate overflow-hidden bg-neutral-950 text-white">
+  <Image src={image.src} alt="" fill priority sizes="100vw" className="object-cover opacity-25" />
+  <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-neutral-950/30" />
+  <div className="container relative mx-auto px-4 py-10 sm:py-16"><div className="max-w-3xl space-y-4">
+   {subtitle && <p className="text-sm font-medium text-atp-gold sm:text-base">{subtitle}</p>}
+   <h1 className="text-3xl font-semibold leading-snug sm:text-4xl lg:text-5xl">{title}</h1>
+   {description && <><p id="collection-description" className={`max-w-2xl text-base leading-relaxed text-neutral-200 sm:text-lg ${expanded ? '' : 'line-clamp-3'}`}>{description}</p>{description.length > 160 && <button type="button" aria-expanded={expanded} aria-controls="collection-description" onClick={() => setExpanded(!expanded)} className="min-h-11 text-base text-atp-gold underline underline-offset-4">{expanded ? (isRTL ? 'عرض أقل' : 'Read less') : (isRTL ? 'قراءة الوصف كاملًا' : 'Read full description')}</button>}</>}
+   <a href="#collection-products" className="flex min-h-12 w-fit items-center justify-center rounded-lg bg-atp-gold px-6 text-base font-semibold text-black hover:bg-atp-gold/90">{isRTL ? 'تصفح المنتجات' : 'Browse products'}</a>
+  </div></div>
+ </section>
 }

@@ -18,9 +18,9 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const isAr = locale === "ar";
 
   return {
-    title: isAr
+    title: { absolute: isAr
       ? "ATP Trading | العافية والتكنولوجيا في الإمارات"
-      : "ATP Trading | Premium Wellness & Technology UAE",
+      : "ATP Trading | Premium Wellness & Technology UAE" },
     description: isAr
       ? "اكتشف حلول العافية المتميزة - العناية بالبشرة، المكملات الغذائية، تقنية المياه. منتجات متاحة داخل الإمارات."
       : "Discover premium wellness solutions - Skincare, Supplements, Water Technology. Available within the UAE.",

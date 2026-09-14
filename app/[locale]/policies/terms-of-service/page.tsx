@@ -22,7 +22,7 @@ export async function generateMetadata({
     : 'Terms of Service for ATP Trading. Learn about the terms and conditions for using our services.';
 
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,

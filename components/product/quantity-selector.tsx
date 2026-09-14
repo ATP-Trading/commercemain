@@ -4,7 +4,7 @@ import { createContext, useContext, useState, ReactNode } from "react"
 import { Label } from "@/components/ui/label"
 import { Minus, Plus } from "lucide-react"
 import { useCart } from "@/components/cart/cart-context"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { m, LazyMotion, domAnimation } from "framer-motion"
 
 // Context for sharing quantity state
@@ -68,6 +68,7 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
   }
 
   const t = useTranslations('product')
+  const ar = useLocale() === 'ar'
 
   return (
     <LazyMotion features={domAnimation}>
@@ -96,6 +97,8 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
             <m.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+              type="button"
+              aria-label={ar ? "تقليل الكمية" : "Decrease quantity"}
               onClick={decrementQuantity}
               disabled={quantity <= 1}
               className="flex items-center justify-center w-12 h-12 text-neutral-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed active:text-[#d4af37]"
@@ -107,6 +110,7 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
             <div className="h-5 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
 
             <input
+              aria-label={t("quantity")}
               type="number"
               min="1"
               value={quantity}
@@ -120,6 +124,8 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
             <m.button
               whileTap={{ scale: 0.9 }}
               whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+              type="button"
+              aria-label={ar ? "زيادة الكمية" : "Increase quantity"}
               onClick={incrementQuantity}
               className="flex items-center justify-center w-12 h-12 text-neutral-400 hover:text-white transition-colors active:text-[#d4af37]"
             >

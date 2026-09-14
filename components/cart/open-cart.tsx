@@ -1,3 +1,5 @@
+"use client"
+import { useLocale } from "next-intl"
 import { ShoppingCartIcon } from "@heroicons/react/24/outline"
 import clsx from "clsx"
 import Link from "next/link"
@@ -9,8 +11,9 @@ export default function OpenCart({
   className?: string
   quantity?: number | undefined
 }) {
+  const locale = useLocale()
   return (
-    <Link href="/cart">
+    <Link href={`/${locale}/cart`} aria-label={locale === "ar" ? "السلة" : "Cart"}>
       <div className="relative p-2 sm:p-3 hover:text-yellow-400 hover:bg-gray-900 rounded-full transition-all duration-300">
         <ShoppingCartIcon className={clsx("w-4 h-4 sm:w-5 sm:h-5 transition-all ease-in-out hover:scale-110", className)} />
 

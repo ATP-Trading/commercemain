@@ -15,7 +15,7 @@ export default async function ContactPage({ params }: Props) {
   const { locale } = await params;
   const isAr = locale === 'ar';
   return <section className="max-w-4xl mx-auto px-4 py-12" dir={isAr ? 'rtl' : 'ltr'}>
-    <h1 className="text-4xl font-serif mb-8 text-center">{isAr ? 'تواصل مع ATP Trading' : 'Contact ATP Trading'}</h1>
+    <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-8 text-center">{isAr ? 'تواصل مع ATP Trading' : 'Contact ATP Trading'}</h1>
     <div className="grid md:grid-cols-2 gap-8">
       <div>
         <h2 className="text-2xl font-semibold mb-6">{isAr ? 'كيف نقدر نساعدك؟' : 'How can we help?'}</h2>

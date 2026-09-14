@@ -15,7 +15,7 @@ function verifyWebhook(body: string, signature: string): boolean {
   hmac.update(body, 'utf8');
   const hash = hmac.digest('base64');
 
-  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
+  return Buffer.byteLength(hash) === Buffer.byteLength(signature) && crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
 }
 
 export async function POST(request: NextRequest) {

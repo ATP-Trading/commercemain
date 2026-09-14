@@ -25,7 +25,7 @@ export async function generateMetadata({
     : 'Discover our mission to deliver innovative wellness solutions that nurture the mind, body, and spirit through premium experiences and cutting-edge technology.'
 
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,

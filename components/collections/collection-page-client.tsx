@@ -45,18 +45,18 @@ export default function CollectionPageClient({
       />
 
       {/* Stats Section */}
-      <p className="bg-atp-off-white py-6 text-center" dir={isRTL ? "rtl" : "ltr"}>
+      <p className="bg-atp-off-white py-4 text-center" dir={isRTL ? "rtl" : "ltr"}>
         <span className="font-bold">{products.length.toLocaleString(locale)}</span>{" "}{t("premiumProducts")}
       </p>
 
       {/* Products Section */}
-      <section className="bg-atp-white py-16 md:py-24">
+      <section id="collection-products" className="scroll-mt-24 bg-atp-white py-8 md:py-12">
         <div className="container mx-auto px-4">
           <m.div
             initial="hidden"
             animate={isVisible ? "visible" : "hidden"}
             variants={staggerSlow}
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-6 md:mb-8"
           >
             <m.h2
               className="font-display text-heading md:text-display text-atp-black mb-4"

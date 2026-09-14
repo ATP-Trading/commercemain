@@ -10,9 +10,6 @@ import {
   useTransform,
 } from "framer-motion";
 import {
-  Heart,
-  Eye,
-  ShoppingBag,
   Star,
   ChevronLeft,
   ChevronRight,
@@ -39,9 +36,6 @@ interface ProductCardProps {
   product: Product;
   locale: "en" | "ar";
   index: number;
-  onAddToCart: (productId: string) => void;
-  onToggleWishlist: (productId: string) => void;
-  isWishlisted: boolean;
   isActive?: boolean;
 }
 
@@ -49,9 +43,6 @@ function ProductCard({
   product,
   locale,
   index,
-  onAddToCart,
-  onToggleWishlist,
-  isWishlisted,
   isActive = false,
 }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -120,58 +111,6 @@ function ProductCard({
         )}
       </div>
 
-      {/* Action Buttons */}
-      <AnimatePresence>
-        {isHovered && (
-          <m.div
-            className="absolute top-4 right-4 z-20 flex flex-col gap-2"
-            initial={{ opacity: 0, x: 20, scale: 0.8 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 20, scale: 0.8 }}
-            transition={{ duration: 0.3, staggerChildren: 0.1 }}
-          >
-            {[
-              {
-                icon: Heart,
-                onClick: () => onToggleWishlist(product.id),
-                className: isWishlisted
-                  ? "fill-red-500 text-red-500"
-                  : "text-gray-600",
-                bgClass: "hover:bg-red-50 hover:text-red-500",
-              },
-              {
-                icon: Eye,
-                onClick: () => { },
-                className: "text-gray-600",
-                bgClass: "hover:bg-blue-50 hover:text-blue-500",
-              },
-              {
-                icon: ShoppingBag,
-                onClick: () => onAddToCart(product.id),
-                className: "text-atp-black",
-                bgClass: "bg-atp-gold hover:bg-atp-black hover:text-atp-gold",
-              },
-            ].map((action, i) => (
-              <m.button
-                key={i}
-                className={`p-3 bg-white/95 backdrop-blur-sm rounded-full shadow-lg transition-all duration-300 ${action.bgClass}`}
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  action.onClick();
-                }}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <action.icon className={`w-4 h-4 ${action.className}`} />
-              </m.button>
-            ))}
-          </m.div>
-        )}
-      </AnimatePresence>
-
       <Link href={`/${locale}/product/${handle}`} className="block">
         {/* Product Image */}
         <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -186,7 +125,7 @@ function ProductCard({
                   src={product.featuredImage.url}
                   alt={product.featuredImage.altText || title}
                   fill
-                  className={`object-cover transition-all duration-700 ${imageLoaded ? "opacity-100 blur-0" : "opacity-0 blur-sm"
+                  className={`object-contain p-3 transition-all duration-700 ${imageLoaded ? "opacity-100 blur-0" : "opacity-0 blur-sm"
                     }`}
                   onLoad={() => setImageLoaded(true)}
                   sizes="280px"
@@ -207,20 +146,7 @@ function ProductCard({
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-          {/* Quick View Button */}
-          <m.div
-            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100"
-            initial={{ y: 20 }}
-            whileHover={{ y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Button
-              size="sm"
-              className="bg-white/90 text-gray-900 hover:bg-white backdrop-blur-sm font-medium px-4 py-2 rounded-full shadow-lg"
-            >
-              {locale === "ar" ? "عرض سريع" : "Quick View"}
-            </Button>
-          </m.div>
+
         </div>
 
         {/* Product Info */}
@@ -258,9 +184,6 @@ export function EnhancedRelatedProductsCarousel({
   collectionHandle,
 }: EnhancedRelatedProductsCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [wishlistedItems, setWishlistedItems] = useState<Set<string>>(
-    new Set()
-  );
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -294,22 +217,6 @@ export function EnhancedRelatedProductsCarousel({
       }
     };
   }, [isPlaying, products.length, itemsPerView]);
-
-  const handleAddToCart = async (productId: string) => {
-    console.log("Add to cart:", productId);
-  };
-
-  const handleToggleWishlist = (productId: string) => {
-    setWishlistedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(productId)) {
-        newSet.delete(productId);
-      } else {
-        newSet.add(productId);
-      }
-      return newSet;
-    });
-  };
 
   const goToSlide = (index: number) => {
     setCurrentIndex(
@@ -379,6 +286,7 @@ export function EnhancedRelatedProductsCarousel({
             <Button
               variant="outline"
               size="icon"
+              aria-label={isPlaying ? (locale === "ar" ? "إيقاف العرض التلقائي" : "Pause slideshow") : (locale === "ar" ? "تشغيل العرض التلقائي" : "Play slideshow")}
               onClick={toggleAutoPlay}
               className="rounded-full border-2 hover:border-atp-gold hover:text-atp-gold"
             >
@@ -393,6 +301,7 @@ export function EnhancedRelatedProductsCarousel({
               <Button
                 variant="outline"
                 size="icon"
+                aria-label={locale === "ar" ? "المنتجات السابقة" : "Previous products"}
                 onClick={prevSlide}
                 disabled={!canGoPrev}
                 className="rounded-full border-2 hover:border-atp-gold hover:text-atp-gold disabled:opacity-50"
@@ -402,6 +311,7 @@ export function EnhancedRelatedProductsCarousel({
               <Button
                 variant="outline"
                 size="icon"
+                aria-label={locale === "ar" ? "المنتجات التالية" : "Next products"}
                 onClick={nextSlide}
                 disabled={!canGoNext}
                 className="rounded-full border-2 hover:border-atp-gold hover:text-atp-gold disabled:opacity-50"
@@ -432,9 +342,6 @@ export function EnhancedRelatedProductsCarousel({
                       product={product}
                       locale={locale}
                       index={index}
-                      onAddToCart={handleAddToCart}
-                      onToggleWishlist={handleToggleWishlist}
-                      isWishlisted={wishlistedItems.has(product.id)}
                       isActive={index === 1} // Highlight the second item
                     />
                   ))}
@@ -455,6 +362,8 @@ export function EnhancedRelatedProductsCarousel({
               (_, index) => (
                 <button
                   key={index}
+                  aria-label={`${locale === "ar" ? "عرض المجموعة" : "Show group"} ${index + 1}`}
+                  aria-current={index === currentIndex ? "true" : undefined}
                   onClick={() => goToSlide(index)}
                   className={`transition-all duration-300 rounded-full ${index === currentIndex
                     ? "bg-atp-gold w-8 h-3"

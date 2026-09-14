@@ -67,7 +67,7 @@ export default function Footer() {
           {/* Logo and Company Info */}
           <div className="lg:col-span-1">
             <Link
-              href="/"
+              href={`/${locale}`}
               className={`flex items-center justify-center lg:justify-start text-white group mb-6`}
             >
               <div className="relative w-16 h-16 flex items-center justify-center">
