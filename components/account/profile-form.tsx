@@ -19,7 +19,7 @@ export function ProfileForm() {
   const { customer, isLoading, isLoggedIn, error, login, refreshCustomer } = useCustomerOAuth()
   return <main dir={locale === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-neutral-950 px-4 py-10 text-base leading-relaxed text-white [&_input]:min-h-12 [&_input]:text-base [&_label]:text-base [&_button]:min-h-12 [&_button]:text-base">
     <div className="mx-auto max-w-xl space-y-6">
-      <Button asChild variant="outline" className="min-h-12 border-atp-gold px-5 text-base font-semibold text-atp-gold"><Link href="/account"><span aria-hidden="true">{locale === 'ar' ? '→' : '←'}</span>{t.back}</Link></Button>
+      <Button asChild variant="outline" className="bg-neutral-900 hover:bg-neutral-800 hover:text-atp-gold min-h-12 border-atp-gold px-5 text-base font-semibold text-atp-gold"><Link href="/account"><span aria-hidden="true">{locale === 'ar' ? '→' : '←'}</span>{t.back}</Link></Button>
       <h1 className="text-3xl font-semibold">{t.title}</h1>
       {isLoading ? <p role="status">{t.loading}</p> : error ? <div role="alert"><p>{t.loadError}</p><Button onClick={() => void refreshCustomer()}>{t.retry}</Button></div> : !isLoggedIn || !customer ? <div><p className="mb-4">{t.login}</p><Button onClick={() => login(`/${locale}/account/profile`)}>{t.signIn}</Button></div> : <NameForm key={customer.id} customer={customer} t={t} login={() => login(`/${locale}/account/profile`)} />}
     </div>
