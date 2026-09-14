@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
-import { isMemberDiscountEligible } from "@/lib/shopify/member-product-eligibility";
+import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
 import { EnhancedMemberPricing } from "@/components/membership/enhanced-member-pricing";
 import { FreeDeliveryIndicator } from "@/components/membership/free-delivery-indicator";
 import Price from "@/components/price";
@@ -118,6 +118,7 @@ export function ATPProductDescription({
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <EnhancedMemberPricing
                 originalPrice={price.amount}
+                discountRate={getMemberDiscountRate(product)}
                 serviceId="cosmetics-supplements"
                 currencyCode={price.currencyCode}
                 showFreeDelivery={true}

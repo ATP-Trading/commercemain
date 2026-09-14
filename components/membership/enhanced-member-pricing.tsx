@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 
 interface EnhancedMemberPricingProps {
   originalPrice: string;
+  discountRate?: number;
   serviceId?: string;
   currencyCode?: string;
   className?: string;
@@ -23,6 +24,7 @@ interface EnhancedMemberPricingProps {
 
 export function EnhancedMemberPricing({
   originalPrice,
+  discountRate = 0.15,
   serviceId,
   currencyCode = UAE_DIRHAM_CODE,
   className = "",
@@ -41,6 +43,7 @@ export function EnhancedMemberPricing({
       <div className={`space-y-3 ${className}`}>
         <MemberPricing
           originalPrice={originalPrice}
+          discountRate={discountRate}
           serviceId={serviceId}
           currencyCode={currencyCode}
           showFreeDelivery={showFreeDelivery && productType === "product"}
@@ -72,13 +75,13 @@ export function EnhancedMemberPricing({
                   <MembershipBadge tier="atp" className="text-xs" />
                 </div>
                 <p className="text-sm font-medium text-atp-black mb-1">
-                  {t('save15Percent')}
+                  {t('savePercent', { percent: Math.round(discountRate * 100) })}
                 </p>
                 <p className="text-xs text-muted-foreground mb-2">
                   {t('memberPriceLabel')}{" "}
                   <span className="font-semibold text-atp-gold">
                     <DirhamSymbol className="inline w-3 h-3" />
-                    {(price * 0.85).toFixed(2)}
+                    {(price * (1 - discountRate)).toFixed(2)}
                   </span>
                   {productType === "product" && t('plusFreeDelivery')}
                 </p>
