@@ -9,6 +9,8 @@ interface MembershipData {
   tier: MembershipTier
   isActive: boolean
   source?: "appstle" | "merchant"
+  startedAt?: string
+  nextBillingDate?: string
   expiresAt?: string
   discountRate: number
 }
@@ -74,6 +76,8 @@ export function useMembership() {
             source: data.membership.source,
             isActive: true,
             expiresAt: data.membership.expirationDate,
+            startedAt: data.membership.startedAt,
+            nextBillingDate: data.membership.nextBillingDate,
             discountRate: typeof data.discountRate === 'number' ? data.discountRate : 0,
           })
         } else {

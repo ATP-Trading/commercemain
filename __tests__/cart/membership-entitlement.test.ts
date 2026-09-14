@@ -13,3 +13,13 @@ it.each(['invalid','{}','[null]'])('reports invalid membership data instead of g
  expect(() => resolve(['atp-member'],value)).toThrow()
 })
 it('does not accept marketing or approximate membership tags', () => expect(resolve(['subscriber','atp-member-pending'], null)).toBeNull())
+it('returns only verified subscription dates, without treating renewal as expiry', () => {
+ const result = resolve([], JSON.stringify([{...subscription, membershipStartDate:'2026-09-14T13:57:24Z', nextBillingDate:'2027-09-14T13:00:00Z', privateToken:'hidden'}]))
+ expect(result).toMatchObject({startedAt:'2026-09-14T13:57:24.000Z', nextBillingDate:'2027-09-14T13:00:00.000Z'})
+ expect(result).not.toHaveProperty('privateToken')
+ expect(result).not.toHaveProperty('expirationDate')
+})
+it('does not invent dates for grants or malformed Appstle dates', () => {
+ expect(resolve(['atp-member'], null)).not.toHaveProperty('nextBillingDate')
+ expect(resolve([], JSON.stringify([{...subscription, nextBillingDate:'invalid'}]))?.nextBillingDate).toBeUndefined()
+})
