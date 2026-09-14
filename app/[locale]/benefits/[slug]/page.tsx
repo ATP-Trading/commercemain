@@ -236,7 +236,7 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
         <div className="container-premium">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
-              {isAr ? "الفوائد الرئيسية" : "Key Benefits"}
+              {isAr ? "ما ينبغي مراجعته" : "What to Check"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto"></div>
           </div>
@@ -281,14 +281,14 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
               {isAr
-                ? `منتجات ${benefit.productTypeAr} الموصى بها`
-                : `Recommended ${benefit.productType} Products`}
+                ? "منتجات ذات صلة"
+                : "Related Products"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto mb-4"></div>
             <p className="text-atp-charcoal max-w-2xl mx-auto">
               {isAr
-                ? `اكتشف منتجات ${benefit.productTypeAr} عالية الجودة لتحقيق ${benefit.benefitAr}`
-                : `Discover premium ${benefit.productType} products to achieve ${benefit.benefit}`}
+                ? "قارن المنتجات وراجع المكونات والمواصفات وطريقة الاستخدام."
+                : "Compare products and review ingredients, specifications and directions."}
             </p>
           </div>
 
@@ -373,13 +373,13 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
         <div className="container-premium text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
             {isAr
-              ? `هل أنت مستعد لتحقيق ${benefit.benefitAr}؟`
-              : `Ready to Achieve ${benefit.benefit}?`}
+              ? "هل تحتاج مساعدة في الاختيار؟"
+              : "Need help choosing?"}
           </h2>
           <p className="text-xl text-atp-white/80 mb-8 max-w-2xl mx-auto">
             {isAr
-              ? `ابدأ رحلتك اليوم مع منتجات ${benefit.productTypeAr} عالية الجودة`
-              : `Start your journey today with premium ${benefit.productType} products`}
+              ? "تصفح المنتجات أو تواصل معنا للاستفسار عن تفاصيلها."
+              : "Browse products or contact us with questions about their details."}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a href="#products" className="btn-atp-gold">
@@ -389,7 +389,7 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
               href={`/${locale}/contact`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
-              {isAr ? "استشارة مجانية" : "Free Consultation"}
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
           </div>
         </div>

@@ -448,7 +448,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a href={`/${locale}/contact`} className="btn-atp-gold">
-              {isAr ? "استشارة مجانية" : "Free Consultation"}
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
             <a
               href={`/${locale}/search`}
