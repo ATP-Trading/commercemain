@@ -1,7 +1,8 @@
+import { canonicalCollectionHandle } from "@/lib/collection-handle";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion } from "@/lib/publication-policy";
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
 import { defaultSort, sorting } from "@/lib/constants";
 import CollectionHero from "@/components/collection/collection-hero";
@@ -13,12 +14,13 @@ export async function generateMetadata(props: {
     params: Promise<{ handle: string; locale: string }>;
 }): Promise<Metadata> {
     const params = await props.params;
+    const canonicalHandle = canonicalCollectionHandle(params.handle);
   if (isEmsPromotion(params.handle)) return inactiveServiceMetadata(params.locale, `/collections/${params.handle}`);
     const localeForApi = params.locale === 'ar'
         ? { language: 'AR', country: 'AE' }
         : { language: 'EN', country: 'AE' };
     
-    const collection = await getCollection(params.handle, localeForApi);
+    const collection = await getCollection(canonicalHandle, localeForApi);
     
     if (!collection) {
         notFound();
@@ -33,7 +35,7 @@ export async function generateMetadata(props: {
         : `Shop ${collection.title} at ATP Trading`);
 
     return {
-        alternates: { canonical: `/${params.locale}/collections/${collection.handle}` },
+        alternates: { canonical: `/${params.locale}/collections/${canonicalHandle}`, languages: { en: `/en/collections/${canonicalHandle}`, ar: `/ar/collections/${canonicalHandle}` } },
         title,
         description,
         openGraph: {
@@ -50,7 +52,17 @@ export default async function CollectionPage(props: {
 }) {
     const searchParams = (await props.searchParams) || {};
     const params = await props.params;
+    const canonicalHandle = canonicalCollectionHandle(params.handle);
   if (isEmsPromotion(params.handle)) return <InactiveServicePage locale={params.locale} />;
+
+    if (canonicalHandle !== params.handle) {
+        const query = new URLSearchParams();
+        for (const [key, value] of Object.entries(searchParams)) {
+            if (Array.isArray(value)) value.forEach(item => query.append(key, item));
+            else if (value !== undefined) query.set(key, value);
+        }
+        permanentRedirect(`/${params.locale}/collections/${canonicalHandle}${query.size ? `?${query}` : ''}`);
+    }
 
     const { sort } = searchParams as { [key: string]: string };
     const { sortKey, reverse } =
@@ -62,12 +74,12 @@ export default async function CollectionPage(props: {
 
     const [products, collection] = await Promise.all([
         getCollectionProducts({
-            collection: params.handle,
+            collection: canonicalHandle,
             sortKey,
             reverse,
             locale: localeForApi,
         }),
-        getCollection(params.handle, localeForApi),
+        getCollection(canonicalHandle, localeForApi),
     ]);
 
     if (!collection) {

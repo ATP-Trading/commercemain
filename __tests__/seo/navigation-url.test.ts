@@ -35,3 +35,7 @@ describe('Shopify checkout host menu links', () => {
     expect(normalizeNavigationUrl(url)).toBe(url);
   });
 });
+
+it.each(['حلول-تكنولوجيا-المياه-والتربة', encodeURIComponent('حلول-تكنولوجيا-المياه-والتربة')])('uses a fetchable water collection handle for %s', handle => {
+ expect(localizeNavigationPath(`/ar/collections/${handle}?sort=price-asc`, 'ar')).toBe('/ar/collections/water-soil-technology-solutions?sort=price-asc');
+});

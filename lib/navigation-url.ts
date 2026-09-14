@@ -1,3 +1,4 @@
+import { canonicalCollectionHandle } from "./collection-handle";
 const storefrontHosts = new Set(["atpgroupservices.ae", "www.atpgroupservices.ae"]);
 
 export function normalizeNavigationUrl(value?: string | null): string {
@@ -20,5 +21,6 @@ export function localizeNavigationPath(path: string, locale: string): string {
   if (/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(path)) return path;
   const normalized = path.startsWith("/") ? path : `/${path}`;
   const clean = normalized.replace(/^\/(en|ar)(?=\/|[?#]|$)/, "");
-  return `/${locale}${clean.startsWith("/") || !clean ? clean : `/${clean}`}`;
+  const canonical = clean.replace(/^\/collections\/([^/?#]+)/, (_, handle) => `/collections/${canonicalCollectionHandle(handle)}`);
+  return `/${locale}${canonical.startsWith("/") || !canonical ? canonical : `/${canonical}`}`;
 }
