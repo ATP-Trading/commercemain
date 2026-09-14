@@ -1,3 +1,6 @@
+import { EditorialSources } from "@/components/seo/editorial-sources";
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -16,7 +19,7 @@ interface BenefitsPageProps {
 
 // Generate static params for all benefits
 export function generateStaticParams() {
-  return Object.keys(BenefitData).map((slug) => ({ slug }));
+  return Object.keys(BenefitData).filter((slug) => !isEmsPromotion(slug)).map((slug) => ({ slug }));
 }
 
 // Generate metadata
@@ -24,25 +27,26 @@ export async function generateMetadata({
   params,
 }: BenefitsPageProps): Promise<Metadata> {
   const { slug, locale } = await params;
+  if (slug === "ems-weight-loss") return inactiveServiceMetadata(locale, `/benefits/${slug}`);
   const benefit = BenefitData[slug];
 
   if (!benefit) return {};
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${benefit.benefitAr} | ATP Group`
+    ? `${benefit.benefitAr} | ATP Trading`
     : benefit.metaTitle;
   const description = isAr ? benefit.descriptionAr : benefit.metaDescription;
-  const url = `https://atpgroupservices.ae/${locale}/benefits/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/benefits/${slug}`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/benefits/${slug}`,
-        ar: `https://atpgroupservices.ae/ar/benefits/${slug}`,
+        en: `https://www.atpgroupservices.ae/en/benefits/${slug}`,
+        ar: `https://www.atpgroupservices.ae/ar/benefits/${slug}`,
       },
     },
     openGraph: {
@@ -61,7 +65,7 @@ function generateBenefitStructuredData(
   locale: string
 ) {
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/benefits/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/benefits/${slug}`;
 
   return {
     "@context": "https://schema.org",
@@ -74,19 +78,17 @@ function generateBenefitStructuredData(
         url,
         author: {
           "@type": "Organization",
-          name: "ATP Group Services",
-          url: "https://atpgroupservices.ae",
+          name: "ATP Trading",
+          url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           logo: {
             "@type": "ImageObject",
-            url: "https://atpgroupservices.ae/logo.png",
+            url: "https://www.atpgroupservices.ae/images/atp-logo.png",
           },
         },
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
         articleSection: isAr ? "الفوائد الصحية" : "Health Benefits",
       },
       {
@@ -96,13 +98,13 @@ function generateBenefitStructuredData(
             "@type": "ListItem",
             position: 1,
             name: isAr ? "الرئيسية" : "Home",
-            item: `https://atpgroupservices.ae/${locale}`,
+            item: `https://www.atpgroupservices.ae/${locale}`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: isAr ? "الفوائد" : "Benefits",
-            item: `https://atpgroupservices.ae/${locale}/benefits`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
@@ -135,6 +137,7 @@ function generateBenefitStructuredData(
 export default async function BenefitsPage({ params }: BenefitsPageProps) {
   const { slug, locale: rawLocale } = await params;
   const locale = (rawLocale === "ar" ? "ar" : "en") as "en" | "ar";
+  if (slug === "ems-weight-loss") return <InactiveServicePage locale={locale} />;
 
   // Set locale for static rendering
   setRequestLocale(locale);
@@ -166,7 +169,6 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
 
       {/* Hero Section */}
       <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-atp-black via-atp-charcoal to-atp-black overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/benefits-hero-bg.jpg')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-atp-black/80 via-transparent to-atp-black/40"></div>
 
         <div className="relative z-10 container-premium text-center text-atp-white px-4">
@@ -234,7 +236,7 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
         <div className="container-premium">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
-              {isAr ? "الفوائد الرئيسية" : "Key Benefits"}
+              {isAr ? "ما ينبغي مراجعته" : "What to Check"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto"></div>
           </div>
@@ -279,14 +281,14 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
               {isAr
-                ? `منتجات ${benefit.productTypeAr} الموصى بها`
-                : `Recommended ${benefit.productType} Products`}
+                ? "منتجات ذات صلة"
+                : "Related Products"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto mb-4"></div>
             <p className="text-atp-charcoal max-w-2xl mx-auto">
               {isAr
-                ? `اكتشف منتجات ${benefit.productTypeAr} عالية الجودة لتحقيق ${benefit.benefitAr}`
-                : `Discover premium ${benefit.productType} products to achieve ${benefit.benefit}`}
+                ? "قارن المنتجات وراجع المكونات والمواصفات وطريقة الاستخدام."
+                : "Compare products and review ingredients, specifications and directions."}
             </p>
           </div>
 
@@ -371,27 +373,28 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
         <div className="container-premium text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
             {isAr
-              ? `هل أنت مستعد لتحقيق ${benefit.benefitAr}؟`
-              : `Ready to Achieve ${benefit.benefit}?`}
+              ? "هل تحتاج مساعدة في الاختيار؟"
+              : "Need help choosing?"}
           </h2>
           <p className="text-xl text-atp-white/80 mb-8 max-w-2xl mx-auto">
             {isAr
-              ? `ابدأ رحلتك اليوم مع منتجات ${benefit.productTypeAr} عالية الجودة`
-              : `Start your journey today with premium ${benefit.productType} products`}
+              ? "تصفح المنتجات أو تواصل معنا للاستفسار عن تفاصيلها."
+              : "Browse products or contact us with questions about their details."}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a href="#products" className="btn-atp-gold">
               {isAr ? "تسوق المنتجات" : "Shop Products"}
             </a>
             <a
-              href="/contact"
+              href={`/${locale}/contact`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
-              {isAr ? "استشارة مجانية" : "Free Consultation"}
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
           </div>
         </div>
       </section>
+      <EditorialSources slug={slug} locale={locale} />
     </>
   );
 }

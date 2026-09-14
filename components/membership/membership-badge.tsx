@@ -15,13 +15,15 @@ interface MembershipBadgeProps {
   discount?: number
   className?: string
   showStatus?: boolean
+  showDiscount?: boolean
 }
 
 export function MembershipBadge({ 
   tier, 
   discount, 
   className, 
-  showStatus = false 
+  showStatus = false,
+  showDiscount = discount !== undefined
 }: MembershipBadgeProps) {
   const t = useTranslations('membership');
   const locale = useLocale() as 'en' | 'ar';
@@ -109,7 +111,7 @@ export function MembershipBadge({
   if (!config) return null;
 
   const IconComponent = config.icon;
-  const memberDiscount = discount || config.discount;
+  const memberDiscount = discount ?? config.discount;
 
   // For ATP tier, show additional styling if expiring soon
   const badgeColor = normalizedTier === 'atp' && isExpiringSoon 
@@ -130,7 +132,7 @@ export function MembershipBadge({
     >
       <IconComponent className={cn("w-3 h-3", getIconClasses('start'))} />
       <span>
-        {config.name} - {discountText}
+        {config.name}{showDiscount && <> - {discountText}</>}
       </span>
     </Badge>
   );

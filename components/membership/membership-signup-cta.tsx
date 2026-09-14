@@ -111,7 +111,7 @@ export function MembershipSignupCta({
             className="bg-green-50 text-green-700 border-green-200"
           >
             <span className="flex items-center gap-1">
-              {t('saveAmount')} <DirhamSymbol size={14} /> {t('annually')}
+              {t('savingsMessage')}
             </span>
           </Badge>
         </div>
@@ -156,7 +156,7 @@ export function MembershipSignupCta({
           {!customer && (
             <p className="text-xs text-center text-gray-500">
               <Link
-                href="/account/login"
+                href="/login"
                 className="text-atp-gold hover:underline"
               >
                 {t('logIn')}

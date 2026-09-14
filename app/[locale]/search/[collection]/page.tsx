@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion } from "@/lib/publication-policy";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
 import { defaultSort, sorting } from "@/lib/constants";
 import CollectionResults from "./collection-results";
@@ -9,6 +11,7 @@ export default async function CategoryPage(props: {
   // Await the params and searchParams
   const searchParams = await props.searchParams;
   const params = await props.params;
+  if (isEmsPromotion(params.collection)) return <InactiveServicePage locale={params.locale} />;
   
   const { sort } = searchParams as { [key: string]: string };
   const { sortKey, reverse } =

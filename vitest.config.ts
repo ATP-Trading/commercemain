@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    server: { deps: { inline: ['next-intl'] } },
     setupFiles: ['./vitest.setup.ts'],
     globals: true,
   },

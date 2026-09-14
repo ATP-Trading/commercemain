@@ -13,7 +13,7 @@ import { WelcomeToast } from "@/components/welcome-toast";
 import { getCart } from "@/lib/shopify/server";
 import { Toaster } from "sonner";
 import { Cinzel, DM_Sans, Tajawal } from "next/font/google";
-import { StructuredData, LocalBusinessStructuredData } from "@/components/structured-data";
+import { StructuredData } from "@/components/structured-data";
 import { SkipToContentSimple } from "@/components/ui/skip-navigation";
 import { PageTransitionProvider } from "@/components/ui/page-transition-provider";
 import { DirectionProvider } from "@/components/ui/direction";
@@ -62,15 +62,8 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'common' });
 
   return {
-    title: t('siteTitle'),
+    title: { absolute: t('siteTitle') },
     description: t('siteDescription'),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: {
-        en: "/en",
-        ar: "/ar",
-      },
-    },
     openGraph: {
       locale: locale === "ar" ? "ar_AE" : "en_AE",
     },
@@ -110,39 +103,13 @@ export default async function LocaleLayout({
       <StructuredData
         type="Organization"
         data={{
-          name: locale === "ar" ? "مجموعة ATP للخدمات" : "ATP Group Services",
+          name: locale === "ar" ? "ATP Trading" : "ATP Trading",
           url: `${baseUrl}/${locale}`,
-          logo: `${baseUrl}/logo.png`,
+          logo: `${baseUrl}/images/atp-logo.png`,
           description:
             locale === "ar"
               ? "حلول العافية المتميزة والتكنولوجيا المتقدمة مع فوائد العضوية الحصرية لـ ATP"
               : "Premium wellness and technology solutions with exclusive ATP membership benefits",
-        }}
-      />
-
-      {/* LocalBusiness Schema for UAE presence */}
-      <LocalBusinessStructuredData
-        additionalType="HealthAndBeautyBusiness"
-        aggregateRating={{
-          ratingValue: 4.8,
-          reviewCount: 1250,
-        }}
-        hasOfferCatalog={{
-          name: "ATP Wellness Services",
-          itemListElement: [
-            {
-              name: "EMS Training",
-              description: "German-engineered electro muscle stimulation fitness programs",
-            },
-            {
-              name: "Premium Skincare",
-              description: "Authentic Thai natural cosmetics and beauty products",
-            },
-            {
-              name: "Wellness Supplements",
-              description: "High-quality health supplements for optimal wellness",
-            },
-          ],
         }}
       />
 

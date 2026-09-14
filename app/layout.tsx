@@ -20,7 +20,7 @@ const cairo = Cairo({
   variable: "--font-cairo",
 });
 
-const SITE_NAME = "ATP Group Services";
+const SITE_NAME = "ATP Trading";
 
 export const metadata = {
   metadataBase: new URL(baseUrl),
@@ -67,7 +67,7 @@ export const metadata = {
         url: `${baseUrl}/opengraph-image.png`,
         width: 1200,
         height: 630,
-        alt: "ATP Group Services - Premium Wellness & Technology",
+        alt: "ATP Trading - Premium Wellness & Technology",
       },
     ],
   },
@@ -79,13 +79,6 @@ export const metadata = {
   },
   verification: {
     google: "your-google-verification-code",
-  },
-  alternates: {
-    canonical: baseUrl,
-    languages: {
-      en: baseUrl,
-      ar: `${baseUrl}/ar`,
-    },
   },
   generator: "v0.app",
 };
@@ -139,10 +132,6 @@ export default async function RootLayout({
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
         <link rel="shortcut icon" href="/images/favicon.ico" />
 
-        {/* Hreflang tags for SEO */}
-        <link rel="alternate" hrefLang="en" href={`${baseUrl}/en`} />
-        <link rel="alternate" hrefLang="ar" href={`${baseUrl}/ar`} />
-        <link rel="alternate" hrefLang="x-default" href={`${baseUrl}/en`} />
       </head>
       <body>
         <DirectionProvider direction={direction}>

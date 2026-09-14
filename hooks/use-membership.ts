@@ -8,6 +8,9 @@ export type MembershipTier = "essential" | "premium" | "elite" | "atp" | null
 interface MembershipData {
   tier: MembershipTier
   isActive: boolean
+  source?: "appstle" | "merchant"
+  startedAt?: string
+  nextBillingDate?: string
   expiresAt?: string
   discountRate: number
 }
@@ -21,6 +24,7 @@ export function useMembership() {
     discountRate: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -41,15 +45,17 @@ export function useMembership() {
 
       if (!isLoggedIn || !customer?.id) {
         resetMembership()
+        setError(null)
         setIsLoading(false)
         return
       }
 
       setIsLoading(true)
+      setError(null)
 
       try {
         const response = await fetch(
-          `/api/membership/status?customerId=${encodeURIComponent(customer.id)}`,
+          '/api/membership/status',
           {
             credentials: 'include',
             cache: 'no-store',
@@ -67,8 +73,11 @@ export function useMembership() {
         if (data.isMember && data.membership) {
           setMembership({
             tier: data.tier,
+            source: data.membership.source,
             isActive: true,
             expiresAt: data.membership.expirationDate,
+            startedAt: data.membership.startedAt,
+            nextBillingDate: data.membership.nextBillingDate,
             discountRate: typeof data.discountRate === 'number' ? data.discountRate : 0,
           })
         } else {
@@ -77,6 +86,7 @@ export function useMembership() {
       } catch (error) {
         console.warn('[useMembership] Failed to load membership status:', error)
         if (!cancelled) {
+          setError("membership-unavailable")
           resetMembership()
         }
       } finally {
@@ -117,6 +127,7 @@ export function useMembership() {
   return {
     membership,
     isLoading,
+    error,
     applyMemberDiscount,
     getMemberPrice,
     isMember: membership.isActive && membership.tier !== null,

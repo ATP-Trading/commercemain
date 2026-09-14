@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
@@ -43,6 +44,7 @@ export function LuxuryProductCard({
   enable3DTilt = true,
   showRating = true,
 }: LuxuryProductCardProps) {
+  const tActions = useTranslations("productActions");
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -54,7 +56,7 @@ export function LuxuryProductCard({
     featuredImage,
     priceRange,
     availableForSale = true,
-    rating = 4.5,
+    rating,
     reviewCount = 0,
   } = product;
 
@@ -129,8 +131,8 @@ export function LuxuryProductCard({
   // Generate star rating
   const renderStars = () => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+    const fullStars = Math.floor(rating ?? 0);
+    const hasHalfStar = (rating ?? 0) % 1 >= 0.5;
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
@@ -216,7 +218,7 @@ export function LuxuryProductCard({
                   "max-md:opacity-100 max-md:translate-y-0"
                 )}
                 whileTap={{ scale: 0.9 }}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                aria-label={isWishlisted ? tActions("removeFromWishlist") : tActions("addToWishlist")}
               >
                 <Heart
                   className={cn(
@@ -313,7 +315,7 @@ export function LuxuryProductCard({
                         "hover:bg-[var(--atp-gold)]"
                       )}
                       whileTap={{ scale: 0.95 }}
-                      aria-label="Quick view"
+                      aria-label={tActions("quickView")}
                     >
                       <Eye className="w-4 h-4" />
                     </m.button>
@@ -330,7 +332,7 @@ export function LuxuryProductCard({
               )}
             >
               {/* Rating */}
-              {showRating && reviewCount > 0 && (
+              {showRating && typeof rating === "number" && Number.isFinite(rating) && rating >= 0 && rating <= 5 && reviewCount > 0 && (
                 <div
                   className={cn(
                     "flex items-center gap-1.5",
@@ -389,7 +391,7 @@ export function LuxuryProductCard({
                   "max-md:opacity-100 max-md:translate-y-0"
                 )}
                 whileTap={{ scale: 0.9 }}
-                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                aria-label={isWishlisted ? tActions("removeFromWishlist") : tActions("addToWishlist")}
               >
                 <Heart
                   className={cn(
@@ -486,7 +488,7 @@ export function LuxuryProductCard({
                         "hover:bg-[var(--atp-gold)]"
                       )}
                       whileTap={{ scale: 0.95 }}
-                      aria-label="Quick view"
+                      aria-label={tActions("quickView")}
                     >
                       <Eye className="w-4 h-4" />
                     </m.button>
@@ -503,7 +505,7 @@ export function LuxuryProductCard({
               )}
             >
               {/* Rating */}
-              {showRating && reviewCount > 0 && (
+              {showRating && typeof rating === "number" && Number.isFinite(rating) && rating >= 0 && rating <= 5 && reviewCount > 0 && (
                 <div
                   className={cn(
                     "flex items-center gap-1.5",

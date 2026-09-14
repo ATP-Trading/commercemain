@@ -20,6 +20,7 @@ interface MembershipErrorDisplayProps {
   onDismiss?: () => void;
   showDetails?: boolean;
   compact?: boolean;
+  dismissLabel?: string;
 }
 
 export function MembershipErrorDisplay({
@@ -27,7 +28,8 @@ export function MembershipErrorDisplay({
   onRetry,
   onDismiss,
   showDetails = false,
-  compact = false
+  compact = false,
+  dismissLabel = 'Dismiss error'
 }: MembershipErrorDisplayProps) {
   const getErrorIcon = () => {
     switch (error.code) {
@@ -80,6 +82,7 @@ export function MembershipErrorDisplay({
             size="sm"
             variant="ghost"
             onClick={onDismiss}
+            aria-label={dismissLabel}
             className="h-6 px-2 text-red-600 hover:text-red-700"
           >
             <X className="w-3 h-3" />
@@ -134,6 +137,7 @@ export function MembershipErrorDisplay({
               size="sm"
               variant="ghost"
               onClick={onDismiss}
+            aria-label={dismissLabel}
               className="h-8 w-8 p-0"
             >
               <X className="w-3 h-3" />

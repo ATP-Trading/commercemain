@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useCustomerOAuth } from '@/hooks/use-customer-oauth'
 import { Loader2, Mail, ArrowRight, ShieldCheck } from 'lucide-react'
-import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { Link } from '@/src/i18n/navigation'
+import { localizedReturnPath } from '@/lib/auth/return-path'
+import { useTranslations, useLocale } from 'next-intl'
 
 /**
  * OAuth-based Login Form for New Shopify Customer Accounts
@@ -24,7 +25,7 @@ export function LoginFormOAuth() {
 
   // Get error from URL if redirected back with error
   const error = searchParams.get('error')
-  const returnTo = searchParams.get('returnTo') || '/account'
+  const returnTo = localizedReturnPath(searchParams.get('returnTo'), useLocale())
 
   // If already logged in, redirect
   useEffect(() => {
@@ -61,7 +62,7 @@ export function LoginFormOAuth() {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>
-              {decodeErrorMessage(error)}
+              {t(error === 'session_expired' || error === 'invalid_state' ? 'invalidState' : 'authFailed')}
             </AlertDescription>
           </Alert>
         )}
@@ -129,17 +130,6 @@ export function LoginFormOAuth() {
       </CardContent>
     </Card>
   )
-}
-
-function decodeErrorMessage(error: string): string {
-  const errorMessages: Record<string, string> = {
-    'missing_code': 'Authentication was cancelled or failed. Please try again.',
-    'session_expired': 'Your session expired. Please try signing in again.',
-    'invalid_state': 'Authentication failed due to a security check. Please try again.',
-    'access_denied': 'Access was denied. Please try again.',
-  }
-
-  return errorMessages[error] || decodeURIComponent(error)
 }
 
 // Re-export the original form for backwards compatibility

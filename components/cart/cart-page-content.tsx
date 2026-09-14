@@ -159,40 +159,13 @@ function isValidCartItem(item: CartItem): boolean {
 
 export function CartPageContent() {
     const { cart, updateCartItem } = useCart();
-    const { membership, isMember, getMemberPrice } = useMembership();
-    const { t: tCart, formatPrice } = useTranslations("cart");
+    const { membership, isMember, isLoading: membershipLoading, error: membershipError } = useMembership();
+    const { t: tCart } = useTranslations("cart");
     const { t: tProduct } = useTranslations("product");
     const { t: tMembership } = useTranslations("membership");
     const { isRTL } = useRTL();
     const locale = useLocale() as 'en' | 'ar';
     const membershipTierForBadge = membership?.tier;
-
-    // Calculate member savings - Memoized
-    const memberSavings = useMemo(() => {
-        if (!cart || !isMember)
-            return { originalTotal: 0, memberTotal: 0, totalSavings: 0 };
-
-        let originalTotal = 0;
-        let memberTotal = 0;
-
-        const safeLines = Array.isArray(cart.lines) ? cart.lines : [];
-
-        safeLines
-            .filter(isValidCartItem)
-            .forEach((item: CartItem) => {
-                const itemPrice = Number.parseFloat(item.cost.totalAmount.amount);
-                const pricing = getMemberPrice((itemPrice / item.quantity).toString());
-
-                originalTotal += pricing.originalPrice * item.quantity;
-                memberTotal += pricing.memberPrice * item.quantity;
-            });
-
-        return {
-            originalTotal,
-            memberTotal,
-            totalSavings: originalTotal - memberTotal,
-        };
-    }, [cart, isMember, getMemberPrice]);
 
     // Get only valid cart items for rendering
     const validCartItems = useMemo(() => {
@@ -323,7 +296,7 @@ export function CartPageContent() {
                                 {isMember && membershipTierForBadge && (
                                     <MembershipBadge 
                                         tier={membershipTierForBadge}
-                                        discount={Math.round(membership.discountRate * 100)}
+                                        showDiscount={false}
                                         className="text-sm" 
                                     />
                                 )}
@@ -341,7 +314,7 @@ export function CartPageContent() {
                         {/* Cart Items Column */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Member Benefits Banner */}
-                            {!isMember && (
+                            {!isMember && !membershipLoading && !membershipError && (
                                 <m.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -370,7 +343,7 @@ export function CartPageContent() {
                                             asChild
                                             className="bg-gradient-to-r from-[#d4af37] to-[#c9a432] hover:from-[#e5c354] hover:to-[#d4af37] text-black font-semibold rounded-xl shadow-lg shadow-[#d4af37]/20 transition-all hover:shadow-[#d4af37]/30 hover:scale-[1.02] whitespace-nowrap"
                                         >
-                                            <Link href="/atp-membership">
+                                            <Link href="/product/atp-membership">
                                                 {tMembership("joinMembership")}
                                             </Link>
                                         </Button>
@@ -414,14 +387,6 @@ export function CartPageContent() {
                                                 `/product/${productHandle}`,
                                                 new URLSearchParams(merchandiseSearchParams)
                                             );
-
-                                            const itemPrice = Number.parseFloat(
-                                                item.cost.totalAmount.amount
-                                            );
-                                            const unitPrice = itemPrice / item.quantity;
-                                            const pricing = isMember
-                                                ? getMemberPrice(unitPrice.toString())
-                                                : null;
 
                                             return (
                                                 <m.div 
@@ -502,27 +467,11 @@ export function CartPageContent() {
 
                                                                 {/* Price */}
                                                                 <div className={isRTL ? "text-left" : "text-right"}>
-                                                                    {isMember && pricing && pricing.savings > 0 ? (
-                                                                        <div>
-                                                                            <span className="text-sm text-neutral-500 line-through block">
-                                                                                {formatPrice(pricing.originalPrice * item.quantity)}
-                                                                            </span>
-                                                                            <Price
-                                                                                className="text-lg font-semibold text-[#d4af37]"
-                                                                                amount={(pricing.memberPrice * item.quantity).toFixed(2)}
-                                                                                currencyCode={item.cost.totalAmount.currencyCode}
-                                                                            />
-                                                                            <span className="text-xs text-[#d4af37]/80 block">
-                                                                                {tCart("page.saveAmount", { amount: formatPrice(pricing.savings * item.quantity) })}
-                                                                            </span>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <Price
-                                                                            className="text-lg font-semibold text-white"
-                                                                            amount={item.cost.totalAmount.amount}
-                                                                            currencyCode={item.cost.totalAmount.currencyCode}
-                                                                        />
-                                                                    )}
+                                                                    <Price
+                                                                        className="text-lg font-semibold text-white"
+                                                                        amount={item.cost.totalAmount.amount}
+                                                                        currencyCode={item.cost.totalAmount.currencyCode}
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -552,8 +501,8 @@ export function CartPageContent() {
                                     >
                                         <badge.icon className="w-5 h-5 text-[#d4af37]" />
                                         <div>
-                                            <p className="text-xs font-medium text-white">{tCart(badge.labelKey)}</p>
-                                            <p className="text-xs text-neutral-500">{tCart(badge.descKey)}</p>
+                                            <p className="text-sm font-medium text-white">{tCart(badge.labelKey)}</p>
+                                            <p className="text-sm leading-relaxed text-neutral-400">{tCart(badge.descKey)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -573,37 +522,8 @@ export function CartPageContent() {
                                 </div>
                                 
                                 <div className="p-6 space-y-5">
-                                    {/* Member Savings Summary */}
-                                    {isMember && memberSavings.totalSavings > 0 && (
-                                        <m.div
-                                            variants={summaryItemVariants}
-                                            initial={false}
-                                            animate="visible"
-                                            className="p-4 rounded-xl bg-gradient-to-br from-[#d4af37]/10 to-transparent border border-[#d4af37]/20"
-                                        >
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Star className="w-4 h-4 text-[#d4af37]" />
-                                                <span className="text-sm font-medium text-[#d4af37]">
-                                                    {tCart("memberSavings")}
-                                                </span>
-                                            </div>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex justify-between text-neutral-400">
-                                                    <span>{tCart("page.originalTotal")}</span>
-                                                    <span>{formatPrice(memberSavings.originalTotal)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-neutral-300">
-                                                    <span>{tCart("page.memberPrice")}</span>
-                                                    <span>{formatPrice(memberSavings.memberTotal)}</span>
-                                                </div>
-                                                <Separator className="bg-[#d4af37]/20 my-2" />
-                                                <div className="flex justify-between font-semibold text-[#d4af37]">
-                                                    <span>{tCart("page.youSave")}</span>
-                                                    <span>{formatPrice(memberSavings.totalSavings)}</span>
-                                                </div>
-                                            </div>
-                                        </m.div>
-                                    )}
+                                    {membershipError && <p role="status" className="text-sm text-neutral-400">{tCart("page.membershipUnavailable")}</p>}
+                                    {isMember && <p className="text-sm text-neutral-400">{tCart("page.memberCheckoutNote")}</p>}
 
                                     {/* Summary Lines */}
                                     <div className="space-y-3">
@@ -611,27 +531,16 @@ export function CartPageContent() {
                                             <span>{tCart("page.subtotalLabel")}</span>
                                             <Price
                                                 className="font-medium"
-                                                amount={
-                                                    isMember
-                                                        ? memberSavings.memberTotal.toFixed(2)
-                                                        : cart.cost.subtotalAmount.amount
-                                                }
+                                                amount={cart.cost.subtotalAmount.amount}
                                                 currencyCode={cart.cost.subtotalAmount.currencyCode}
                                             />
                                         </div>
 
                                         <div className="flex justify-between text-neutral-400">
                                             <span>{tCart("page.shippingLabel")}</span>
-                                            {isMember ? (
-                                                <span className="text-[#d4af37] font-medium flex items-center gap-1">
-                                                    <Truck className="w-3 h-3" />
-                                                    {tCart("free")}
-                                                </span>
-                                            ) : (
-                                                <span className="text-neutral-500 text-sm">
-                                                    {tCart("calculatedAtCheckout")}
-                                                </span>
-                                            )}
+                                            <span className="text-neutral-500 text-sm">
+                                                {tCart("calculatedAtCheckout")}
+                                            </span>
                                         </div>
 
                                         <div className="flex justify-between text-neutral-400">
@@ -647,11 +556,7 @@ export function CartPageContent() {
                                             <span>{tCart("page.totalLabel")}
                                             </span>
                                             <Price
-                                                amount={
-                                                    isMember
-                                                        ? memberSavings.memberTotal.toFixed(2)
-                                                        : cart.cost.totalAmount.amount
-                                                }
+                                                amount={cart.cost.totalAmount.amount}
                                                 currencyCode={cart.cost.totalAmount.currencyCode}
                                             />
                                         </div>
@@ -672,7 +577,7 @@ export function CartPageContent() {
                                     </Button>
 
                                     {/* Security Note */}
-                                    <div className="flex items-center justify-center gap-2 pt-2 text-xs text-neutral-500">
+                                    <div className="flex items-center justify-center gap-2 pt-2 text-sm leading-relaxed text-neutral-400">
                                         <Shield className="w-3 h-3" />
                                         <span>{tCart("page.secureCheckout")}</span>
                                     </div>
@@ -700,7 +605,7 @@ function CheckoutButton({ isMember, t }: { isMember: boolean; t: Translator }) {
             ) : (
                 <div className="flex items-center justify-center gap-2">
                     {isMember && <Crown className="w-4 h-4" />}
-                    {isMember ? t("page.premiumCheckout") : t("proceedToCheckout")}
+                    {t("proceedToCheckout")}
                 </div>
             )}
         </Button>

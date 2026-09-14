@@ -4,7 +4,6 @@ import { m, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Grid } from "@/components/grid";
 import ProductGridItems from "@/components/layout/product-grid-items";
-import CollectionStats from "@/components/collection/collection-stats";
 import { StructuredData } from "@/components/structured-data";
 import { staggerSlow, fadeInUp, getAccessibleVariants } from "@/lib/animations";
 import { useAnimateOnMount } from "@/hooks/use-animate-on-mount";
@@ -33,29 +32,6 @@ export default function CollectionPageClient({
   // This fixes the issue where products don't show on first mobile navigation
   const isVisible = useAnimateOnMount(50);
 
-  // Prepare stats data
-  const stats = [
-    {
-      value: products?.length || 0,
-      suffix: "+",
-      label: t("premiumProducts"),
-    },
-    {
-      value: 100,
-      suffix: "%",
-      label: t("naturalIngredients"),
-    },
-    {
-      value: 98,
-      suffix: "%",
-      label: t("customerSatisfaction") || "Satisfaction",
-    },
-    {
-      value: 10,
-      suffix: "K+",
-      label: t("happyCustomers") || "Happy Customers",
-    },
-  ];
 
   return (
     <>
@@ -64,21 +40,23 @@ export default function CollectionPageClient({
         data={{
           name: collection.title,
           description: collection.description,
-          url: `https://atpgroupservices.ae/collections/${collection.handle}`,
+          url: `https://www.atpgroupservices.ae/${locale}/collections/${collection.handle}`,
         }}
       />
 
       {/* Stats Section */}
-      <CollectionStats stats={stats} isRTL={isRTL} />
+      <p className="bg-atp-off-white py-4 text-center" dir={isRTL ? "rtl" : "ltr"}>
+        <span className="font-bold">{products.length.toLocaleString(locale)}</span>{" "}{t("premiumProducts")}
+      </p>
 
       {/* Products Section */}
-      <section className="bg-atp-white py-16 md:py-24">
+      <section id="collection-products" className="scroll-mt-24 bg-atp-white py-8 md:py-12">
         <div className="container mx-auto px-4">
           <m.div
             initial="hidden"
             animate={isVisible ? "visible" : "hidden"}
             variants={staggerSlow}
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-6 md:mb-8"
           >
             <m.h2
               className="font-display text-heading md:text-display text-atp-black mb-4"

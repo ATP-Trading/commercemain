@@ -192,7 +192,7 @@ export function MembershipLifecycleStatus({ customerId, className }: MembershipL
           <Alert variant="destructive">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
-              Your membership has expired. Renew now to restore your benefits including 15% service discounts and free delivery.
+              Your membership has expired. Renew now to restore your benefits including 15% off eligible supplements and skincare, 10% off water and soil products, and free UAE delivery.
             </AlertDescription>
           </Alert>
         )}
@@ -207,7 +207,7 @@ export function MembershipLifecycleStatus({ customerId, className }: MembershipL
               ) : (
                 <XCircle className="h-3 w-3 text-red-500" />
               )}
-              <span>15% Service Discount</span>
+              <span>10–15% Category Discounts</span>
             </div>
             <div className="flex items-center gap-2">
               {validation.isValid ? (

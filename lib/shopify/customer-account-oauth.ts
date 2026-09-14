@@ -1,3 +1,4 @@
+import { customerAccountOrigin } from '@/lib/auth/site-origin'
 /**
  * Shopify Customer Account API OAuth Implementation
  * 
@@ -13,7 +14,7 @@ const getConfig = () => {
   const clientId = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID
   const clientSecret = process.env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET
   const shopId = process.env.SHOPIFY_SHOP_ID
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const siteUrl = customerAccountOrigin(process.env)
   
   // Custom OAuth endpoints (for stores with custom account domains)
   const customAuthUrl = process.env.SHOPIFY_CUSTOMER_ACCOUNT_AUTH_URL
@@ -493,14 +494,14 @@ export async function queryCustomerAccountApi<T>(
       status: response.status,
       bodyPreview: text.substring(0, 200),
     })
-    throw new Error(`Customer Account API returned non-JSON response (${response.status}). This usually means the API endpoint is incorrect or the access token is invalid.`)
+    throw Object.assign(new Error('Customer Account API returned an invalid response'), { status: response.status })
   }
 
   const result = await response.json()
 
   if (!response.ok) {
     console.error('[CustomerAccountAPI] Request failed:', result)
-    throw new Error(result.errors?.[0]?.message || 'Customer Account API request failed')
+    throw Object.assign(new Error(result.errors?.[0]?.message || 'Customer Account API request failed'), { status: response.status })
   }
 
   return result

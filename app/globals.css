@@ -173,7 +173,7 @@
 
   /* Improved focus indicators for accessibility */
   :focus-visible {
-    outline: 2px solid var(--atp-gold);
+    outline: 2px solid var(--color-atp-gold);
     outline-offset: 2px;
   }
 
@@ -189,7 +189,7 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 2px solid var(--atp-gold);
+    outline: 2px solid var(--color-atp-gold);
     outline-offset: 2px;
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
   }
@@ -856,4 +856,11 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+/* Shared reading rhythm for the active Arabic/English storefront. */
+[lang="ar"] { font-family: var(--font-cairo), system-ui, sans-serif; }
+[lang="ar"] :is(h1,h2,h3,h4) { letter-spacing: normal; }
+main :is(input,select,textarea) { font-size: 1rem; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }

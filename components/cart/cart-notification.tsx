@@ -9,7 +9,7 @@ import Image from "next/image"
 import Link from "next/link"
 import Price from "@/components/price"
 import type { CartItem } from "@/lib/shopify/types"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 
 interface CartNotificationProps {
     item: CartItem | null
@@ -19,6 +19,7 @@ interface CartNotificationProps {
 
 export function CartNotification({ item, isVisible, onClose }: CartNotificationProps) {
     const t = useTranslations('cart')
+    const locale = useLocale()
 
     console.log("🔔 CartNotification render:", {
         item: item ? {
@@ -82,6 +83,7 @@ export function CartNotification({ item, isVisible, onClose }: CartNotificationP
                                     variant="ghost"
                                     size="sm"
                                     onClick={onClose}
+                                    aria-label={locale === "ar" ? "إغلاق الإشعار" : "Close notification"}
                                     className="h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
                                 >
                                     <X className="w-4 h-4" />
@@ -141,7 +143,7 @@ export function CartNotification({ item, isVisible, onClose }: CartNotificationP
                                     size="sm"
                                     className="flex-1"
                                 >
-                                    <Link href="/cart">
+                                    <Link href={`/${locale}/cart`}>
                                         {t('viewCart')}
                                     </Link>
                                 </Button>

@@ -108,14 +108,7 @@ export const STORE_PAYMENT_METHODS: PaymentMethodConfig[] = [
         enabled: true,
         region: 'all',
     },
-    // Mada - Saudi payment network (for Arabic locale)
-    {
-        name: 'Mada',
-        type: 'card',
-        iconKey: 'mada',
-        enabled: true,
-        region: 'ar',
-    },
+
 ];
 
 // Helper function to get payment methods by locale

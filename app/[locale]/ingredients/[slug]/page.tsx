@@ -1,3 +1,4 @@
+import { EditorialSources } from "@/components/seo/editorial-sources";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -31,21 +32,21 @@ export async function generateMetadata({
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${ingredient.nameAr} | الدليل الكامل | ATP Group`
+    ? `${ingredient.nameAr} | الدليل الكامل | ATP Trading`
     : ingredient.metaTitle;
   const description = isAr
     ? ingredient.descriptionAr
     : ingredient.metaDescription;
-  const url = `https://atpgroupservices.ae/${locale}/ingredients/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/ingredients/${slug}`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/ingredients/${slug}`,
-        ar: `https://atpgroupservices.ae/ar/ingredients/${slug}`,
+        en: `https://www.atpgroupservices.ae/en/ingredients/${slug}`,
+        ar: `https://www.atpgroupservices.ae/ar/ingredients/${slug}`,
       },
     },
     openGraph: {
@@ -64,7 +65,7 @@ function generateIngredientStructuredData(
   locale: string
 ) {
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/ingredients/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/ingredients/${slug}`;
 
   return {
     "@context": "https://schema.org",
@@ -77,19 +78,17 @@ function generateIngredientStructuredData(
         url,
         author: {
           "@type": "Organization",
-          name: "ATP Group Services",
-          url: "https://atpgroupservices.ae",
+          name: "ATP Trading",
+          url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           logo: {
             "@type": "ImageObject",
-            url: "https://atpgroupservices.ae/logo.png",
+            url: "https://www.atpgroupservices.ae/images/atp-logo.png",
           },
         },
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
         articleSection: isAr ? "المكونات" : "Ingredients",
         about: {
           "@type": "Thing",
@@ -103,13 +102,13 @@ function generateIngredientStructuredData(
             "@type": "ListItem",
             position: 1,
             name: isAr ? "الرئيسية" : "Home",
-            item: `https://atpgroupservices.ae/${locale}`,
+            item: `https://www.atpgroupservices.ae/${locale}`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: isAr ? "المكونات" : "Ingredients",
-            item: `https://atpgroupservices.ae/${locale}/ingredients`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
@@ -161,7 +160,6 @@ export default async function IngredientsPage({ params }: IngredientsPageProps) 
 
       {/* Hero Section */}
       <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-atp-black via-atp-charcoal to-atp-black overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/ingredients-hero-bg.jpg')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-atp-black/80 via-transparent to-atp-black/40"></div>
 
         <div className="relative z-10 container-premium text-center text-atp-white px-4">
@@ -298,14 +296,14 @@ export default async function IngredientsPage({ params }: IngredientsPageProps) 
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
               {isAr
-                ? `منتجات تحتوي على ${ingredient.nameAr}`
-                : `Products Containing ${ingredient.name}`}
+                ? "منتجات ذات صلة"
+                : "Related Products"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto mb-4"></div>
             <p className="text-atp-charcoal max-w-2xl mx-auto">
               {isAr
-                ? `اكتشف منتجاتنا الممتازة المُحلاة بـ ${ingredient.nameAr}`
-                : `Discover our premium products formulated with ${ingredient.name}`}
+                ? "راجع ملصق كل منتج للتأكد من المكونات وطريقة الاستخدام."
+                : "Check each product label for its ingredients and directions."}
             </p>
           </div>
 
@@ -369,22 +367,23 @@ export default async function IngredientsPage({ params }: IngredientsPageProps) 
           </h2>
           <p className="text-xl text-atp-white/80 mb-8 max-w-2xl mx-auto">
             {isAr
-              ? `تسوق منتجاتنا المُحلاة بـ ${ingredient.nameAr} عالي الجودة`
-              : `Shop our premium products featuring ${ingredient.name}`}
+              ? "قارن المنتجات واقرأ تفاصيلها قبل الاختيار."
+              : "Compare products and read their details before choosing."}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a href="#products" className="btn-atp-gold">
               {isAr ? "تسوق المنتجات" : "Shop Products"}
             </a>
             <a
-              href="/contact"
+              href={`/${locale}/contact`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
-              {isAr ? "استشارة خبير" : "Expert Consultation"}
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
           </div>
         </div>
       </section>
+      <EditorialSources slug={slug} locale={locale} />
     </>
   );
 }

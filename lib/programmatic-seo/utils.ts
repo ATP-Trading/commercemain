@@ -10,18 +10,18 @@ export function generateCategoryMetadata(slug: string, locale: string): Metadata
   if (!category) return {};
 
   const isAr = locale === "ar";
-  const title = isAr ? `${category.nameAr} | ATP Group` : category.metaTitle;
+  const title = isAr ? `${category.nameAr} | ATP Trading` : category.metaTitle;
   const description = isAr ? category.descriptionAr : category.metaDescription;
-  const url = `https://atpgroupservices.ae/${locale}/category/${slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/category/${slug}`;
 
   return {
-    title,
+    title: { absolute: title.includes("ATP Trading") ? title : `${title} | ATP Trading` },
     description,
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/category/${slug}`,
-        ar: `https://atpgroupservices.ae/ar/category/${slug}`,
+        en: `https://www.atpgroupservices.ae/en/category/${slug}`,
+        ar: `https://www.atpgroupservices.ae/ar/category/${slug}`,
       },
     },
     openGraph: {
@@ -54,21 +54,21 @@ export function generateLocationMetadata(
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${serviceData.nameAr} في ${cityData.nameAr} | ATP Group`
-    : `${serviceData.name} in ${cityData.name} | Professional ${serviceData.name} Near You`;
+    ? `${serviceData.nameAr} في ${cityData.nameAr} | ATP Trading`
+    : `${serviceData.name} in ${cityData.name} | ATP Trading`;
   const description = isAr
-    ? `ابحث عن ${serviceData.nameAr} في ${cityData.nameAr}. ATP Group تقدم ${serviceData.nameAr} الاحترافي مع توصيل سريع في ${cityData.nameAr}.`
-    : `Looking for ${serviceData.name} in ${cityData.name}? ATP Group offers professional ${serviceData.name} with fast delivery in ${cityData.name}.`;
-  const url = `https://atpgroupservices.ae/${locale}/${service}/${city}`;
+    ? `تصفح ${serviceData.nameAr} وراجع معلومات المنتجات والتوصيل إلى ${cityData.nameAr} مع ATP Trading.`
+    : `Browse ${serviceData.name} and review product details and delivery to ${cityData.name} with ATP Trading.`;
+  const url = `https://www.atpgroupservices.ae/${locale}/${service}/${city}`;
 
   return {
-    title,
+    title: { absolute: title.includes("ATP Trading") ? title : `${title} | ATP Trading` },
     description,
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/${service}/${city}`,
-        ar: `https://atpgroupservices.ae/ar/${service}/${city}`,
+        en: `https://www.atpgroupservices.ae/en/${service}/${city}`,
+        ar: `https://www.atpgroupservices.ae/ar/${service}/${city}`,
       },
     },
     openGraph: {
@@ -106,7 +106,7 @@ export function generateCategoryStructuredData(
   locale: string
 ) {
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/category/${category.slug}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/category/${category.slug}`;
 
   return {
     "@context": "https://schema.org",
@@ -125,7 +125,7 @@ export function generateCategoryStructuredData(
             item: {
               "@type": "Product",
               name: product.title,
-              url: `https://atpgroupservices.ae/${locale}/product/${product.handle}`,
+              url: `https://www.atpgroupservices.ae/${locale}/product/${product.handle}`,
               image: product.featuredImage?.url,
               offers: {
                 "@type": "Offer",
@@ -145,13 +145,13 @@ export function generateCategoryStructuredData(
               "@type": "ListItem",
               position: 1,
               name: isAr ? "الرئيسية" : "Home",
-              item: `https://atpgroupservices.ae/${locale}`,
+              item: `https://www.atpgroupservices.ae/${locale}`,
             },
             {
               "@type": "ListItem",
               position: 2,
               name: isAr ? "الفئات" : "Categories",
-              item: `https://atpgroupservices.ae/${locale}/categories`,
+              item: `https://www.atpgroupservices.ae/${locale}/search`,
             },
             {
               "@type": "ListItem",
@@ -195,23 +195,17 @@ export function generateLocationStructuredData(
   if (!serviceData || !cityData) return null;
 
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/${service}/${city}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/${service}/${city}`;
 
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "LocalBusiness",
-        "@id": `${url}/#localbusiness`,
-        name: `ATP Group Services - ${isAr ? serviceData.nameAr : serviceData.name}`,
+        "@type": "CollectionPage",
+        "@id": `${url}/#collection`,
+        name: `ATP Trading - ${isAr ? serviceData.nameAr : serviceData.name}`,
         description: `${isAr ? serviceData.nameAr : serviceData.name} in ${isAr ? cityData.nameAr : cityData.name}`,
         url,
-        telephone: "+971-4-XXX-XXXX",
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: cityData.name,
-          addressCountry: "AE",
-        },
         areaServed: {
           "@type": "City",
           name: cityData.name,
@@ -224,7 +218,7 @@ export function generateLocationStructuredData(
             itemOffered: {
               "@type": "Product",
               name: product.title,
-              url: `https://atpgroupservices.ae/${locale}/product/${product.handle}`,
+              url: `https://www.atpgroupservices.ae/${locale}/product/${product.handle}`,
             },
           })),
         },
@@ -236,19 +230,19 @@ export function generateLocationStructuredData(
             "@type": "ListItem",
             position: 1,
             name: isAr ? "الرئيسية" : "Home",
-            item: `https://atpgroupservices.ae/${locale}`,
+            item: `https://www.atpgroupservices.ae/${locale}`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: isAr ? "الخدمات" : "Services",
-            item: `https://atpgroupservices.ae/${locale}/services`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
             position: 3,
             name: isAr ? serviceData.nameAr : serviceData.name,
-            item: `https://atpgroupservices.ae/${locale}/${service}`,
+            item: `https://www.atpgroupservices.ae/${locale}/collections/${serviceData.collection}`,
           },
           {
             "@type": "ListItem",

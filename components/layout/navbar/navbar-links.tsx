@@ -1,4 +1,5 @@
 "use client";
+import { normalizeNavigationUrl, localizeNavigationPath } from "@/lib/navigation-url";
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -14,119 +15,6 @@ const collectionMapping = {
     "skincare-supplements": "amazing-thai-products",
     "water-soil-technology": "water-soil-technology-solutions",
     "ems-training": "ems",
-};
-
-// Helper for mock data (moved from index.tsx)
-const getMockProductsForCollection = (menuHandle: string): Product[] => {
-    // ... Copied mock data logic ...
-    // For brevity in this extraction, assumes the same logic is needed. 
-    // I will include the full mock data dictionary here to ensure functionality.
-    const mockData: Record<string, Product[]> = {
-        "skincare-supplements": [
-            {
-                id: "mock-1",
-                handle: "smone-brightening-cream",
-                title: "S'MONE Brightening Cream – Advanced Radiance Formula",
-                description: "Advanced brightening cream for radiant skin",
-                descriptionHtml: "<p>Advanced brightening cream for radiant skin</p>",
-                featuredImage: {
-                    url: "/anti-aging-serum.png",
-                    altText: "S'MONE Brightening Cream",
-                    width: 400,
-                    height: 400,
-                },
-                priceRange: {
-                    minVariantPrice: { amount: "170.0", currencyCode: "AED" },
-                    maxVariantPrice: { amount: "170.0", currencyCode: "AED" },
-                },
-                availableForSale: true,
-                tags: [],
-                variants: [],
-                images: [],
-                options: [],
-                seo: { title: "", description: "" },
-                updatedAt: new Date().toISOString(),
-            },
-            {
-                id: "mock-2",
-                handle: "dna-hya-facial-cleanser",
-                title: "DNA HYA Facial Cleanser – With Salmon DNA & Hyaluronic Acid",
-                description: "Advanced facial cleanser with DNA technology",
-                descriptionHtml: "<p>Advanced facial cleanser with DNA technology</p>",
-                featuredImage: {
-                    url: "/acne-treatment-products.png",
-                    altText: "DNA HYA Facial Cleanser",
-                    width: 400,
-                    height: 400,
-                },
-                priceRange: {
-                    minVariantPrice: { amount: "120.0", currencyCode: "AED" },
-                    maxVariantPrice: { amount: "120.0", currencyCode: "AED" },
-                },
-                availableForSale: true,
-                tags: [],
-                variants: [],
-                images: [],
-                options: [],
-                seo: { title: "", description: "" },
-                updatedAt: new Date().toISOString(),
-            },
-        ],
-        "water-soil-technology": [
-            {
-                id: "mock-3",
-                handle: "water-purification-system",
-                title: "Advanced Water Purification System",
-                description: "Professional water treatment solution",
-                descriptionHtml: "<p>Professional water treatment solution</p>",
-                featuredImage: {
-                    url: "/hero-water-tech.png",
-                    altText: "Water Purification System",
-                    width: 400,
-                    height: 400,
-                },
-                priceRange: {
-                    minVariantPrice: { amount: "2500.0", currencyCode: "AED" },
-                    maxVariantPrice: { amount: "2500.0", currencyCode: "AED" },
-                },
-                availableForSale: true,
-                tags: [],
-                variants: [],
-                images: [],
-                options: [],
-                seo: { title: "", description: "" },
-                updatedAt: new Date().toISOString(),
-            },
-        ],
-        "ems-training": [
-            {
-                id: "mock-4",
-                handle: "ems-training-package",
-                title: "Professional EMS Training Package",
-                description: "Complete EMS training certification program",
-                descriptionHtml: "<p>Complete EMS training certification program</p>",
-                featuredImage: {
-                    url: "/corporate-business-plan.png",
-                    altText: "EMS Training Package",
-                    width: 400,
-                    height: 400,
-                },
-                priceRange: {
-                    minVariantPrice: { amount: "1500.0", currencyCode: "AED" },
-                    maxVariantPrice: { amount: "1500.0", currencyCode: "AED" },
-                },
-                availableForSale: true,
-                tags: [],
-                variants: [],
-                images: [],
-                options: [],
-                seo: { title: "", description: "" },
-                updatedAt: new Date().toISOString(),
-            },
-        ],
-    };
-
-    return mockData[menuHandle] || [];
 };
 
 interface NavbarLinksProps {
@@ -157,32 +45,12 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
     const atpMembershipText = t('atpMembership');
     const skincareSupplementsText = t('skincareSupplements');
     const waterSoilTechText = t('waterSoilTechnology');
-    const emsTrainingText = t('emsTraining');
     const aboutUsText = t('aboutUs');
     const contactUsText = t('contactUs');
 
-    const withLocale = useCallback(
-        (path: string) => {
-            if (path.startsWith("http") || path.startsWith("mailto:") || path.startsWith("#")) {
-                return path;
-            }
-            if (path.startsWith(`/${locale}`)) {
-                return path;
-            }
-            const normalized = path.startsWith("/") ? path : `/${path}`;
-            return `/${locale}${normalized}`;
-        },
-        [locale]
-    );
+    const withLocale = useCallback((path: string) => localizeNavigationPath(path, locale), [locale]);
 
-    const normalizeMenuUrl = useCallback((url?: string | null) => {
-        if (!url) return "";
-        try {
-            return new URL(url).pathname;
-        } catch {
-            return url;
-        }
-    }, []);
+    const normalizeMenuUrl = normalizeNavigationUrl;
 
     const getMenuSlug = useCallback((item: ShopifyMenuItem) => {
         const urlPath = normalizeMenuUrl(item.url);
@@ -295,11 +163,6 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
                     handle: "water-soil-technology",
                 },
                 {
-                    title: emsTrainingText,
-                    path: `/${locale}/ems`,
-                    handle: "ems-training",
-                },
-                {
                     title: aboutUsText,
                     path: `/${locale}/about`,
                     handle: "about",
@@ -316,7 +179,6 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
             atpMembershipText,
             skincareSupplementsText,
             waterSoilTechText,
-            emsTrainingText,
             aboutUsText,
             contactUsText,
         ]
@@ -441,8 +303,7 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
             setMenuProducts((prev) => ({ ...prev, [menuHandle]: limitedProducts }));
         } catch (error) {
             navLogger.error(`Failed to fetch products for ${menuHandle}:`, error);
-            const mockProducts = getMockProductsForCollection(menuHandle);
-            setMenuProducts((prev) => ({ ...prev, [menuHandle]: mockProducts }));
+            setMenuProducts((prev) => ({ ...prev, [menuHandle]: [] }));
         } finally {
             setLoadingProducts((prev) => ({ ...prev, [menuHandle]: false }));
         }
@@ -513,10 +374,10 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
                     >
                         <Link
                             href={item.path}
-                            className="text-white hover:text-yellow-400 transition-all duration-300 text-xs font-medium tracking-wide uppercase relative group whitespace-nowrap"
+                            className="text-white hover:text-atp-gold transition-all duration-300 inline-flex min-h-9 items-center text-sm font-medium tracking-normal relative group whitespace-nowrap"
                         >
                             {item.title}
-                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-yellow-400 transition-all duration-300 group-hover:w-full"></span>
+                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-atp-gold transition-all duration-300 group-hover:w-full"></span>
                         </Link>
                     </div>
                 ))}
@@ -533,10 +394,10 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
                     >
                         <Link
                             href={item.path}
-                            className="text-white hover:text-yellow-400 transition-all duration-300 text-xs font-medium tracking-wide uppercase relative group whitespace-nowrap"
+                            className="text-white hover:text-atp-gold transition-all duration-300 inline-flex min-h-9 items-center text-sm font-medium tracking-normal relative group whitespace-nowrap"
                         >
                             {item.title}
-                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-yellow-400 transition-all duration-300 group-hover:w-full"></span>
+                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-atp-gold transition-all duration-300 group-hover:w-full"></span>
                         </Link>
                     </div>
                 ))}

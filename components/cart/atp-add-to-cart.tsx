@@ -1,10 +1,12 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Crown } from "lucide-react";
 import clsx from "clsx";
 import { MembershipBadge } from "@/components/membership/membership-badge";
-import { useAtpMembership, useMembershipDiscount } from "@/hooks/use-atp-membership";
+import { useMembership } from "@/hooks/use-membership";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
 import { useTranslations } from "next-intl";
@@ -63,20 +65,6 @@ function SubmitButton({
 
   return (
     <div className={`space-y-3 ${isRTL ? "font-arabic" : ""}`}>
-      {/* Member savings indicator */}
-      {isMember && memberSavings && memberSavings > 0 && (
-        <div
-          className={`flex items-center justify-center gap-2 text-sm ${
-            isRTL ? "flex-row-reverse text-right" : ""
-          }`}
-        >
-          <MembershipBadge tier="premium" className="text-xs" />
-          <span className="text-atp-gold font-medium">
-            {t('saveMembership', { savings: memberSavings })}
-          </span>
-        </div>
-      )}
-
       <m.button
         type="submit"
         aria-label={t('addToCart')}
@@ -100,7 +88,11 @@ function SubmitButton({
 
 export function ATPAddToCart({ product }: { product: Product }) {
   const { addCartItem } = useCart();
-  const { isActive: isMember } = useAtpMembership();
+  const { isRTL } = useRTL();
+  const [failed, setFailed] = useState(false);
+  const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
+  const { isMember } = useMembership();
   const { calculateServiceDiscount } = useMembershipDiscount();
   const { showNotification } = useCartNotification();
   const { quantity } = useQuantity();
@@ -114,6 +106,8 @@ export function ATPAddToCart({ product }: { product: Product }) {
       : 0;
 
   const handleAddToCart = async () => {
+    if (submitting.current) return;
+    setFailed(false);
     console.log("🛒 Add to cart clicked!", {
       selectedVariant,
       product,
@@ -127,6 +121,8 @@ export function ATPAddToCart({ product }: { product: Product }) {
         quantity
       );
 
+      submitting.current = true;
+      setPending(true);
       try {
         // Add the item multiple times based on selected quantity
         for (let i = 0; i < quantity; i++) {
@@ -163,6 +159,10 @@ export function ATPAddToCart({ product }: { product: Product }) {
         showNotification(cartItem);
       } catch (error) {
         console.error("❌ Error adding item to cart:", error);
+        setFailed(true);
+      } finally {
+        submitting.current = false;
+        setPending(false);
       }
     } else {
       console.error("❌ No variant selected");
@@ -176,12 +176,15 @@ export function ATPAddToCart({ product }: { product: Product }) {
         await handleAddToCart();
       }}
     >
+      <fieldset disabled={pending} aria-busy={pending}>
       <SubmitButton
         availableForSale={availableForSale}
         selectedVariantId={selectedVariantId}
         isMember={isMember}
         memberSavings={memberSavings}
       />
+      </fieldset>
+      {failed && <p role="alert" className="mt-3 text-sm text-red-600">{isRTL ? "لم تكتمل الإضافة. راجع سلتك قبل المحاولة مجددًا." : "The addition did not complete. Check your cart before trying again."}</p>}
     </form>
   );
 }

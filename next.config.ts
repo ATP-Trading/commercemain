@@ -1,5 +1,6 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import path from 'path';
+import { indexingHeaders } from './lib/indexing-headers';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -98,6 +99,7 @@ export default withNextIntl({
   },
   async headers() {
     return [
+      ...indexingHeaders,
       {
         source: "/(.*)",
         headers: [

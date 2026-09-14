@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Search, User, X, LogOut } from "lucide-react";
 import { m, AnimatePresence } from "framer-motion";
-import { useCustomer } from "@/hooks/use-customer";
+import { useCustomerOAuth } from "@/hooks/use-customer-oauth";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 import { ATPCartModal } from "@/components/cart/atp-cart-modal";
@@ -18,7 +18,7 @@ interface NavbarActionsProps {
 
 export function NavbarActions({ locale, isRTL }: NavbarActionsProps) {
     const t = useTranslations('navbar');
-    const { customer, logout } = useCustomer();
+    const { customer, logout } = useCustomerOAuth();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     return (
@@ -44,12 +44,12 @@ export function NavbarActions({ locale, isRTL }: NavbarActionsProps) {
                         <Link
                             href={`/${locale}/account`}
                             className="p-2 sm:p-3 hover:text-yellow-400 hover:bg-gray-900 rounded-full transition-all duration-300 hidden sm:block"
-                            title={t('welcome', { name: customer.firstName })}
+                            title={t('welcome', { name: customer.firstName || (isRTL ? 'عميلنا' : 'customer') })}
                         >
                             <User className="w-4 h-4 sm:w-5 sm:h-5" />
                         </Link>
                         <button
-                            onClick={logout}
+                            onClick={() => logout(`/${locale}`)}
                             className="p-2 sm:p-3 hover:text-red-400 hover:bg-gray-900 rounded-full transition-all duration-300 hidden sm:block"
                             title={t('signOut')}
                         >

@@ -1,3 +1,4 @@
+import { safeReturnPath } from '@/lib/auth/return-path'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   generateCodeVerifier,
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Get optional return URL from query params
     const { searchParams } = new URL(request.url)
-    const returnTo = searchParams.get('returnTo') || '/account'
+    const returnTo = safeReturnPath(searchParams.get('returnTo'), '/account')
 
     // Generate PKCE values
     const codeVerifier = generateCodeVerifier()

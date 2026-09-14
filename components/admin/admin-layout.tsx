@@ -29,7 +29,7 @@ export function AdminLayout({ children, title = 'Admin Dashboard' }: AdminLayout
             
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-600">
-                ATP Group Services
+                ATP Trading
               </div>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function AdminLayout({ children, title = 'Admin Dashboard' }: AdminLayout
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div>
-              © 2024 ATP Group Services - Admin Dashboard
+              © 2024 ATP Trading - Admin Dashboard
             </div>
             <div className="flex items-center space-x-4">
               <span>Version 1.0</span>

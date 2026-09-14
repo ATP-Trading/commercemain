@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
 
         try {
             // Fetch dynamic payment settings from Shopify
-            // Map locale to country code roughly
-            const countryCode = locale === 'ar' ? 'AE' : 'US';
+            // Both storefront languages serve the UAE market.
+            const countryCode = 'AE';
 
             const paymentSettings = await getShopPaymentSettings({
                 language: locale,

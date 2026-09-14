@@ -3,7 +3,7 @@
 import { MemberPricing } from "./member-pricing";
 import { FreeDeliveryIndicator } from "./free-delivery-indicator";
 import { MembershipBadge } from "./membership-badge";
-import { useMembershipDiscount } from "@/hooks/use-atp-membership";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { UAE_DIRHAM_CODE } from "@/lib/constants";
 import { DirhamSymbol } from "@/components/icons/dirham-symbol";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 
 interface EnhancedMemberPricingProps {
   originalPrice: string;
+  discountRate?: number;
   serviceId?: string;
   currencyCode?: string;
   className?: string;
@@ -23,6 +24,7 @@ interface EnhancedMemberPricingProps {
 
 export function EnhancedMemberPricing({
   originalPrice,
+  discountRate = 0.15,
   serviceId,
   currencyCode = UAE_DIRHAM_CODE,
   className = "",
@@ -31,7 +33,7 @@ export function EnhancedMemberPricing({
   productType = "service",
 }: EnhancedMemberPricingProps) {
   const t = useTranslations('membership');
-  const { hasActiveMembership, checkFreeDeliveryEligibility } =
+  const { hasActiveMembership, isLoading } =
     useMembershipDiscount();
   const price = Number.parseFloat(originalPrice);
 
@@ -41,17 +43,13 @@ export function EnhancedMemberPricing({
       <div className={`space-y-3 ${className}`}>
         <MemberPricing
           originalPrice={originalPrice}
+          discountRate={discountRate}
           serviceId={serviceId}
           currencyCode={currencyCode}
           showFreeDelivery={showFreeDelivery && productType === "product"}
         />
 
-        {/* Free delivery indicator for products */}
-        {showFreeDelivery &&
-          productType === "product" &&
-          checkFreeDeliveryEligibility() && (
-            <FreeDeliveryIndicator variant="inline" size="sm" />
-          )}
+
       </div>
     );
   }
@@ -68,22 +66,22 @@ export function EnhancedMemberPricing({
       </div>
 
       {/* Membership CTA */}
-      {showMembershipCTA && (
+      {showMembershipCTA && !isLoading && (
         <Card className="bg-atp-gold/5 border-atp-gold/20">
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <MembershipBadge tier="atp" className="text-xs" />
+                  <MembershipBadge tier="atp" discount={Math.round(discountRate * 100)} className="text-xs" />
                 </div>
                 <p className="text-sm font-medium text-atp-black mb-1">
-                  {t('save15Percent')}
+                  {t('savePercent', { percent: Math.round(discountRate * 100) })}
                 </p>
                 <p className="text-xs text-muted-foreground mb-2">
                   {t('memberPriceLabel')}{" "}
                   <span className="font-semibold text-atp-gold">
                     <DirhamSymbol className="inline w-3 h-3" />
-                    {(price * 0.85).toFixed(2)}
+                    {(price * (1 - discountRate)).toFixed(2)}
                   </span>
                   {productType === "product" && t('plusFreeDelivery')}
                 </p>

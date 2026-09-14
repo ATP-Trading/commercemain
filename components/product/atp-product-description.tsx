@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
+import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
 import { EnhancedMemberPricing } from "@/components/membership/enhanced-member-pricing";
 import { FreeDeliveryIndicator } from "@/components/membership/free-delivery-indicator";
 import Price from "@/components/price";
@@ -11,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrustBadges } from "@/components/ui/trust-badges";
 import { ProductReviews } from "@/components/reviews/product-reviews";
-import { useAtpMembership } from "@/hooks/use-atp-membership";
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
 import { useTranslations } from "next-intl";
@@ -21,7 +21,7 @@ import {
   getLocalizedProductDescription,
   getLocalizedProductDescriptionHtml,
 } from "@/lib/shopify/i18n-queries";
-import { Award, Leaf, Shield, Star } from "lucide-react";
+import { Award, Leaf, Star } from "lucide-react";
 import { VariantSelector } from "./variant-selector";
 import { QuantitySelector, QuantityProvider } from "./quantity-selector";
 import { StickyAddToCart } from "./sticky-add-to-cart";
@@ -37,7 +37,6 @@ export function ATPProductDescription({
   product: Product;
   locale: "en" | "ar";
 }) {
-  const { isActive: isMember } = useAtpMembership();
   const t = useTranslations('product');
   const { isRTL } = useRTL();
   const { price, selectedVariant } = useSelectedVariant(product);
@@ -115,10 +114,11 @@ export function ATPProductDescription({
           </h1>
 
           {/* Enhanced ATP Member Pricing Display - Hidden for membership product */}
-          {!isMembershipProduct ? (
+          {!isMembershipProduct && isMemberDiscountEligible(product) ? (
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <EnhancedMemberPricing
                 originalPrice={price.amount}
+                discountRate={getMemberDiscountRate(product)}
                 serviceId="cosmetics-supplements"
                 currencyCode={price.currencyCode}
                 showFreeDelivery={true}
@@ -130,14 +130,17 @@ export function ATPProductDescription({
             /* Simple price display for membership product */
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-atp-gold">
+                <span className="text-2xl font-semibold text-neutral-900">
                   <Price
                     amount={price.amount}
+                    className="text-2xl font-semibold"
                     currencyCode={price.currencyCode}
                   />
                 </span>
-                <span className="text-sm text-muted-foreground">/year</span>
+                {isMembershipProduct && <span className="text-base text-neutral-600">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
+              {isMembershipProduct && <p className="mt-3 text-base leading-relaxed text-neutral-700">{locale === 'ar' ? 'خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة، مع توصيل مجاني داخل الإمارات.' : '15% off eligible supplements and skincare, and 10% off water and soil products, with free delivery within the UAE.'}</p>}
+              {isMembershipProduct && <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600">{locale === 'ar' ? 'تتجدد العضوية تلقائيًا كل سنة. يمكنك إلغاء التجديد من حسابك أو بالتواصل معنا. راجع شروط الاشتراك قبل الدفع.' : 'Membership renews automatically each year. You can cancel renewal through your account or by contacting us. Review the subscription terms before payment.'}</p>}
             </div>
           )}
 
@@ -177,48 +180,7 @@ export function ATPProductDescription({
             />
           </div>
 
-          {/* Product Quality Indicators */}
-          <div
-            className={`flex flex-wrap gap-2 mb-4 ${isRTL ? "flex-row-reverse justify-end" : ""
-              }`}
-          >
-            {isWellnessProduct && (
-              <>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Shield className="w-3 h-3" />
-                  {t('labTested')}
-                </div>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Leaf className="w-3 h-3" />
-                  {t('naturalIngredients')}
-                </div>
-              </>
-            )}
-            {isTechProduct && (
-              <>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Award className="w-3 h-3" />
-                  {t('germanEngineering')}
-                </div>
-                <div
-                  className={`flex items-center gap-1 text-xs text-muted-foreground ${isRTL ? "flex-row-reverse" : ""
-                    }`}
-                >
-                  <Shield className="w-3 h-3" />
-                  {t('professionalGrade')}
-                </div>
-              </>
-            )}
-          </div>
+
         </div>
 
         {/* Variant Selector (only show if there are actual variants with options) */}
@@ -265,13 +227,6 @@ export function ATPProductDescription({
         <div className="mb-6 border-b border-atp-light-gray pb-6">
           <TrustBadges variant="horizontal" />
         </div>
-
-        {/* Free Delivery Indicator for Members */}
-        {isMember && (
-          <div className="mb-6">
-            <FreeDeliveryIndicator variant="card" />
-          </div>
-        )}
 
         {/* Product Description - Structured Accordion Layout */}
         {(localizedDescriptionHtml || product.descriptionHtml) && (

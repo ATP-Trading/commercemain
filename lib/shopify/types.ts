@@ -261,6 +261,7 @@ export type ShopifyProduct = {
   };
   // Collections that include this product
   collections?: Connection<{
+    id?: string;
     handle: string;
     title: string;
   }>;
@@ -271,21 +272,24 @@ export type ShopifyCartOperation = {
     cart: ShopifyCart;
   };
   variables: {
+    language?: string;
     cartId: string;
   };
 };
 
 export type ShopifyCreateCartOperation = {
-  data: { cartCreate: { cart: ShopifyCart } };
+  data: { cartCreate: { cart: ShopifyCart; userErrors?: { message: string }[] } };
 };
 
 export type ShopifyAddToCartOperation = {
   data: {
     cartLinesAdd: {
       cart: ShopifyCart;
+      userErrors?: { message: string }[];
     };
   };
   variables: {
+    language?: string;
     cartId: string;
     lines: {
       merchandiseId: string;
@@ -301,6 +305,7 @@ export type ShopifyRemoveFromCartOperation = {
     };
   };
   variables: {
+    language?: string;
     cartId: string;
     lineIds: string[];
   };
@@ -313,6 +318,7 @@ export type ShopifyUpdateCartOperation = {
     };
   };
   variables: {
+    language?: string;
     cartId: string;
     lines: {
       id: string;

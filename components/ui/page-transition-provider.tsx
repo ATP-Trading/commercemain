@@ -3,13 +3,11 @@
 /**
  * PageTransitionProvider
  * 
- * Wraps route content with AnimatePresence and PageTransition
- * to enable smooth page transitions in Next.js App Router.
+ * Keep one route subtree mounted. Exit animations must not retain App Router
+ * content (including its metadata) after navigation.
  */
 
 import { type ReactNode } from "react";
-import { AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
 import { PageTransition } from "@/components/ui/page-transition";
 
 interface PageTransitionProviderProps {
@@ -23,13 +21,9 @@ export function PageTransitionProvider({
   className,
   variant = "slideUp",
 }: PageTransitionProviderProps) {
-  const pathname = usePathname();
-
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <PageTransition key={pathname} variant={variant} className={className}>
+    <PageTransition variant={variant} className={className}>
         {children}
-      </PageTransition>
-    </AnimatePresence>
+    </PageTransition>
   );
 }

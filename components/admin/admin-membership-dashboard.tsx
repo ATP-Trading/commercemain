@@ -116,7 +116,7 @@ export function AdminMembershipDashboard({ className }: AdminMembershipDashboard
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Membership Dashboard</h1>
           <p className="text-muted-foreground">
-            Manage ATP Group Services memberships and view analytics
+            Manage ATP Trading memberships and view analytics
           </p>
         </div>
         <div className="flex items-center space-x-2">

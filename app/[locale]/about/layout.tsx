@@ -17,25 +17,25 @@ export async function generateMetadata({
   const isArabic = locale === 'ar'
   
   const title = isArabic 
-    ? 'عن مجموعة ATP للخدمات | حلول العافية المتميزة'
-    : 'About ATP Group Services | Premium Wellness Solutions'
+    ? 'عن ATP Trading | حلول العافية المتميزة'
+    : 'About ATP Trading | Premium Wellness Solutions'
   
   const description = isArabic
     ? 'اكتشف مهمتنا في تقديم حلول العافية المبتكرة التي تغذي العقل والجسم والروح من خلال تجارب متميزة وتقنية متطورة.'
     : 'Discover our mission to deliver innovative wellness solutions that nurture the mind, body, and spirit through premium experiences and cutting-edge technology.'
 
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,
       description,
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
-      url: `https://atpgroupservices.ae/${locale}/about`,
-      siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
+      url: `https://www.atpgroupservices.ae/${locale}/about`,
+      siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
       images: [{
-        url: 'https://atpgroupservices.ae/og-about.jpg',
+        url: 'https://www.atpgroupservices.ae/opengraph-image',
         width: 1200,
         height: 630,
         alt: title,
@@ -45,13 +45,13 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: ['https://atpgroupservices.ae/og-about.jpg'],
+      images: ['https://www.atpgroupservices.ae/opengraph-image'],
     },
     alternates: {
-      canonical: `https://atpgroupservices.ae/${locale}/about`,
+      canonical: `https://www.atpgroupservices.ae/${locale}/about`,
       languages: {
-        en: 'https://atpgroupservices.ae/en/about',
-        ar: 'https://atpgroupservices.ae/ar/about',
+        en: 'https://www.atpgroupservices.ae/en/about',
+        ar: 'https://www.atpgroupservices.ae/ar/about',
       },
     },
   }

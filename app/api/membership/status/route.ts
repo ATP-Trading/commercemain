@@ -1,73 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { isLoggedIn } from '@/lib/shopify/customer-account-oauth'
-import { AtpMembershipService } from '@/lib/services/atp-membership-service'
+import { NextResponse } from 'next/server'
+import { getValidAccessToken, queryCustomerAccountApi } from '@/lib/shopify/customer-account-oauth'
+import { config } from '@/lib/config'
+import { resolveMembershipEntitlement } from '@/lib/shopify/membership-entitlement'
 
-export async function GET(request: NextRequest) {
+const noMembership = { isMember: false, tier: null, discountRate: 0, membership: null }
+const headers = { 'Cache-Control': 'private, no-store' }
+
+export async function GET() {
   try {
-    const loggedIn = await isLoggedIn()
+    const accessToken = await getValidAccessToken()
+    if (!accessToken) return NextResponse.json(noMembership, { headers })
 
-    if (!loggedIn) {
-      return NextResponse.json({
-        isMember: false,
-        tier: null,
-        discountRate: 0,
-        membership: null,
-      })
-    }
-
-    const customerId = request.nextUrl.searchParams.get('customerId')
-    if (!customerId) {
-      return NextResponse.json(
-        {
-          isMember: false,
-          tier: null,
-          discountRate: 0,
-          membership: null,
-          error: 'customerId is required',
-        },
-        { status: 400 }
-      )
-    }
-
-    const membershipService = AtpMembershipService.getInstance()
-    const membershipResult = await membershipService.getMembership(customerId)
-
-    if (!membershipResult.success) {
-      return NextResponse.json(
-        {
-          isMember: false,
-          tier: null,
-          discountRate: 0,
-          membership: null,
-          error: membershipResult.error?.message || 'Failed to load membership',
-        },
-        { status: 500 }
-      )
-    }
-
-    const membership = membershipResult.data
-    const validation = membershipService.validateMembership(membership)
-    const isActiveMember = !!membership && validation.isActive
-
-    return NextResponse.json({
-      isMember: isActiveMember,
-      tier: isActiveMember ? 'atp' : null,
-      discountRate: isActiveMember ? membership.benefits.serviceDiscount : 0,
-      membership,
-    })
-  } catch (error) {
-    console.error('[Membership/Status] Failed to load membership status:', error)
-    return NextResponse.json(
-      {
-        isMember: false,
-        tier: null,
-        discountRate: 0,
-        membership: null,
-        error: 'Failed to load membership status',
-      },
-      { status: 500 }
+    // Resolve the customer from the authenticated session, never a caller-supplied ID.
+    const identity = await queryCustomerAccountApi<{ customer: { id: string } }>(
+      accessToken, 'query MembershipIdentity { customer { id } }'
     )
+    if (identity.errors?.length || !identity.data?.customer?.id) {
+      return NextResponse.json({ ...noMembership, error: 'Unable to verify customer' }, { status: 401, headers })
+    }
+    const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN
+    if (!adminToken || !config.shopify.domain) throw new Error('Membership lookup is not configured')
+    const response = await fetch(`https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/graphql.json`, {
+      method: 'POST', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': adminToken },
+      body: JSON.stringify({
+        query: 'query MembershipStatus($id: ID!) { customer(id: $id) { tags metafield(namespace: "appstle_membership", key: "subscriptions") { value } } }',
+        variables: { id: identity.data.customer.id },
+      }),
+    })
+    if (!response.ok) throw new Error('Membership lookup failed')
+    const result = await response.json()
+    if (result.errors?.length) throw new Error('Membership lookup failed')
+    if (!result.data?.customer) throw new Error('Customer lookup failed')
+    const subscription = resolveMembershipEntitlement(result.data.customer.tags, result.data.customer.metafield?.value)
+    if (!subscription) return NextResponse.json(noMembership, { headers })
+    return NextResponse.json({
+      isMember: true, tier: 'atp', discountRate: 0.15,
+      // No invented expiry: Appstle owns subscriptions; merchant grants last until the tag is removed.
+      membership: subscription,
+    }, { headers })
+  } catch {
+    return NextResponse.json({ ...noMembership, error: 'Unable to load membership status' }, { status: 503, headers })
   }
 }
-
 export const dynamic = 'force-dynamic'

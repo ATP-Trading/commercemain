@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { getProducts } from "@/lib/shopify/server";
 import { defaultSort, sorting } from "@/lib/constants";
+import { matchesLocalizedTitle } from "@/lib/localized-search";
 import SearchResults from "./search-results";
+
+export async function generateMetadata({ params }: { params: Promise<{locale: string}> }): Promise<Metadata> {
+ const { locale } = await params;
+ return { title: locale === 'ar' ? 'البحث عن المنتجات' : 'Search products', robots: { index: false, follow: true } };
+}
 
 // Force dynamic rendering - this page uses no-store fetch for fresh Shopify data
 export const dynamic = 'force-dynamic';
@@ -10,7 +17,7 @@ export default async function SearchPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // Await the params and searchParams
-  const searchParams = await props.searchParams;
+  const searchParams = (await props.searchParams) || {};
   const params = await props.params;
 
   const { sort, q: searchQuery } = searchParams as {
@@ -21,7 +28,7 @@ export default async function SearchPage(props: {
     sorting.find((item) => item.slug === sort) || defaultSort;
 
   // Fetch products on the server
-  const products = await getProducts({
+  let products = await getProducts({
     sortKey,
     reverse,
     query: searchQuery,
@@ -30,6 +37,13 @@ export default async function SearchPage(props: {
       country: "AE",
     },
   });
+
+  // Shopify may not match translated titles. Use the localized catalog for an
+  // Arabic title fallback when the provider returns no matches (current catalog <100).
+  if (params.locale === "ar" && searchQuery && products.length === 0 && /\p{Script=Arabic}/u.test(searchQuery)) {
+    const catalog = await getProducts({ sortKey, reverse, locale: { language: "AR", country: "AE" } });
+    products = catalog.filter(product => matchesLocalizedTitle(product, searchQuery, "ar"));
+  }
 
   return (
     <SearchResults

@@ -4,8 +4,6 @@ import type React from "react";
 
 import clsx from "clsx";
 import Image from "next/image";
-import { m } from "framer-motion";
-import { Heart, Eye, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import Label from "../label";
 
@@ -25,7 +23,6 @@ export function GridTileImage({
     isATPMember?: boolean;
   };
 } & React.ComponentProps<typeof Image>) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
@@ -43,40 +40,6 @@ export function GridTileImage({
     >
       <div className="absolute inset-0 bg-gradient-to-t from-atp-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
-      <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 z-20">
-        <m.button
-          className="p-2 bg-atp-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-atp-gold hover:text-atp-black transition-all duration-200"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onHoverStart={(e: any) => {
-            e.preventDefault();
-            setIsWishlisted(!isWishlisted);
-          }}
-        >
-          <Heart
-            className={clsx("w-4 h-4", {
-              "fill-red-500 text-red-500": isWishlisted,
-              "text-atp-charcoal": !isWishlisted,
-            })}
-          />
-        </m.button>
-
-        <m.button
-          className="p-2 bg-atp-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-atp-gold hover:text-atp-black transition-all duration-200"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Eye className="w-4 h-4 text-atp-charcoal" />
-        </m.button>
-
-        <m.button
-          className="p-2 bg-atp-gold backdrop-blur-sm rounded-full shadow-lg hover:bg-atp-black hover:text-atp-gold transition-all duration-200"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ShoppingBag className="w-4 h-4 text-atp-black" />
-        </m.button>
-      </div>
 
       {label?.isATPMember && (
         <div className="absolute top-4 left-4 z-20">

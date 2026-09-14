@@ -1,5 +1,4 @@
 import { getShopPolicy } from '@/lib/shopify/server';
-import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -14,29 +13,29 @@ export async function generateMetadata({
   const isArabic = locale === 'ar';
 
   const title = isArabic
-    ? 'سياسة الاسترداد | مجموعة ATP للخدمات'
-    : 'Refund Policy | ATP Group Services';
+    ? 'سياسة الاسترداد | ATP Trading'
+    : 'Refund Policy | ATP Trading';
 
   const description = isArabic
-    ? 'سياسة الاسترداد والإرجاع الخاصة بمجموعة ATP للخدمات. تعرف على شروط وإجراءات الإرجاع والاسترداد.'
-    : 'Refund and Return Policy for ATP Group Services. Learn about our return and refund terms and procedures.';
+    ? 'سياسة الاسترداد والإرجاع الخاصة بATP Trading. تعرف على شروط وإجراءات الإرجاع والاسترداد.'
+    : 'Refund and Return Policy for ATP Trading. Learn about our return and refund terms and procedures.';
 
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,
       description,
       type: 'website',
       locale: isArabic ? 'ar_AE' : 'en_AE',
-      url: `https://atpgroupservices.com/${locale}/policies/refund-policy`,
-      siteName: isArabic ? 'مجموعة ATP' : 'ATP Group Services',
+      url: `https://www.atpgroupservices.ae/${locale}/policies/refund-policy`,
+      siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
     },
     alternates: {
-      canonical: `https://atpgroupservices.com/${locale}/policies/refund-policy`,
+      canonical: `https://www.atpgroupservices.ae/${locale}/policies/refund-policy`,
       languages: {
-        en: 'https://atpgroupservices.com/en/policies/refund-policy',
-        ar: 'https://atpgroupservices.com/ar/policies/refund-policy',
+        en: 'https://www.atpgroupservices.ae/en/policies/refund-policy',
+        ar: 'https://www.atpgroupservices.ae/ar/policies/refund-policy',
       },
     },
   };
@@ -46,7 +45,6 @@ export default async function RefundPolicyPage({
   params,
 }: RefundPolicyPageProps) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'common' });
   const isArabic = locale === 'ar';
 
   const policy = await getShopPolicy('refundPolicy', {
@@ -90,10 +88,10 @@ export default async function RefundPolicyPage({
           {isArabic ? '→ العودة للرئيسية' : '← Back to Home'}
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{policy.title}</h1>
+        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{isArabic ? 'سياسة الإرجاع والاسترداد' : 'Returns & Refunds Policy'}</h1>
 
         <div
-          className="prose prose-invert prose-lg max-w-none
+          className="prose prose-invert prose-base sm:prose-lg max-w-none
             prose-headings:text-white prose-headings:font-semibold
             prose-p:text-neutral-300 prose-p:leading-relaxed
             prose-a:text-atp-gold prose-a:no-underline hover:prose-a:underline

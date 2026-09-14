@@ -42,7 +42,6 @@ const filterGroups: FilterGroup[] = [
         value: "supplements",
         count: 18,
       },
-      { id: "ems", label: "EMS Equipment", value: "ems", count: 12 },
       {
         id: "water-tech",
         label: "Water Technology",

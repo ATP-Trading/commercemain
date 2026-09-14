@@ -35,7 +35,7 @@ import { DirhamSymbol } from '@/components/icons/dirham-symbol';
 import { useMembershipI18n } from '@/lib/utils/membership-i18n';
 import { useRTL } from '@/hooks/use-rtl';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { Link } from '@/src/i18n/navigation';
 
 // Extend Window interface for gtag
 declare global {
@@ -83,7 +83,12 @@ export function AtpMembershipSignup({
     errorHandling.clearErrors();
 
     const result = await errorHandling.handleAsyncError(async () => {
-      return await purchaseMembership(customer.id);
+      try {
+        return await purchaseMembership(customer.id);
+      } catch (error) {
+        onSignupError?.(error instanceof Error ? error : new Error('Signup failed'));
+        throw error;
+      }
     });
 
     if (result) {
@@ -166,6 +171,7 @@ export function AtpMembershipSignup({
               error={error}
               onRetry={errorHandling.retry}
               onDismiss={() => errorHandling.clearError(index)}
+              dismissLabel={t('dismissError')}
             />
           ))}
         </div>
@@ -228,7 +234,7 @@ export function AtpMembershipSignup({
             {/* Value Proposition */}
             <div className="bg-green-50 p-4 rounded-lg">
               <p className="text-green-800 font-medium text-sm flex items-center gap-1">
-                {t('saveUpTo')} 500+ <DirhamSymbol size={14} /> {t('annuallyWithBenefits')}
+                {t('savingsMessage')}
               </p>
               <p className="text-green-600 text-xs mt-1">
                 {t('roiMessage')}
@@ -263,7 +269,7 @@ export function AtpMembershipSignup({
               {!customer && (
                 <p className="text-sm text-muted-foreground">
                   {t('pleaseLogIn')}{" "}
-                  <Link href="/account/login" className="text-atp-gold hover:underline">
+                  <Link href="/login" className="text-atp-gold hover:underline">
                     {t('logIn')}
                   </Link>{" "}
                   {t('toPurchaseMembership')}

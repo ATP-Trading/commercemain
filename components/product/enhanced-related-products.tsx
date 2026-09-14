@@ -107,54 +107,6 @@ function ProductCard({
         )}
       </div>
 
-      {/* Action Buttons */}
-      <AnimatePresence>
-        {isHovered && (
-          <m.div
-            className="absolute top-3 right-3 z-20 flex flex-col gap-2"
-            variants={overlayVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-          >
-            <m.button
-              className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-atp-gold hover:text-atp-black transition-all duration-200"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => {
-                e.preventDefault();
-                onToggleWishlist(product.id);
-              }}
-            >
-              <Heart
-                className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"
-                  }`}
-              />
-            </m.button>
-
-            <m.button
-              className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-atp-gold hover:text-atp-black transition-all duration-200"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Eye className="w-4 h-4 text-gray-600" />
-            </m.button>
-
-            <m.button
-              className="p-2 bg-atp-gold backdrop-blur-sm rounded-full shadow-lg hover:bg-atp-black hover:text-atp-gold transition-all duration-200"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => {
-                e.preventDefault();
-                onAddToCart(product.id);
-              }}
-            >
-              <ShoppingBag className="w-4 h-4 text-atp-black" />
-            </m.button>
-          </m.div>
-        )}
-      </AnimatePresence>
-
       <Link href={`/${locale}/product/${handle}`} className="block">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
@@ -170,7 +122,7 @@ function ProductCard({
                   src={product.featuredImage.url}
                   alt={product.featuredImage.altText || title}
                   fill
-                  className={`object-cover transition-opacity duration-700 ${imageLoaded ? "opacity-100" : "opacity-0"
+                  className={`object-contain transition-opacity duration-700 ${imageLoaded ? "opacity-100" : "opacity-0"
                     }`}
                   onLoad={() => setImageLoaded(true)}
                   sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -208,19 +160,7 @@ function ProductCard({
                 />
               </div>
 
-              {/* Rating Stars (placeholder) */}
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${i < 4
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
-                      }`}
-                  />
-                ))}
-                <span className="text-xs text-gray-500 ml-1">(4.0)</span>
-              </div>
+
             </div>
           </div>
         </div>
@@ -341,6 +281,7 @@ export function EnhancedRelatedProducts({
               <Button
                 variant="outline"
                 size="icon"
+                aria-label={locale === "ar" ? "المنتجات السابقة" : "Previous products"}
                 onClick={prevPage}
                 disabled={!canGoPrev}
                 className="rounded-full border-2 hover:border-atp-gold hover:text-atp-gold disabled:opacity-50"
@@ -350,6 +291,7 @@ export function EnhancedRelatedProducts({
               <Button
                 variant="outline"
                 size="icon"
+                aria-label={locale === "ar" ? "المنتجات التالية" : "Next products"}
                 onClick={nextPage}
                 disabled={!canGoNext}
                 className="rounded-full border-2 hover:border-atp-gold hover:text-atp-gold disabled:opacity-50"
@@ -399,6 +341,8 @@ export function EnhancedRelatedProducts({
             {[...Array(totalPages)].map((_, index) => (
               <button
                 key={index}
+                aria-label={`${locale === "ar" ? "عرض المجموعة" : "Show group"} ${index + 1}`}
+                aria-current={index === currentPage ? "true" : undefined}
                 onClick={() => setCurrentPage(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentPage
                   ? "bg-atp-gold w-8"

@@ -13,7 +13,7 @@ import {
   FaSnapchatGhost,
 } from "react-icons/fa";
 
-const SITE_NAME = "ATP Group Services";
+const SITE_NAME = "ATP Trading";
 
 export default function Footer() {
   const locale = useLocale();
@@ -58,22 +58,22 @@ export default function Footer() {
       dir={isRTL ? "rtl" : "ltr"}
     >
       {/* Main Footer Content */}
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
         <div
-          className={`grid grid-cols-1 gap-12 lg:grid-cols-4 ${
+          className={`grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 ${
             isRTL ? "text-right" : ""
           }`}
         >
           {/* Logo and Company Info */}
           <div className="lg:col-span-1">
             <Link
-              href="/"
+              href={`/${locale}`}
               className={`flex items-center justify-center lg:justify-start text-white group mb-6`}
             >
               <div className="relative w-16 h-16 flex items-center justify-center">
                 <Image
                   src="/images/atp_logo-removebg-preview.png"
-                  alt="ATP Group Services Logo"
+                  alt="ATP Trading Logo"
                   width={64}
                   height={64}
                   className="object-contain filter brightness-0 invert hover:scale-105 transition-transform duration-200"
@@ -153,7 +153,7 @@ export default function Footer() {
         </div>
 
         {/* Payment Methods */}
-        <div className="mt-16 pt-8 border-t border-neutral-800">
+        <div className="mt-10 pt-8 border-t border-neutral-800">
           <div className="flex justify-center">
             <PaymentMethods />
           </div>
@@ -167,7 +167,7 @@ export default function Footer() {
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-neutral-400"
           >
             <p>
-              © {currentYear} atpgroupservices. {t('allRightsReserved')}.
+              © {currentYear} {SITE_NAME}. {t('allRightsReserved')}.
             </p>
             <div
               className="flex items-center gap-4"

@@ -3,7 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
 import Price from "@/components/price";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useQuantity } from "@/components/product/quantity-selector";
 import { useCart } from "@/components/cart/cart-context";
 
@@ -25,6 +27,9 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
     const { addCartItem } = useCart();
     const { quantity } = useQuantity();
     const t = useTranslations("product");
+    const { calculateServiceDiscount } = useMembershipDiscount();
+    const isMembershipProduct = product.handle === "atp-membership" || product.tags.some(tag => tag.toLowerCase().includes("membership"));
+    const displayPrice = isMembershipProduct || !isMemberDiscountEligible(product) ? selectedVariant.price.amount : String(calculateServiceDiscount(Number(selectedVariant.price.amount), undefined, getMemberDiscountRate(product)).finalPrice);
 
     useEffect(() => {
         if (!triggerRef.current) return;
@@ -84,7 +89,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
                                 {product.title}
                             </p>
                             <Price
-                                amount={selectedVariant.price.amount}
+                                amount={displayPrice}
                                 currencyCode={selectedVariant.price.currencyCode}
                                 className="text-lg font-bold text-atp-gold"
                             />

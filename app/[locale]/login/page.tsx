@@ -1,14 +1,22 @@
 import { LoginFormOAuth } from "@/components/auth/login-form-oauth";
 import { Link } from "@/src/i18n/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Sign In - ATP Group Services",
-  description:
-    "Sign in to your ATP account to access exclusive member benefits and manage your wellness journey.",
-};
+type LoginPageProps = { params: Promise<{ locale: string }> };
 
-export default function LoginPage() {
+export async function generateMetadata({ params }: LoginPageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'auth' });
+  return {
+    title: `${t('signIn')} - ATP Trading`,
+    description: t('signInDescriptionOAuth'),
+  };
+}
+
+export default async function LoginPage({ params }: LoginPageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'auth' });
   return (
     <div className="min-h-screen bg-gradient-to-b from-atp-gray-light to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -17,8 +25,8 @@ export default function LoginPage() {
             href="/"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+            {t('backToHome')}
           </Link>
         </div>
 
@@ -26,13 +34,13 @@ export default function LoginPage() {
 
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            New to ATP Group Services?
+            {t('newToAtp')}
           </p>
           <Link
             href="/atp-membership"
             className="inline-flex items-center gap-2 text-atp-gold hover:underline font-medium"
           >
-            Explore ATP Membership Benefits
+            {t('exploreMembershipBenefits')}
           </Link>
         </div>
       </div>

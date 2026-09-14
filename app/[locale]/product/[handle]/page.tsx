@@ -1,3 +1,5 @@
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion } from "@/lib/publication-policy";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -19,13 +21,13 @@ import { Suspense } from "react";
 // Helper function to generate rich meta descriptions
 const generateMetaDescription = (product: any, locale: "en" | "ar") => {
   const price = `${product.priceRange.minVariantPrice.currencyCode} ${product.priceRange.minVariantPrice.amount}`;
-  const availability = product.availableForSale 
-    ? (locale === "ar" ? "متوفر" : "In Stock") 
+  const availability = product.availableForSale
+    ? (locale === "ar" ? "متوفر" : "In Stock")
     : (locale === "ar" ? "غير متوفر" : "Out of Stock");
-  
+
   const baseDesc = getLocalizedProductDescription(product, locale);
   const truncated = baseDesc.slice(0, 120);
-  
+
   return locale === "ar"
     ? `${truncated}... | ${price} | ${availability} | شحن مجاني للإمارات`
     : `${truncated}... | ${price} | ${availability} | Free UAE Shipping`;
@@ -41,6 +43,7 @@ export async function generateMetadata(props: {
   params: Promise<{ handle: string; locale: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
+  if (isEmsPromotion(params.handle)) return inactiveServiceMetadata(params.locale, `/product/${params.handle}`);
 
   // Shopify Translate & Adapt already provides the correct localized handle in the URL
   // So we use params.handle directly with the appropriate language context
@@ -62,7 +65,7 @@ export async function generateMetadata(props: {
   );
 
   return {
-    title: product.seo.title || `${title} | ATP Group Services`,
+    title: product.seo.title || `${title} | ATP Trading`,
     description: product.seo.description || generateMetaDescription(product, params.locale as "en" | "ar"),
     robots: {
       index: indexable,
@@ -73,17 +76,13 @@ export async function generateMetadata(props: {
       },
     },
     alternates: {
-      canonical: `https://atpgroupservices.ae/${params.locale}/product/${params.handle}`,
-      languages: {
-        'en': `https://atpgroupservices.ae/en/product/${params.handle}`,
-        'ar': `https://atpgroupservices.ae/ar/product/${params.handle}`,
-      },
+      canonical: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
     },
     openGraph: url
       ? {
           title: product.seo.title || title,
           description: product.seo.description || generateMetaDescription(product, params.locale as "en" | "ar"),
-          url: `https://atpgroupservices.ae/${params.locale}/product/${params.handle}`,
+          url: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
           type: 'website',
           images: [
             {
@@ -102,6 +101,7 @@ export default async function ProductPage(props: {
   params: Promise<{ handle: string; locale: string }>;
 }) {
   const params = await props.params;
+  if (isEmsPromotion(params.handle)) return <InactiveServicePage locale={params.locale} />;
 
   // Shopify Translate & Adapt already provides the correct localized handle in the URL
   // So we use params.handle directly with the appropriate language context
@@ -122,25 +122,25 @@ export default async function ProductPage(props: {
     description: localizedDescription,
     image: product.images.map((img: Image) => img.url),
     sku: product.id, // Use product ID as SKU fallback
-    url: `https://atpgroupservices.ae/${params.locale}/product/${params.handle}`,
+    url: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
     price: product.priceRange.minVariantPrice.amount,
     priceCurrency: product.priceRange.minVariantPrice.currencyCode,
     availability: product.availableForSale ? "InStock" as const : "OutOfStock" as const,
-    brand: "ATP Group Services", // Company brand
+    brand: "ATP Trading", // Company brand
   };
 
   const breadcrumbItems = [
-    { 
-      name: params.locale === "ar" ? "الرئيسية" : "Home", 
-      url: `https://atpgroupservices.ae/${params.locale}` 
+    {
+      name: params.locale === "ar" ? "الرئيسية" : "Home",
+      url: `https://www.atpgroupservices.ae/${params.locale}`
     },
-    { 
-      name: params.locale === "ar" ? "المنتجات" : "Products", 
-      url: `https://atpgroupservices.ae/${params.locale}/collections` 
+    {
+      name: params.locale === "ar" ? "المنتجات" : "Products",
+      url: `https://www.atpgroupservices.ae/${params.locale}/search`
     },
-    { 
-      name: localizedTitle, 
-      url: productSchemaData.url 
+    {
+      name: localizedTitle,
+      url: productSchemaData.url
     }
   ];
 

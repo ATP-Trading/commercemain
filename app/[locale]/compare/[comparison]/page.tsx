@@ -1,3 +1,6 @@
+import { EditorialSources } from "@/components/seo/editorial-sources";
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -16,7 +19,7 @@ interface ComparisonPageProps {
 
 // Generate static params for all comparisons
 export function generateStaticParams() {
-  return Object.keys(ComparisonData).map((comparison) => ({ comparison }));
+  return Object.keys(ComparisonData).filter((slug) => !isEmsPromotion(slug)).map((comparison) => ({ comparison }));
 }
 
 // Generate metadata
@@ -24,25 +27,26 @@ export async function generateMetadata({
   params,
 }: ComparisonPageProps): Promise<Metadata> {
   const { comparison, locale } = await params;
+  if (comparison === "ems-vs-gym") return inactiveServiceMetadata(locale, `/compare/${comparison}`);
   const data = ComparisonData[comparison];
 
   if (!data) return {};
 
   const isAr = locale === "ar";
   const title = isAr
-    ? `${data.optionAAr} vs ${data.optionBAr} | أيهما أفضل؟ | ATP Group`
+    ? `${data.optionAAr} vs ${data.optionBAr} | أيهما أفضل؟ | ATP Trading`
     : data.metaTitle;
   const description = isAr ? data.descriptionAr : data.description;
-  const url = `https://atpgroupservices.ae/${locale}/compare/${comparison}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/compare/${comparison}`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: url,
       languages: {
-        en: `https://atpgroupservices.ae/en/compare/${comparison}`,
-        ar: `https://atpgroupservices.ae/ar/compare/${comparison}`,
+        en: `https://www.atpgroupservices.ae/en/compare/${comparison}`,
+        ar: `https://www.atpgroupservices.ae/ar/compare/${comparison}`,
       },
     },
     openGraph: {
@@ -61,7 +65,7 @@ function generateComparisonStructuredData(
   locale: string
 ) {
   const isAr = locale === "ar";
-  const url = `https://atpgroupservices.ae/${locale}/compare/${comparison}`;
+  const url = `https://www.atpgroupservices.ae/${locale}/compare/${comparison}`;
 
   return {
     "@context": "https://schema.org",
@@ -76,19 +80,17 @@ function generateComparisonStructuredData(
         url,
         author: {
           "@type": "Organization",
-          name: "ATP Group Services",
-          url: "https://atpgroupservices.ae",
+          name: "ATP Trading",
+          url: "https://www.atpgroupservices.ae",
         },
         publisher: {
           "@type": "Organization",
-          name: "ATP Group Services",
+          name: "ATP Trading",
           logo: {
             "@type": "ImageObject",
-            url: "https://atpgroupservices.ae/logo.png",
+            url: "https://www.atpgroupservices.ae/images/atp-logo.png",
           },
         },
-        datePublished: new Date().toISOString(),
-        dateModified: new Date().toISOString(),
         articleSection: isAr ? "المقارنات" : "Comparisons",
       },
       {
@@ -98,13 +100,13 @@ function generateComparisonStructuredData(
             "@type": "ListItem",
             position: 1,
             name: isAr ? "الرئيسية" : "Home",
-            item: `https://atpgroupservices.ae/${locale}`,
+            item: `https://www.atpgroupservices.ae/${locale}`,
           },
           {
             "@type": "ListItem",
             position: 2,
             name: isAr ? "المقارنات" : "Comparisons",
-            item: `https://atpgroupservices.ae/${locale}/compare`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
@@ -137,6 +139,7 @@ function generateComparisonStructuredData(
 export default async function ComparisonPage({ params }: ComparisonPageProps) {
   const { comparison, locale: rawLocale } = await params;
   const locale = (rawLocale === "ar" ? "ar" : "en") as "en" | "ar";
+  if (comparison === "ems-vs-gym") return <InactiveServicePage locale={locale} />;
 
   // Set locale for static rendering
   setRequestLocale(locale);
@@ -175,15 +178,14 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
 
       {/* Hero Section */}
       <section className="relative min-h-[50vh] flex items-center justify-center bg-gradient-to-br from-atp-black via-atp-charcoal to-atp-black overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/compare-hero-bg.jpg')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-atp-black/80 via-transparent to-atp-black/40"></div>
 
         <div className="relative z-10 container-premium text-center text-atp-white px-4">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+          <h1 className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
             <span className="text-3xl md:text-5xl font-bold">{isAr ? data.optionAAr : data.optionA}</span>
             <span className="text-4xl md:text-6xl text-atp-gold font-bold">VS</span>
             <span className="text-3xl md:text-5xl font-bold">{isAr ? data.optionBAr : data.optionB}</span>
-          </div>
+          </h1>
           <p className="text-xl md:text-2xl text-atp-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
             {isAr ? data.descriptionAr : data.description}
           </p>
@@ -445,11 +447,11 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
               : "Our expert team is ready to help you make the right choice"}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="/contact" className="btn-atp-gold">
-              {isAr ? "استشارة مجانية" : "Free Consultation"}
+            <a href={`/${locale}/contact`} className="btn-atp-gold">
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
             <a
-              href={`/${locale}/collections`}
+              href={`/${locale}/search`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
               {isAr ? "تصفح جميع المنتجات" : "Browse All Products"}
@@ -457,6 +459,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
           </div>
         </div>
       </section>
+      <EditorialSources slug={comparison} locale={locale} />
     </>
   );
 }

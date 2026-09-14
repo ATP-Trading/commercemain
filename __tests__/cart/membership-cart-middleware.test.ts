@@ -130,6 +130,10 @@ describe('MembershipCartMiddleware', () => {
         'customer-1'
       );
 
+      // Eligibility must not subtract a second discount or guessed shipping fee.
+      expect(result.cost).toEqual(mockCart.cost);
+      expect(result.lines).toEqual(mockCart.lines);
+
       // Verify results
       expect(result.membershipBenefits).toBeDefined();
       expect(result.membershipBenefits?.serviceDiscounts).toHaveLength(1);

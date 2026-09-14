@@ -8,12 +8,10 @@ import {
 
 // Validation schema for profile updates
 const updateProfileSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').optional(),
-  lastName: z.string().min(1, 'Last name is required').optional(),
-  email: z.string().email('Invalid email address').optional(),
-  phone: z.string().optional(),
-  acceptsMarketing: z.boolean().optional(),
-})
+  firstName: z.string().trim().min(1).max(100).optional(),
+  lastName: z.string().trim().max(100).optional(),
+}).strict().refine(data => data.firstName !== undefined || data.lastName !== undefined, 'No profile changes provided')
+
 
 // GraphQL query to get customer profile
 const CUSTOMER_PROFILE_QUERY = `
@@ -290,8 +288,8 @@ export async function PUT(request: NextRequest) {
 
     // Build the input for the Customer Account API
     const input: Record<string, unknown> = {}
-    if (validatedData.firstName) input.firstName = validatedData.firstName
-    if (validatedData.lastName) input.lastName = validatedData.lastName
+    if (validatedData.firstName !== undefined) input.firstName = validatedData.firstName
+    if (validatedData.lastName !== undefined) input.lastName = validatedData.lastName
     // Note: Email and phone updates may require different mutations in Customer Account API
 
     // Update customer using Customer Account API
@@ -324,6 +322,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const customer = data?.customerUpdate?.customer
+    if (!customer) return NextResponse.json({ error: 'Profile update was not confirmed' }, { status: 502 })
     
     return NextResponse.json({
       success: true,

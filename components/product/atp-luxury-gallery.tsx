@@ -16,7 +16,7 @@
  * - Reduced motion support
  * - Zoom level indicator
  * 
- * Part of ATP Group Services luxury e-commerce redesign.
+ * Part of ATP Trading luxury e-commerce redesign.
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";

@@ -1,6 +1,8 @@
+import { prepareMembershipLines, variantPlanQuery, type PurchaseLine, type VariantPlans } from './membership-purchase'
 import 'server-only'
+import { getLocale } from 'next-intl/server'
+import { isEmsPromotion } from '@/lib/publication-policy'
 
-import { createStorefrontApiClient } from '@shopify/storefront-api-client'
 import { TAGS } from "@/lib/constants"
 import { isShopifyError } from "@/lib/type-guards"
 import { ensureStartsWith } from "@/lib/utils"
@@ -11,12 +13,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies, headers as requestHeaders } from "next/headers"
 import { config } from "@/lib/config"
 
-// Initialize Shopify Storefront API Client
-const storefrontClient = createStorefrontApiClient({
-  storeDomain: config.shopify.domain!,
-  apiVersion: config.shopify.apiVersion as any,
-  publicAccessToken: config.shopify.accessToken!,
-})
 import {
   Cart,
   Collection,
@@ -118,8 +114,7 @@ export async function shopifyFetch<T>({
   try {
     // Check if environment variables are properly configured
     if (!isEnvValid) {
-      console.warn('[Shopify] Environment variables not configured. Using demo store fallback.')
-      console.warn('[Shopify] Please create .env.local with your store credentials.')
+      throw new Error('Shopify environment variables are missing or invalid')
     }
 
     console.log(`[Shopify] Making request to: ${endpoint}`)
@@ -212,50 +207,38 @@ export async function shopifyFetch<T>({
 
 
 
-export async function createCart(
-  lines?: { merchandiseId: string; quantity: number }[]
-): Promise<Cart> {
-  try {
-    const hasLines = lines && lines.length > 0;
-    const res = await shopifyFetch<ShopifyCreateCartOperation>({
-      query: createCartMutation,
-      variables: hasLines ? { input: { lines } } : undefined
-    } as any); // Type workaround for optional variables
-
-    const cart = reshapeCart(res.body.data.cartCreate.cart);
-
-    // Set the cart cookie
-    if (cart.id) {
-      const cookieStore = await cookies();
-      cookieStore.set('cartId', cart.id);
-    }
-
-    return cart;
-  } catch (error) {
-    console.warn('[Shopify] Using mock cart data due to error:', error)
-    return mockCart
-  }
+async function preparePurchaseLines(lines: PurchaseLine[]) {
+  return prepareMembershipLines(lines, async id => {
+    const res = await shopifyFetch<{ data: { node: VariantPlans | null }; variables: { id: string } }>({ query: variantPlanQuery, variables: { id } })
+    return res.body.data.node
+  })
 }
 
-export async function addToCart(
-  lines: { merchandiseId: string; quantity: number }[]
-): Promise<Cart> {
-  let cartId = (await cookies()).get('cartId')?.value;
+export async function createCart(lines: PurchaseLine[] = []): Promise<Cart> {
+  const prepared = await preparePurchaseLines(lines)
+  const res = await shopifyFetch<ShopifyCreateCartOperation>({
+    query: createCartMutation,
+    variables: { input: { lines: prepared }, language: (await getLocale()) === "ar" ? "AR" : "EN" }
+  } as any)
+  const result = res.body.data.cartCreate
+  if (result.userErrors?.length || !result.cart) throw new Error('Unable to create cart')
+  const cart = reshapeCart(result.cart)
+  if (!cart.id) throw new Error('Cart identity is missing')
+  ;(await cookies()).set('cartId', cart.id)
+  return cart
+}
 
-  // If no cart exists, create one with the items
-  if (!cartId) {
-    console.log('[Shopify] No cart found, creating new cart with items');
-    return await createCart(lines);
-  }
-
+export async function addToCart(lines: PurchaseLine[]): Promise<Cart> {
+  const cartId = (await cookies()).get('cartId')?.value
+  if (!cartId) return createCart(lines)
+  const prepared = await preparePurchaseLines(lines)
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
-    variables: {
-      cartId,
-      lines
-    }
-  });
-  return reshapeCart(res.body.data.cartLinesAdd.cart);
+    variables: { cartId, language: (await getLocale()) === "ar" ? "AR" : "EN", lines: prepared }
+  })
+  const result = res.body.data.cartLinesAdd
+  if (result.userErrors?.length || !result.cart) throw new Error('Unable to add cart items')
+  return reshapeCart(result.cart)
 }
 
 export async function removeFromCart(lineIds: string[]): Promise<Cart> {
@@ -264,6 +247,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
     query: removeFromCartMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       lineIds
     }
   });
@@ -279,6 +263,7 @@ export async function updateCart(
     query: editCartItemsMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       lines
     }
   });
@@ -305,6 +290,7 @@ export async function updateCartBuyerIdentity(
     query: updateCartBuyerIdentityMutation,
     variables: {
       cartId,
+      language: (await getLocale()) === "ar" ? "AR" : "EN",
       buyerIdentity,
     },
   })
@@ -329,7 +315,7 @@ export async function getCart(): Promise<Cart | undefined> {
 
   const res = await shopifyFetch<ShopifyCartOperation>({
     query: getCartQuery,
-    variables: { cartId }
+    variables: { cartId, language: (await getLocale()) === "ar" ? "AR" : "EN" }
   });
 
   // Old carts becomes `null` when you checkout.
@@ -764,14 +750,14 @@ export async function getCollections(
       // Filter out the `hidden` collections.
       // Collections that start with `hidden-*` need to be hidden on the search page.
       ...reshapeCollections(shopifyCollections).filter(
-        (collection) => !collection.handle.startsWith('hidden')
+        (collection) => !collection.handle.startsWith('hidden') && !isEmsPromotion(collection.handle)
       )
     ];
 
     return collections;
   } catch (error) {
     console.warn('[Shopify] Using mock collections data due to error:', error)
-    return mockCollections
+    return mockCollections.filter((collection) => !isEmsPromotion(collection.handle))
   }
 }
 
@@ -993,7 +979,7 @@ export async function getProducts({
     return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
   } catch (error) {
     console.warn('[Shopify] Using mock products data due to error:', error)
-    return mockProducts
+    return mockProducts.filter((product) => !isEmsPromotion(`${product.handle} ${product.title}`))
   }
 }
 

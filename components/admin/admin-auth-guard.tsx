@@ -105,7 +105,7 @@ export function AdminAuthGuard({ children }: AdminAuthGuardProps) {
             </form>
             
             <div className="mt-6 text-center text-sm text-gray-600">
-              <p>ATP Group Services</p>
+              <p>ATP Trading</p>
               <p>Administrative Access Only</p>
             </div>
           </CardContent>

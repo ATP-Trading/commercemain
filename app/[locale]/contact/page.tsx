@@ -1,121 +1,38 @@
-import type { Metadata } from "next"
-import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next';
 
-interface ContactPageProps {
-  params: Promise<{ locale: string }>
-}
+type Props = { params: Promise<{ locale: string }> };
 
-export async function generateMetadata({
-  params,
-}: ContactPageProps): Promise<Metadata> {
-  const { locale } = await params
-  const isArabic = locale === 'ar'
-  
-  const title = isArabic 
-    ? 'اتصل بنا | مجموعة ATP للخدمات'
-    : 'Contact Us | ATP Group Services'
-  
-  const description = isArabic
-    ? 'تواصل مع مجموعة ATP للخدمات. نحن هنا للمساعدة في احتياجاتك للعناية بالبشرة والمكملات وتقنية المياه وتدريب EMS.'
-    : "Get in touch with ATP Group Services. We're here to help with your skincare, supplements, water technology, and EMS training needs."
-
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      locale: isArabic ? 'ar_AE' : 'en_AE',
-    },
-    alternates: {
-      canonical: `/${locale}/contact`,
-      languages: {
-        en: '/en/contact',
-        ar: '/ar/contact',
-      },
-    },
-  }
+    title: locale === 'ar' ? 'تواصل معنا' : 'Contact us',
+    description: locale === 'ar' ? 'تواصل مع ATP Trading للاستفسار عن المنتجات والطلبات داخل الإمارات.' : 'Contact ATP Trading about products and orders within the UAE.',
+    alternates: { canonical: `/${locale}/contact`, languages: { en: '/en/contact', ar: '/ar/contact' } },
+  };
 }
 
-export default function ContactPage() {
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8 text-center">Contact ATP Group Services</h1>
-      
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Get in Touch</h2>
-          <p className="mb-6">
-            We're here to help! Whether you have questions about our products, 
-            need technical support, or want to learn more about our services, 
-            our team is ready to assist you.
-          </p>
-          
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-lg mb-2">General Inquiries</h3>
-              <p className="text-gray-600">info@atpgroupservices.ae</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Customer Support</h3>
-              <p className="text-gray-600">support@atpgroupservices.ae</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Sales Team</h3>
-              <p className="text-gray-600">sales@atpgroupservices.ae</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Phone</h3>
-              <p className="text-gray-600">+971 56 958 6422</p>
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Service Areas</h2>
-          <div className="space-y-4">
-            <div className="border-l-4 border-blue-500 pl-4">
-              <h3 className="font-semibold">Skincare & Supplements</h3>
-              <p className="text-gray-600">Expert consultation and product recommendations</p>
-            </div>
-            
-            <div className="border-l-4 border-green-500 pl-4">
-              <h3 className="font-semibold">Water & Soil Technology</h3>
-              <p className="text-gray-600">Technical support and implementation services</p>
-            </div>
-            
-            <div className="border-l-4 border-purple-500 pl-4">
-              <h3 className="font-semibold">EMS Training</h3>
-              <p className="text-gray-600">Training schedules and certification programs</p>
-            </div>
-            
-            <div className="border-l-4 border-yellow-500 pl-4">
-              <h3 className="font-semibold">Membership Programs</h3>
-              <p className="text-gray-600">Membership inquiries and benefits information</p>
-            </div>
-          </div>
-          
-          <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold text-lg mb-3">Business Hours</h3>
-            <p className="text-gray-600">
-              Monday - Friday: 9:00 AM - 6:00 PM<br />
-              Saturday: 9:00 AM - 2:00 PM<br />
-              Sunday: Closed
-            </p>
-          </div>
+export default async function ContactPage({ params }: Props) {
+  const { locale } = await params;
+  const isAr = locale === 'ar';
+  return <section className="max-w-4xl mx-auto px-4 py-12" dir={isAr ? 'rtl' : 'ltr'}>
+    <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-8 text-center">{isAr ? 'تواصل مع ATP Trading' : 'Contact ATP Trading'}</h1>
+    <div className="grid md:grid-cols-2 gap-8">
+      <div>
+        <h2 className="text-2xl font-semibold mb-6">{isAr ? 'كيف نقدر نساعدك؟' : 'How can we help?'}</h2>
+        <p className="mb-6">{isAr ? 'تواصل معنا للاستفسار عن المنتجات أو طلبك. نخدم العملاء داخل دولة الإمارات العربية المتحدة.' : 'Contact us with questions about our products or your order. We serve customers within the United Arab Emirates.'}</p>
+        <div className="space-y-4">
+          <div><h3 className="font-semibold mb-2">{isAr ? 'البريد الإلكتروني' : 'Email'}</h3><a href="mailto:info@atpgroupservices.ae" className="underline" dir="ltr">info@atpgroupservices.ae</a></div>
+          <div><h3 className="font-semibold mb-2">{isAr ? 'الهاتف' : 'Phone'}</h3><a href="tel:+971569586422" className="underline" dir="ltr">+971 56 958 6422</a></div>
         </div>
       </div>
-      
-      <div className="mt-12 text-center">
-        <p className="text-gray-600">
-          For urgent matters, please call our support line or send us an email. 
-          We typically respond within 24 hours during business days.
-        </p>
+      <div>
+        <h2 className="text-2xl font-semibold mb-6">{isAr ? 'منتجاتنا' : 'Our products'}</h2>
+        <ul className="space-y-4">
+          <li>{isAr ? 'العناية بالبشرة والعناية الشخصية' : 'Skincare and personal care'}</li>
+          <li>{isAr ? 'المكملات' : 'Supplements'}</li>
+          <li>{isAr ? 'تقنيات المياه والتربة' : 'Water and soil technology'}</li>
+        </ul>
       </div>
     </div>
-  )
+  </section>;
 }

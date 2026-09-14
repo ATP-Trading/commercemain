@@ -9,16 +9,9 @@ import { cronHandlers } from '../../../../../lib/services/membership-cron-servic
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret if configured
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret) {
-      const authHeader = request.headers.get('authorization');
-      if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-        return NextResponse.json(
-          { success: false, error: 'Unauthorized' },
-          { status: 401 }
-        );
-      }
+    if (!cronSecret || request.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     console.log('Daily membership cron job triggered');

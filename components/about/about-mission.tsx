@@ -31,49 +31,19 @@ export function AboutMission() {
 
     const content = {
         en: {
-            ourStory: {
-                title: "Our Story",
-                paragraphs: [
-                    "ATP was founded with a clear purpose: to deliver authentic, high-quality Thai wellness products to the UAE and the region—without compromising on quality or credibility.",
-                    "We identified a real gap in the market. Many products are marketed as \"natural\" or \"premium,\" yet only a few are produced in high-quality, trusted, and certified laboratories under strict standards. This is where ATP began.",
-                    "All ATP products are sourced directly from Thailand and manufactured in reliable, accredited laboratories that comply with rigorous safety, quality, and regulatory requirements. Whether in food supplements, personal care, or advanced water and soil solutions, every product is selected based on formulation integrity, testing, and real-world effectiveness.",
-                    "ATP is not driven by trends or exaggerated claims. We focus on transparency, proven quality, and products we confidently stand behind and use ourselves.",
-                ],
-            },
-            ourVision: {
-                title: "Our Vision",
-                intro: "Our vision is to establish ATP as a trusted and leading Thai wellness brand across the GCC, with a structured and sustainable expansion across the region.",
-                subtitle: "We aim to:",
-                points: [
-                    "Expand across GCC markets with carefully selected products",
-                    "Partner exclusively with certified laboratories and reliable manufacturers",
-                    "Fully comply with local and international regulations",
-                    "Build a long-term brand based on trust, consistency, and quality—not promises",
-                ],
-            },
+            ourStory: { title: "About ATP Trading", paragraphs: [
+                "ATP Trading offers skincare, supplements, and water and soil technology products to customers within the United Arab Emirates.",
+                "Browse our collections for product information and contact us with questions about your order."
+            ] },
+            ourVision: { title: "Our Focus", intro: "Serving customers within the UAE with clear product information and support.", subtitle: "We focus on:", points: ["Skincare and personal care", "Supplements", "Water and soil technology", "Customer support within the UAE"] }
         },
         ar: {
-            ourStory: {
-                title: "قصتنا",
-                paragraphs: [
-                    "تأسست ATP بهدف واضح: تقديم منتجات عناية وصحة تايلندية أصلية عالية الجودة إلى دولة الإمارات والمنطقة، دون أي تنازل عن الجودة أو المصداقية.",
-                    "لاحظنا فجوة حقيقية في السوق. كثير من المنتجات تُسوَّق على أنها طبيعية أو مميزة، لكن القليل منها فقط يتم إنتاجه في مختبرات عالية الجودة، معتمدة وموثوقة، وتحت معايير صارمة. من هنا جاءت فكرة ATP.",
-                    "جميع منتجاتنا مستوردة مباشرة من تايلند، ويتم تصنيعها في مختبرات معتمدة تلتزم بأعلى معايير السلامة، الجودة، والرقابة. نحن نحرص على اختيار منتجات قائمة على تركيبات مدروسة واختبارات واضحة، سواء في المكملات الغذائية، منتجات العناية الشخصية، أو حلول تنقية المياه والتربة.",
-                    "ATP لا تعتمد على الادعاءات أو التسويق المبالغ فيه. نحن نركز على الشفافية، الجودة الحقيقية، والنتائج التي يمكن الوثوق بها، ونقدّم فقط ما نؤمن به ونستخدمه بثقة.",
-                ],
-            },
-            ourVision: {
-                title: "رؤيتنا المستقبلية",
-                intro: "نطمح في ATP إلى أن نكون علامة تجارية موثوقة ورائدة في مجال العناية والصحة التايلندية على مستوى دول مجلس التعاون الخليجي (GCC)، مع توسع مدروس ومستدام في أسواق المنطقة.",
-                subtitle: "رؤيتنا تقوم على:",
-                points: [
-                    "التوسع في دول الخليج بمنتجات مختارة بعناية",
-                    "التعاون المستمر مع مختبرات وشركاء معتمدين فقط",
-                    "الالتزام التام بالأنظمة والمعايير المحلية والدولية",
-                    "بناء علامة طويلة المدى تعتمد على الجودة والثقة، لا على الوعود",
-                ],
-            },
-        },
+            ourStory: { title: "عن ATP Trading", paragraphs: [
+                "تقدم ATP Trading منتجات العناية بالبشرة والمكملات وتقنيات المياه والتربة للعملاء داخل دولة الإمارات العربية المتحدة.",
+                "تصفح مجموعاتنا للاطلاع على معلومات المنتجات، وتواصل معنا للاستفسار عن طلبك."
+            ] },
+            ourVision: { title: "اهتمامنا", intro: "خدمة العملاء داخل الإمارات بمعلومات واضحة عن المنتجات ودعم العملاء.", subtitle: "نركز على:", points: ["العناية بالبشرة والعناية الشخصية", "المكملات", "تقنيات المياه والتربة", "دعم العملاء داخل الإمارات"] }
+        }
     };
 
     const currentContent = isRTL ? content.ar : content.en;

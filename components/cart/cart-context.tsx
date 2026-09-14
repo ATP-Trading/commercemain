@@ -362,13 +362,13 @@ export function useCart() {
 
       if (!result.success) {
         console.error("❌ Server action failed:", result.error);
-        // Optionally revert the optimistic update here
+        throw new Error(result.error || "Failed to add item to cart");
       } else {
         console.log("✅ Server action succeeded");
       }
     } catch (error) {
       console.error("❌ Error calling server action:", error);
-      // Optionally revert the optimistic update here
+      throw error;
     }
 
     return cartItem;

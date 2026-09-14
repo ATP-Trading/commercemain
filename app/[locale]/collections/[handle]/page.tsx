@@ -1,4 +1,8 @@
+import { canonicalCollectionHandle } from "@/lib/collection-handle";
+import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
+import { isEmsPromotion } from "@/lib/publication-policy";
 import { Suspense } from "react";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
 import { defaultSort, sorting } from "@/lib/constants";
 import CollectionHero from "@/components/collection/collection-hero";
@@ -10,25 +14,33 @@ export async function generateMetadata(props: {
     params: Promise<{ handle: string; locale: string }>;
 }): Promise<Metadata> {
     const params = await props.params;
+    const canonicalHandle = canonicalCollectionHandle(params.handle);
+  if (isEmsPromotion(params.handle)) return inactiveServiceMetadata(params.locale, `/collections/${params.handle}`);
     const localeForApi = params.locale === 'ar'
         ? { language: 'AR', country: 'AE' }
         : { language: 'EN', country: 'AE' };
     
-    const collection = await getCollection(params.handle, localeForApi);
+    const collection = await getCollection(canonicalHandle, localeForApi);
     
     if (!collection) {
-        return {
-            title: "Collection Not Found",
-            description: "The requested collection could not be found.",
-        };
+        notFound();
     }
 
+    const seoTitle = collection.seo?.title;
+    const title = params.locale === 'ar' && !/\p{Script=Arabic}/u.test(seoTitle || '')
+        ? collection.title
+        : seoTitle || collection.title;
+    const description = collection.description || (params.locale === 'ar'
+        ? `تسوّق ${collection.title} لدى ATP Trading`
+        : `Shop ${collection.title} at ATP Trading`);
+
     return {
-        title: collection.title,
-        description: collection.description || `Shop ${collection.title} at ATP Group Services`,
+        alternates: { canonical: `/${params.locale}/collections/${canonicalHandle}`, languages: { en: `/en/collections/${canonicalHandle}`, ar: `/ar/collections/${canonicalHandle}` } },
+        title,
+        description,
         openGraph: {
             title: collection.title,
-            description: collection.description || `Shop ${collection.title} at ATP Group Services`,
+            description,
             images: collection.image ? [{ url: collection.image.url }] : [],
         },
     };
@@ -38,8 +50,19 @@ export default async function CollectionPage(props: {
     params: Promise<{ handle: string; locale: string }>;
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const searchParams = await props.searchParams;
+    const searchParams = (await props.searchParams) || {};
     const params = await props.params;
+    const canonicalHandle = canonicalCollectionHandle(params.handle);
+  if (isEmsPromotion(params.handle)) return <InactiveServicePage locale={params.locale} />;
+
+    if (canonicalHandle !== params.handle) {
+        const query = new URLSearchParams();
+        for (const [key, value] of Object.entries(searchParams)) {
+            if (Array.isArray(value)) value.forEach(item => query.append(key, item));
+            else if (value !== undefined) query.set(key, value);
+        }
+        permanentRedirect(`/${params.locale}/collections/${canonicalHandle}${query.size ? `?${query}` : ''}`);
+    }
 
     const { sort } = searchParams as { [key: string]: string };
     const { sortKey, reverse } =
@@ -51,26 +74,26 @@ export default async function CollectionPage(props: {
 
     const [products, collection] = await Promise.all([
         getCollectionProducts({
-            collection: params.handle,
+            collection: canonicalHandle,
             sortKey,
             reverse,
             locale: localeForApi,
         }),
-        getCollection(params.handle, localeForApi),
+        getCollection(canonicalHandle, localeForApi),
     ]);
 
     if (!collection) {
-        return (
-            <div className="container-premium section-padding text-center">
-                <h1 className="text-3xl font-serif">Collection Not Found</h1>
-            </div>
-        );
+        notFound();
     }
 
     const isRTL = params.locale === 'ar';
 
-    // Hero image from Shopify collection, with fallback
-    const heroImage = collection.image ? {
+    const collectionArt: Record<string, string> = {
+        'amazing-thai-products': '/images/collection-supplements-care-coffee.jpg',
+        'water-soil-technology-solutions': '/images/collection-water-soil.jpg',
+    };
+    const editorialImage = collectionArt[canonicalHandle];
+    const heroImage = editorialImage ? { src: editorialImage, alt: collection.title } : collection.image ? {
         src: collection.image.url,
         alt: collection.image.altText || collection.title,
         mobileSrc: collection.image.url,
@@ -88,6 +111,7 @@ export default async function CollectionPage(props: {
                 subtitle={isRTL ? "مجموعة متميزة" : "Premium Collection"}
                 description={collection.description}
                 image={heroImage}
+                editorial={Boolean(editorialImage)}
                 isRTL={isRTL}
             />
 

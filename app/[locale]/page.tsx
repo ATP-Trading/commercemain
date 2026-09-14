@@ -18,45 +18,45 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const isAr = locale === "ar";
 
   return {
-    title: isAr
-      ? "مجموعة ATP للخدمات | العافية والتكنولوجيا في الإمارات"
-      : "ATP Group Services | Premium Wellness & Technology UAE",
+    title: { absolute: isAr
+      ? "ATP Trading | العافية والتكنولوجيا في الإمارات"
+      : "ATP Trading | Premium Wellness & Technology UAE" },
     description: isAr
-      ? "اكتشف حلول العافية المتميزة - تدريب EMS، العناية بالبشرة، المكملات الغذائية، تقنية المياه. توصيل مجاني في الإمارات والخليج."
-      : "Discover premium wellness solutions - EMS Training, Skincare, Supplements, Water Technology. Free delivery across UAE & GCC.",
+      ? "اكتشف حلول العافية المتميزة - العناية بالبشرة، المكملات الغذائية، تقنية المياه. منتجات متاحة داخل الإمارات."
+      : "Discover premium wellness solutions - Skincare, Supplements, Water Technology. Available within the UAE.",
     keywords: isAr
-      ? ["EMS", "عافية", "بشرة", "مكملات", "مياه قلوية", "دبي", "الإمارات", "تدريب EMS", "عناية بالبشرة"]
-      : ["EMS training", "wellness", "skincare", "supplements", "alkaline water", "Dubai", "UAE", "fitness", "health"],
+      ? ["عافية", "بشرة", "مكملات", "مياه قلوية", "دبي", "الإمارات", "عناية بالبشرة"]
+      : ["wellness", "skincare", "supplements", "alkaline water", "Dubai", "UAE", "fitness", "health"],
     alternates: {
-      canonical: `https://atpgroupservices.ae/${locale}`,
+      canonical: `https://www.atpgroupservices.ae/${locale}`,
       languages: {
-        'en': 'https://atpgroupservices.ae/en',
-        'ar': 'https://atpgroupservices.ae/ar',
+        'en': 'https://www.atpgroupservices.ae/en',
+        'ar': 'https://www.atpgroupservices.ae/ar',
       },
     },
     openGraph: {
-      title: isAr ? "مجموعة ATP للخدمات" : "ATP Group Services",
+      title: isAr ? "ATP Trading" : "ATP Trading",
       description: isAr
         ? "حلول العافية المتميزة والتكنولوجيا المتقدمة في الإمارات"
         : "Premium wellness and technology solutions in UAE",
-      url: `https://atpgroupservices.ae/${locale}`,
+      url: `https://www.atpgroupservices.ae/${locale}`,
       type: 'website',
-      siteName: isAr ? "مجموعة ATP" : "ATP Group Services",
+      siteName: isAr ? "ATP Trading" : "ATP Trading",
       locale: isAr ? 'ar_AE' : 'en_AE',
       images: [{
-        url: 'https://atpgroupservices.ae/og-image.jpg',
+        url: 'https://www.atpgroupservices.ae/images/atp-logo.png',
         width: 1200,
         height: 630,
-        alt: isAr ? "مجموعة ATP للخدمات" : "ATP Group Services",
+        alt: isAr ? "ATP Trading" : "ATP Trading",
       }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: isAr ? "مجموعة ATP للخدمات" : "ATP Group Services",
+      title: isAr ? "ATP Trading" : "ATP Trading",
       description: isAr
         ? "حلول العافية المتميزة والتكنولوجيا المتقدمة"
         : "Premium wellness and technology solutions",
-      images: ['https://atpgroupservices.ae/og-image.jpg'],
+      images: ['https://www.atpgroupservices.ae/images/atp-logo.png'],
     },
     robots: {
       index: true,
@@ -86,8 +86,8 @@ export default async function HomePage({ params }: HomePageProps) {
       <StructuredData
         type="WebSite"
         data={{
-          name: "ATP Group Services - Authentic Thai Wellness meets German Fitness",
-          url: `https://atpgroupservices.ae/${locale}`,
+          name: "ATP Trading",
+          url: `https://www.atpgroupservices.ae/${locale}`,
           description: t('siteDescription'),
         }}
       />

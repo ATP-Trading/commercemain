@@ -1,0 +1,34 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+const mocks = vi.hoisted(() => ({ add: vi.fn(), notify: vi.fn() }));
+vi.mock('@/components/cart/cart-context', () => ({ useCart: () => ({ addCartItem: mocks.add }) }));
+vi.mock('@/components/cart/cart-provider', () => ({ useCartNotification: () => ({ showNotification: mocks.notify }) }));
+vi.mock('@/hooks/use-atp-membership', () => ({ useAtpMembership: () => ({ isActive: false }), useMembershipDiscount: () => ({ calculateServiceDiscount: vi.fn() }) }));
+vi.mock('@/components/membership/membership-badge', () => ({ MembershipBadge: () => null }));
+vi.mock('@/hooks/use-rtl', () => ({ useRTL: () => ({ isRTL: true }) }));
+vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
+vi.mock('@/components/product/quantity-selector', () => ({ useQuantity: () => ({ quantity: 1 }) }));
+vi.mock('@/hooks/use-selected-variant', () => ({ useSelectedVariant: () => ({ availableForSale: true, selectedVariantId: 'variant', selectedVariant: { id: 'variant', title: 'Default', price: { amount: '180', currencyCode: 'AED' }, selectedOptions: [] } }) }));
+import { ATPAddToCart } from '@/components/cart/atp-add-to-cart';
+import type { Product } from '@/lib/shopify/types';
+const product = { id: 'product', title: 'Product', handle: 'product', featuredImage: {} } as Product;
+beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}); vi.spyOn(console, 'error').mockImplementation(() => {}); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+it('shows an Arabic failure without a success notification', async () => {
+ mocks.add.mockRejectedValue(new Error('failure'));
+ render(<ATPAddToCart product={product} />);
+ fireEvent.click(screen.getByRole('button', { name: 'addToCart' }));
+ expect(await screen.findByRole('alert')).toHaveTextContent('لم تكتمل الإضافة');
+ expect(mocks.notify).not.toHaveBeenCalled();
+});
+it('prevents repeat submissions while a request is pending', async () => {
+ let finish!: () => void;
+ mocks.add.mockImplementation(() => new Promise<void>(resolve => { finish = resolve; }));
+ render(<ATPAddToCart product={product} />);
+ const button = screen.getByRole('button', { name: 'addToCart' });
+ fireEvent.click(button); fireEvent.click(button);
+ expect(mocks.add).toHaveBeenCalledTimes(1);
+ expect(button).toBeDisabled();
+ finish();
+ await waitFor(() => expect(mocks.notify).toHaveBeenCalledTimes(1));
+});

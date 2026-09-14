@@ -1,3 +1,4 @@
+import { safeReturnPath } from '@/lib/auth/return-path'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getOAuthState,
@@ -47,33 +48,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Validate state to prevent CSRF attacks
-    // Note: State might be base64 encoded with returnTo data
+    // A missing state, missing stored state, or JSON without matching CSRF is invalid.
     let returnTo = '/account'
-    
-    if (state) {
+    let stateMatches = !!state && !!storedState.state && state === storedState.state
+    if (state && storedState.state && !stateMatches) {
       try {
-        // Try to decode state as JSON (contains returnTo)
         const stateData = JSON.parse(Buffer.from(state, 'base64url').toString())
-        if (stateData.returnTo) {
-          returnTo = stateData.returnTo
-        }
-        // Validate CSRF token if included
-        if (stateData.csrf && stateData.csrf !== storedState.state) {
-          console.error('[Auth/Callback] State mismatch - possible CSRF attack')
-          return NextResponse.redirect(
-            new URL('/auth/login?error=invalid_state', config.siteUrl)
-          )
-        }
+        stateMatches = typeof stateData?.csrf === 'string' && stateData.csrf === storedState.state
+        if (stateMatches) returnTo = safeReturnPath(stateData.returnTo)
       } catch {
-        // State is not JSON, compare directly
-        if (state !== storedState.state) {
-          console.error('[Auth/Callback] State mismatch - possible CSRF attack')
-          return NextResponse.redirect(
-            new URL('/auth/login?error=invalid_state', config.siteUrl)
-          )
-        }
+        stateMatches = false
       }
+    }
+    if (!stateMatches) {
+      return NextResponse.redirect(new URL('/login?error=invalid_state', config.siteUrl))
     }
 
     console.log('[Auth/Callback] Exchanging code for tokens')

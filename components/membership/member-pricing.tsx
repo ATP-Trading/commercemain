@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { MembershipBadge } from "@/components/membership/membership-badge"
 import { UAE_DIRHAM_CODE } from "@/lib/constants"
 import { DirhamSymbol } from "@/components/icons/dirham-symbol"
-import { useMembershipDiscount } from "@/hooks/use-atp-membership"
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing"
 import { MEMBERSHIP_CONFIG } from "@/lib/constants/membership"
 import { useMembershipI18n } from "@/lib/utils/membership-i18n"
 import { useRTL } from "@/hooks/use-rtl"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 
 interface MemberPricingProps {
   originalPrice: string
+  discountRate?: number
   serviceId?: string
   currencyCode?: string
   className?: string
@@ -22,6 +23,7 @@ interface MemberPricingProps {
 
 export function MemberPricing({ 
   originalPrice, 
+  discountRate,
   serviceId, 
   currencyCode = UAE_DIRHAM_CODE, 
   className,
@@ -78,13 +80,13 @@ export function MemberPricing({
   }
 
   // Calculate ATP membership discount
-  const discountCalculation = calculateServiceDiscount(price, serviceId)
+  const discountCalculation = calculateServiceDiscount(price, serviceId, discountRate)
   const isEligibleForFreeDelivery = checkFreeDeliveryEligibility()
   
   const originalPriceFormatted = formatPrice(price);
   const finalPriceFormatted = formatPrice(discountCalculation.finalPrice);
   const savingsFormatted = formatPrice(discountCalculation.savings);
-  const discountPercentage = Math.round(MEMBERSHIP_CONFIG.SERVICE_DISCOUNT_PERCENTAGE * 100);
+  const discountPercentage = Math.round(discountCalculation.discountPercentage * 100);
 
   return (
     <div className={cn(

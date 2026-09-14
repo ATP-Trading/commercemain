@@ -1,7 +1,5 @@
 import { AboutHero } from "@/components/about/about-hero";
-import { AboutStats } from "@/components/about/about-stats";
 import { AboutMission } from "@/components/about/about-mission";
-import { AboutTimeline } from "@/components/about/about-timeline";
 import { AboutValues } from "@/components/about/about-values";
 import { AboutCTA } from "@/components/about/about-cta";
 import { StructuredData } from "@/components/structured-data";
@@ -13,7 +11,7 @@ export default function AboutPage() {
       <StructuredData
         type="Organization"
         data={{
-          description: "Learn about ATP Group Services - premium wellness and technology solutions including EMS Training, Skincare, Supplements, and Water Technology with exclusive ATP membership benefits in UAE.",
+          description: "Learn about ATP Trading - premium wellness and technology solutions including Skincare, Supplements, and Water Technology with exclusive ATP membership benefits in UAE.",
         }}
       />
 
@@ -21,13 +19,11 @@ export default function AboutPage() {
       <AboutHero />
 
       {/* Stats Section - Social proof with animated counters */}
-      <AboutStats />
 
       {/* Mission Section - Our purpose and values */}
       <AboutMission />
 
       {/* Timeline Section - Brand story and milestones */}
-      <AboutTimeline />
 
       {/* Values Section - What we stand for */}
       <AboutValues />

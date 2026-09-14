@@ -31,31 +31,30 @@ export function AboutCTA() {
                         className={`text-4xl md:text-5xl font-serif text-atp-black mb-8 ${isRTL ? "font-arabic" : ""
                             }`}
                     >
-                        Ready to Transform Your Wellness Journey?
+                        {isRTL ? "تصفح منتجات ATP Trading" : "Explore ATP Trading products"}
                     </h2>
                     <p
                         className={`text-xl text-atp-charcoal mb-8 max-w-2xl mx-auto ${isRTL ? "font-arabic" : ""
                             }`}
                     >
-                        Discover how ATP Group Services can help you achieve your wellness
-                        goals with our premium solutions and personalized care.
+                        {isRTL ? "تواصل معنا للاستفسار عن منتجاتنا المتاحة داخل الإمارات." : "Contact us about our products available within the UAE."}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <m.a
-                            href="/atp-membership"
+                            href={isRTL ? "/ar/atp-membership" : "/en/atp-membership"}
                             className="btn-atp-gold text-lg px-8 py-4"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            Explore ATP Membership
+                            {isRTL ? "استكشف عضوية ATP" : "Explore ATP Membership"}
                         </m.a>
                         <m.a
-                            href="/contact"
+                            href={isRTL ? "/ar/contact" : "/en/contact"}
                             className="btn-premium-outline text-atp-black border-atp-black hover:bg-atp-black hover:text-atp-white text-lg px-8 py-4"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            Contact Us Today
+                            {isRTL ? "تواصل معنا" : "Contact us"}
                         </m.a>
                     </div>
                 </m.div>
