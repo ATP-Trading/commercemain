@@ -107,14 +107,14 @@ export default function TrustIndicators({ locale }: TrustIndicatorsProps) {
                 {feature.title}
               </h3>
               {feature.showSymbol ? (
-                <p className="text-atp-charcoal/70 flex items-center gap-1 justify-center text-sm sm:text-base">
+                <p className="text-atp-charcoal/70 flex flex-wrap items-center gap-1 justify-center text-sm sm:text-base">
                   {locale === "ar" ? (
                     <>
-                      أكثر من <DirhamSymbol size={14} /> 250.00
+                      من <DirhamSymbol size={16} /> 250 داخل الإمارات
                     </>
                   ) : (
                     <>
-                      Over <DirhamSymbol size={14} /> 250.00
+                      From <DirhamSymbol size={16} /> 250 within the UAE
                     </>
                   )}
                 </p>
