@@ -7,5 +7,9 @@ export function customerAccountOrigin(env: Record<string, string | undefined>): 
   if (url.username || url.password || (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) {
     throw new Error('Invalid customer account site URL')
   }
+  // Production uses www; keep OAuth on the same host as the session cookies.
+  if (env.VERCEL_ENV === 'production' && url.hostname === 'atpgroupservices.ae') {
+    url.hostname = 'www.atpgroupservices.ae'
+  }
   return url.origin
 }

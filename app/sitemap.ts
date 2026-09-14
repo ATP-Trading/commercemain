@@ -1,3 +1,4 @@
+import { canonicalCollectionHandle } from '@/lib/collection-handle';
 import { isEmsPromotion, isInactiveLocation } from '@/lib/publication-policy';
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
 import { getSitemapResources, type SitemapResource } from '@/lib/shopify/sitemap';
@@ -12,7 +13,7 @@ const locales = ['en', 'ar'] as const;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   validateEnvironmentVariables();
   // Only implemented public pages: Shopify CMS handles do not have a catch-all route.
-  const paths = ['', '/about', '/contact', '/water-soil-technology',
+  const paths = ['', '/about', '/contact',
     '/policies/privacy-policy', '/policies/refund-policy', '/policies/terms-of-service'];
   for (const [prefix, data] of Object.entries({ category: CategoryData, benefits: BenefitData,
     ingredients: IngredientData, compare: ComparisonData })) {
@@ -34,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const locale of locales) {
       for (const item of catalogs[locale].filter(visible)) {
         routes.push({
-          url: `${baseUrl}/${locale}/${routePath}/${encodeURIComponent(item.handle)}`,
+          url: `${baseUrl}/${locale}/${routePath}/${encodeURIComponent(kind === 'collections' ? canonicalCollectionHandle(item.handle) : item.handle)}`,
           ...(item.updatedAt && Number.isFinite(Date.parse(item.updatedAt)) ? { lastModified: item.updatedAt } : {}),
         });
       }

@@ -180,11 +180,11 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-atp-black/80 via-transparent to-atp-black/40"></div>
 
         <div className="relative z-10 container-premium text-center text-atp-white px-4">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+          <h1 className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
             <span className="text-3xl md:text-5xl font-bold">{isAr ? data.optionAAr : data.optionA}</span>
             <span className="text-4xl md:text-6xl text-atp-gold font-bold">VS</span>
             <span className="text-3xl md:text-5xl font-bold">{isAr ? data.optionBAr : data.optionB}</span>
-          </div>
+          </h1>
           <p className="text-xl md:text-2xl text-atp-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
             {isAr ? data.descriptionAr : data.description}
           </p>

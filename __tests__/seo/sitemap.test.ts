@@ -50,6 +50,18 @@ describe('complete sitemap catalog', () => {
     expect(new Set(urls).size).toBe(urls.length);
     expect(shopifyFetch).toHaveBeenCalledTimes(4);
   });
+  it('lists final water collection URLs instead of legacy aliases', async () => {
+    shopifyFetch.mockImplementation(async ({ query, variables }) => {
+      const kind = query.includes('SitemapProducts') ? 'products' : 'collections';
+      return page(kind, kind === 'products' ? [] : [item('water', variables.language === 'AR' ? 'حلول-تكنولوجيا-المياه-والتربة' : 'water-soil-technology-solutions')]);
+    });
+    const urls = (await sitemap()).map(route => route.url);
+    for (const locale of ['ar', 'en']) {
+      expect(urls).toContain(`https://www.atpgroupservices.ae/${locale}/collections/water-soil-technology-solutions`);
+      expect(urls).not.toContain(`https://www.atpgroupservices.ae/${locale}/water-soil-technology`);
+    }
+    expect(urls.some(url => url.includes('%D8%AD%D9%84%D9%88%D9%84'))).toBe(false);
+  });
   it('fails the whole sitemap when one language cannot load', async () => {
     shopifyFetch.mockImplementation(async ({ variables }) => {
       if (variables.language === 'AR') throw new Error('Arabic unavailable');
