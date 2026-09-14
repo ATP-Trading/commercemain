@@ -1,3 +1,4 @@
+import { filterLocationProducts } from "@/lib/programmatic-seo/location-products";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
@@ -67,10 +68,10 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const isAr = locale === "ar";
 
   // Fetch products for this service
-  const products = await getCollectionProducts({
+  const products = filterLocationProducts(await getCollectionProducts({
     collection: serviceData.collection,
     locale: { language: isAr ? "AR" : "EN", country: "AE" },
-  });
+  }), service);
 
   // Generate structured data
   const structuredData = generateLocationStructuredData(

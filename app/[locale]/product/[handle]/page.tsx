@@ -1,3 +1,4 @@
+import { getProductLanguageLinks } from "@/lib/shopify/product-language-links";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion } from "@/lib/publication-policy";
 import type { Metadata } from "next";
@@ -76,6 +77,7 @@ export async function generateMetadata(props: {
       },
     },
     alternates: {
+      languages: await getProductLanguageLinks(product.id),
       canonical: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
     },
     openGraph: url
@@ -121,12 +123,12 @@ export default async function ProductPage(props: {
     name: localizedTitle,
     description: localizedDescription,
     image: product.images.map((img: Image) => img.url),
-    sku: product.id, // Use product ID as SKU fallback
     url: `https://www.atpgroupservices.ae/${params.locale}/product/${params.handle}`,
     price: product.priceRange.minVariantPrice.amount,
     priceCurrency: product.priceRange.minVariantPrice.currencyCode,
     availability: product.availableForSale ? "InStock" as const : "OutOfStock" as const,
-    brand: "ATP Trading", // Company brand
+    // Omit unverified manufacturer brands rather than labeling the reseller as the brand.
+    brand: product.handle === "atp-membership" ? "ATP Trading" : undefined,
   };
 
   const breadcrumbItems = [

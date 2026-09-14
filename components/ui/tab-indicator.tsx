@@ -52,8 +52,23 @@ export function TabsWithIndicator({
           <button
             key={tab.id}
             role="tab"
+            id={`${layoutId}-${tab.id}-tab`}
+            tabIndex={isActive ? 0 : -1}
             aria-selected={isActive}
-            aria-controls={`${tab.id}-panel`}
+            aria-controls={`${layoutId}-panel`}
+            onKeyDown={(event) => {
+              const rtl = event.currentTarget.closest("[dir]")?.getAttribute("dir") === "rtl";
+              const nextKey = rtl ? "ArrowLeft" : "ArrowRight";
+              const previousKey = rtl ? "ArrowRight" : "ArrowLeft";
+              if (![nextKey, previousKey, "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              const index = tabs.findIndex(item => item.id === tab.id);
+              const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1
+                : (index + (event.key === nextKey ? 1 : -1) + tabs.length) % tabs.length;
+              onTabChange(tabs[next].id);
+              const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]");
+              buttons?.[next]?.focus();
+            }}
             onClick={() => onTabChange(tab.id)}
             className={cn(
               'relative z-10 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-colors',

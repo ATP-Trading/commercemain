@@ -1,6 +1,7 @@
 import type { ShopifyMenuItem } from '@/lib/shopify/types';
 
 export const isEmsPromotion = (value: string) => /(?:^|[^a-z])ems(?:[^a-z]|$)/i.test(value);
+export const isInactiveCollection = (handle: string) => isEmsPromotion(handle) || ['home-services', 'yoga-pilates'].includes(handle);
 export const unsupportedCities = new Set(['riyadh', 'jeddah', 'dammam', 'khobar', 'kuwait-city', 'manama', 'doha', 'muscat']);
 export const isInactiveLocation = (service: string, city: string) => isEmsPromotion(service) || unsupportedCities.has(city);
 

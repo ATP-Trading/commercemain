@@ -60,7 +60,7 @@ export async function Navbar() {
                   alt="ATP Trading"
                   fill
                   className="object-contain filter brightness-0 invert group-hover:brightness-75 transition-all duration-500"
-                  priority
+                  sizes="(min-width: 768px) 96px, (min-width: 640px) 80px, 64px"
                 />
               </div>
             </Link>

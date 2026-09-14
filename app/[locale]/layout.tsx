@@ -9,7 +9,6 @@ import { MembershipProvider } from "@/hooks/use-atp-membership-context";
 import { Navbar } from "@/components/layout/navbar";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import Footer from "@/components/layout/footer";
-import { WelcomeToast } from "@/components/welcome-toast";
 import { getCart } from "@/lib/shopify/server";
 import { Toaster } from "sonner";
 import { Cinzel, DM_Sans, Tajawal } from "next/font/google";
@@ -142,7 +141,6 @@ export default async function LocaleLayout({
                         },
                       }}
                     />
-                    <WelcomeToast />
                   </main>
                   <Footer />
                   <MobileBottomNav />

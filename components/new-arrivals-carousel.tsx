@@ -1,8 +1,6 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import Price from "@/components/price";
 import type { Product } from "@/lib/shopify/types";
 import type { Locale } from "@/lib/i18n/config";
@@ -44,9 +42,11 @@ function ProductCard({ product, locale }: { product: Product; locale: Locale }) 
   );
 }
 
-export function NewArrivalsCarousel({ products, carouselProducts, locale }: NewArrivalsCarouselProps) {
-  const t = useTranslations("homepage");
-  const tProduct = useTranslations("product");
+export async function NewArrivalsCarousel({ products, carouselProducts, locale }: NewArrivalsCarouselProps) {
+  const [t, tProduct] = await Promise.all([
+    getTranslations({ locale, namespace: "homepage" }),
+    getTranslations({ locale, namespace: "product" }),
+  ]);
   const sections = [
     { id: "new-arrivals", title: locale === "ar" ? "منتجاتنا الجديدة" : "New arrivals", items: carouselProducts.slice(0, 4) },
     { id: "featured-products", title: t("featuredProductsTitle"), items: products.slice(0, 5) },
