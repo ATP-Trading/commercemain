@@ -281,17 +281,6 @@ export function NewArrivalsCarousel({
                     <ProductBadges product={product} size="sm" />
                   </div>
 
-                  {/* Wishlist button */}
-                  <button
-                    className={cn(
-                      "absolute top-4 z-20 p-2 rounded-full glass opacity-0 group-hover:opacity-100 transition-opacity",
-                      isRTL ? "left-4" : "right-4"
-                    )}
-                    aria-label={tActions("addToWishlist")}
-                  >
-                    <Heart className="w-4 h-4 text-atp-white" />
-                  </button>
-
                   {/* Product info */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-10">
                     <h3 className={cn(
