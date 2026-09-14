@@ -227,7 +227,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               : "Our team is available to help you find the perfect product for your needs"}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="/contact" className="btn-atp-gold">
+            <a href={`/${locale}/contact`} className="btn-atp-gold">
               {isAr ? "اتصل بنا" : "Contact Us"}
             </a>
             <a

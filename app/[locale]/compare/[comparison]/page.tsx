@@ -1,3 +1,4 @@
+import { EditorialSources } from "@/components/seo/editorial-sources";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
@@ -105,7 +106,7 @@ function generateComparisonStructuredData(
             "@type": "ListItem",
             position: 2,
             name: isAr ? "المقارنات" : "Comparisons",
-            item: `https://www.atpgroupservices.ae/${locale}/compare`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
@@ -458,6 +459,7 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
           </div>
         </div>
       </section>
+      <EditorialSources slug={comparison} locale={locale} />
     </>
   );
 }

@@ -55,10 +55,10 @@ export function generateLocationMetadata(
   const isAr = locale === "ar";
   const title = isAr
     ? `${serviceData.nameAr} في ${cityData.nameAr} | ATP Trading`
-    : `${serviceData.name} in ${cityData.name} | Professional ${serviceData.name} Near You`;
+    : `${serviceData.name} in ${cityData.name} | ATP Trading`;
   const description = isAr
-    ? `ابحث عن ${serviceData.nameAr} في ${cityData.nameAr}. ATP Trading تقدم ${serviceData.nameAr} الاحترافي مع توصيل سريع في ${cityData.nameAr}.`
-    : `Looking for ${serviceData.name} in ${cityData.name}? ATP Trading offers professional ${serviceData.name} with fast delivery in ${cityData.name}.`;
+    ? `تصفح ${serviceData.nameAr} وراجع معلومات المنتجات والتوصيل إلى ${cityData.nameAr} مع ATP Trading.`
+    : `Browse ${serviceData.name} and review product details and delivery to ${cityData.name} with ATP Trading.`;
   const url = `https://www.atpgroupservices.ae/${locale}/${service}/${city}`;
 
   return {

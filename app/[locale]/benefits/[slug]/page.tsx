@@ -1,3 +1,4 @@
+import { EditorialSources } from "@/components/seo/editorial-sources";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion, isInactiveLocation } from "@/lib/publication-policy";
 import { Metadata } from "next";
@@ -103,7 +104,7 @@ function generateBenefitStructuredData(
             "@type": "ListItem",
             position: 2,
             name: isAr ? "الفوائد" : "Benefits",
-            item: `https://www.atpgroupservices.ae/${locale}/benefits`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
@@ -385,7 +386,7 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
               {isAr ? "تسوق المنتجات" : "Shop Products"}
             </a>
             <a
-              href="/contact"
+              href={`/${locale}/contact`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
               {isAr ? "استشارة مجانية" : "Free Consultation"}
@@ -393,6 +394,7 @@ export default async function BenefitsPage({ params }: BenefitsPageProps) {
           </div>
         </div>
       </section>
+      <EditorialSources slug={slug} locale={locale} />
     </>
   );
 }

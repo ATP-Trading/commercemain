@@ -1,3 +1,4 @@
+import { EditorialSources } from "@/components/seo/editorial-sources";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -107,7 +108,7 @@ function generateIngredientStructuredData(
             "@type": "ListItem",
             position: 2,
             name: isAr ? "المكونات" : "Ingredients",
-            item: `https://www.atpgroupservices.ae/${locale}/ingredients`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
@@ -295,14 +296,14 @@ export default async function IngredientsPage({ params }: IngredientsPageProps) 
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
               {isAr
-                ? `منتجات تحتوي على ${ingredient.nameAr}`
-                : `Products Containing ${ingredient.name}`}
+                ? "منتجات ذات صلة"
+                : "Related Products"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto mb-4"></div>
             <p className="text-atp-charcoal max-w-2xl mx-auto">
               {isAr
-                ? `اكتشف منتجاتنا الممتازة المُحلاة بـ ${ingredient.nameAr}`
-                : `Discover our premium products formulated with ${ingredient.name}`}
+                ? "راجع ملصق كل منتج للتأكد من المكونات وطريقة الاستخدام."
+                : "Check each product label for its ingredients and directions."}
             </p>
           </div>
 
@@ -366,22 +367,23 @@ export default async function IngredientsPage({ params }: IngredientsPageProps) 
           </h2>
           <p className="text-xl text-atp-white/80 mb-8 max-w-2xl mx-auto">
             {isAr
-              ? `تسوق منتجاتنا المُحلاة بـ ${ingredient.nameAr} عالي الجودة`
-              : `Shop our premium products featuring ${ingredient.name}`}
+              ? "قارن المنتجات واقرأ تفاصيلها قبل الاختيار."
+              : "Compare products and read their details before choosing."}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a href="#products" className="btn-atp-gold">
               {isAr ? "تسوق المنتجات" : "Shop Products"}
             </a>
             <a
-              href="/contact"
+              href={`/${locale}/contact`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
-              {isAr ? "استشارة خبير" : "Expert Consultation"}
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
           </div>
         </div>
       </section>
+      <EditorialSources slug={slug} locale={locale} />
     </>
   );
 }

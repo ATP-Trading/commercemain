@@ -69,7 +69,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   // Fetch products for this service
   const products = await getCollectionProducts({
     collection: serviceData.collection,
-    locale: { language: locale, country: "AE" },
+    locale: { language: isAr ? "AR" : "EN", country: "AE" },
   });
 
   // Generate structured data
@@ -100,25 +100,25 @@ export default async function LocationPage({ params }: LocationPageProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-atp-black/80 via-transparent to-atp-black/40"></div>
 
         <div className="relative z-10 container-premium text-center text-atp-white px-4">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold mb-6 tracking-tight">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-6 tracking-tight">
             {isAr
               ? `${serviceData.nameAr} في ${cityData.nameAr}`
               : `${serviceData.name} in ${cityData.name}`}
           </h1>
           <p className="text-xl md:text-2xl text-atp-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
             {isAr
-              ? `اكتشف ${serviceData.nameAr} الاحترافي في ${cityData.nameAr}. توصيل سريع وخدمة ممتازة في جميع أنحاء ${cityData.nameAr}.`
-              : `Discover professional ${serviceData.name} in ${cityData.name}. Fast delivery and excellent service throughout ${cityData.name}.`}
+              ? `تصفح ${serviceData.nameAr} المتاحة للطلب والتوصيل إلى ${cityData.nameAr}. راجع تفاصيل كل منتج قبل الشراء.`
+              : `Browse ${serviceData.name} available to order for delivery to ${cityData.name}. Review each product’s details before buying.`}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a href="#products" className="btn-atp-gold">
               {isAr ? "تصفح المنتجات" : "Browse Products"}
             </a>
             <a
-              href="/contact"
+              href={`/${locale}/contact`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
-              {isAr ? "احجز استشارة" : "Book Consultation"}
+              {isAr ? "تواصل معنا" : "Contact Us"}
             </a>
           </div>
         </div>
@@ -132,12 +132,12 @@ export default async function LocationPage({ params }: LocationPageProps) {
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-6">
                 {isAr
                   ? `${serviceData.nameAr} في ${cityData.nameAr}`
-                  : `${serviceData.name} Services in ${cityData.name}`}
+                  : `${serviceData.name} in ${cityData.name}`}
               </h2>
               <p className="text-atp-charcoal text-lg mb-6 leading-relaxed">
                 {isAr
-                  ? `نقدم ${serviceData.nameAr} الاحترافي في ${cityData.nameAr} والمناطق المجاورة. فريقنا من الخبراء جاهز لمساعدتك في تحقيق أهدافك في ${cityData.nameAr}.`
-                  : `We provide professional ${serviceData.name} in ${cityData.name} and surrounding areas. Our team of experts is ready to help you achieve your goals in ${cityData.name}.`}
+                  ? `يمكنك طلب منتجاتنا عبر الموقع للتوصيل إلى ${cityData.nameAr}. تواصل معنا إذا احتجت مساعدة في اختيار المنتج أو تأكيد ترتيبات التوصيل.`
+                  : `Order online for delivery to ${cityData.name}. Contact us for help with product information or delivery arrangements.`}
               </p>
 
               <div className="space-y-4">
@@ -159,12 +159,12 @@ export default async function LocationPage({ params }: LocationPageProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-atp-black mb-1">
-                      {isAr ? "خدمة سريعة" : "Fast Service"}
+                      {isAr ? "توصيل داخل الإمارات" : "UAE Delivery"}
                     </h3>
                     <p className="text-atp-charcoal">
                       {isAr
-                        ? "توصيل سريع في جميع أنحاء المدينة"
-                        : "Quick delivery throughout the city"}
+                        ? "تظهر تفاصيل التوصيل عند إتمام الطلب"
+                        : "Delivery details are shown at checkout"}
                     </p>
                   </div>
                 </div>
@@ -187,12 +187,12 @@ export default async function LocationPage({ params }: LocationPageProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-atp-black mb-1">
-                      {isAr ? "جودة مضمونة" : "Quality Guaranteed"}
+                      {isAr ? "معلومات المنتج" : "Product Information"}
                     </h3>
                     <p className="text-atp-charcoal">
                       {isAr
-                        ? "منتجات أصلية 100٪ مع ضمان الجودة"
-                        : "100% authentic products with quality guarantee"}
+                        ? "راجع المواصفات وطريقة الاستخدام قبل الشراء"
+                        : "Review specifications and use instructions before buying"}
                     </p>
                   </div>
                 </div>
@@ -215,12 +215,12 @@ export default async function LocationPage({ params }: LocationPageProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-atp-black mb-1">
-                      {isAr ? "دعم محلي" : "Local Support"}
+                      {isAr ? "مساعدة في الطلب" : "Order Support"}
                     </h3>
                     <p className="text-atp-charcoal">
                       {isAr
-                        ? "فريق دعم محلي يتحدث لغتك"
-                        : "Local support team speaking your language"}
+                        ? "فريق مساعدة في الطلب يتحدث لغتك"
+                        : "Contact us in Arabic or English"}
                     </p>
                   </div>
                 </div>
@@ -247,8 +247,8 @@ export default async function LocationPage({ params }: LocationPageProps) {
                     />
                   </svg>
                   {isAr
-                    ? `توصيل مجاني للطلبات فوق 200 درهم في ${cityData.nameAr}`
-                    : `Free delivery on orders over 200 AED in ${cityData.name}`}
+                    ? "التوصيل ١٥ درهمًا للطلبات أقل من ٢٥٠ درهمًا، ومجاني من ٢٥٠ درهمًا"
+                    : "Delivery is AED 15 below AED 250, and free from AED 250"}
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -265,8 +265,8 @@ export default async function LocationPage({ params }: LocationPageProps) {
                     />
                   </svg>
                   {isAr
-                    ? "توصيل خلال 1-2 أيام عمل"
-                    : "Delivery within 1-2 business days"}
+                    ? "توصيل مجاني داخل الإمارات لأعضاء ATP الفعّالين"
+                    : "Free UAE delivery for active ATP members"}
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -282,7 +282,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  {isAr ? "الدفع عند الاستلام متاح" : "Cash on delivery available"}
+                  {isAr ? "وسائل الدفع المتاحة تظهر عند إتمام الطلب" : "Available payment methods are shown at checkout"}
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -298,7 +298,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  {isAr ? "إرجاع سهل خلال 14 يوم" : "Easy returns within 14 days"}
+                  {isAr ? "طلب إرجاع المنتج السليم غير المفتوح خلال ٣ أيام وفق سياسة الاسترداد" : "Request return of unopened, undamaged products within 3 days, subject to the refund policy"}
                 </li>
               </ul>
             </div>
@@ -334,12 +334,12 @@ export default async function LocationPage({ params }: LocationPageProps) {
         </div>
       </section>
 
-      {/* Nearby Cities Section */}
+      {/* Other UAE Locations Section */}
       <section className="section-padding bg-atp-white">
         <div className="container-premium">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-atp-black mb-4">
-              {isAr ? "مدن مجاورة" : "Nearby Cities"}
+              {isAr ? "مدن أخرى داخل الإمارات" : "Other UAE Locations"}
             </h2>
             <div className="w-24 h-1 bg-atp-gold mx-auto"></div>
           </div>
@@ -375,18 +375,18 @@ export default async function LocationPage({ params }: LocationPageProps) {
           </h2>
           <p className="text-xl text-atp-white/80 mb-8 max-w-2xl mx-auto">
             {isAr
-              ? `اتصل بنا اليوم للحصول على ${serviceData.nameAr} الاحترافي في ${cityData.nameAr}`
-              : `Contact us today for professional ${serviceData.name} in ${cityData.name}`}
+              ? "تواصل معنا للمساعدة في معلومات المنتجات والتوصيل."
+              : "Contact us for help with product and delivery information."}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="/contact" className="btn-atp-gold">
+            <a href={`/${locale}/contact`} className="btn-atp-gold">
               {isAr ? "اتصل بنا" : "Contact Us"}
             </a>
             <a
-              href={`tel:+9714XXXXXXX`}
+              href={`/${locale}/policies/refund-policy`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
-              {isAr ? "اتصل الآن" : "Call Now"}
+              {isAr ? "سياسة الاسترداد" : "Refund Policy"}
             </a>
           </div>
         </div>
