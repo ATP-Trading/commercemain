@@ -24,6 +24,9 @@ export function NavbarActions({ locale, isRTL }: NavbarActionsProps) {
     return (
         <>
             <div className={`flex items-center gap-3 sm:gap-4 md:gap-6 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="sm:hidden">
+                    <LanguageSwitcher variant="compact" />
+                </div>
                 <div className="hidden sm:block">
                     <LanguageSwitcher />
                 </div>

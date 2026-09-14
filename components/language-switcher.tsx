@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from '@/src/i18n/navigation';
 import { useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
+import { Languages } from 'lucide-react';
 
 const localeNames = {
   en: 'English',
@@ -13,7 +14,7 @@ const supportedLocales = ['en', 'ar'] as const;
 
 interface LanguageSwitcherProps {
   showFullText?: boolean;
-  variant?: 'default' | 'mobile' | 'footer';
+  variant?: 'default' | 'mobile' | 'footer' | 'compact';
 }
 
 export function LanguageSwitcher({ showFullText = false, variant = 'default' }: LanguageSwitcherProps = {}) {
@@ -23,17 +24,39 @@ export function LanguageSwitcher({ showFullText = false, variant = 'default' }: 
   const params = useParams();
 
   const handleLocaleChange = (newLocale: string) => {
+    const search = new URLSearchParams(window.location.search);
+    const query = Object.fromEntries(Array.from(new Set(search.keys()), key => {
+      const values = search.getAll(key);
+      return [key, values.length > 1 ? values : values[0]];
+    }));
     router.replace(
       // @ts-expect-error -- TypeScript will validate that only known params
       // are used in combination with a given pathname. Since the two will
       // always match for the current route, we can skip runtime checks.
-      { pathname, params },
+      { pathname, params, query, hash: window.location.hash },
       { locale: newLocale }
     );
   };
 
   const isMobile = variant === 'mobile';
   const isFooter = variant === 'footer';
+
+  if (variant === 'compact') {
+    const nextLocale = locale === 'ar' ? 'en' : 'ar';
+    return (
+      <button
+        type="button"
+        onClick={() => handleLocaleChange(nextLocale)}
+        lang={nextLocale}
+        dir={nextLocale === 'ar' ? 'rtl' : 'ltr'}
+        aria-label={nextLocale === 'ar' ? 'التبديل إلى العربية' : 'Switch to English'}
+        className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-atp-gold/60 bg-neutral-900 px-2.5 text-sm font-semibold text-white hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-atp-gold"
+      >
+        <Languages className="h-4 w-4 shrink-0 text-atp-gold" aria-hidden="true" />
+        {localeNames[nextLocale]}
+      </button>
+    );
+  }
 
   // Footer variant uses a native select element
   if (isFooter) {
