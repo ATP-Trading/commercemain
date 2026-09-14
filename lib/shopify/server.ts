@@ -1,3 +1,4 @@
+import { prepareMembershipLines, variantPlanQuery, type PurchaseLine, type VariantPlans } from './membership-purchase'
 import 'server-only'
 import { getLocale } from 'next-intl/server'
 import { isEmsPromotion } from '@/lib/publication-policy'
@@ -206,51 +207,38 @@ export async function shopifyFetch<T>({
 
 
 
-export async function createCart(
-  lines?: { merchandiseId: string; quantity: number }[]
-): Promise<Cart> {
-  try {
-    const hasLines = lines && lines.length > 0;
-    const res = await shopifyFetch<ShopifyCreateCartOperation>({
-      query: createCartMutation,
-      variables: { lineItems: hasLines ? lines : [], language: (await getLocale()) === "ar" ? "AR" : "EN" }
-    } as any); // Type workaround for optional variables
-
-    const cart = reshapeCart(res.body.data.cartCreate.cart);
-
-    // Set the cart cookie
-    if (cart.id) {
-      const cookieStore = await cookies();
-      cookieStore.set('cartId', cart.id);
-    }
-
-    return cart;
-  } catch (error) {
-    console.warn('[Shopify] Using mock cart data due to error:', error)
-    return mockCart
-  }
+async function preparePurchaseLines(lines: PurchaseLine[]) {
+  return prepareMembershipLines(lines, async id => {
+    const res = await shopifyFetch<{ data: { node: VariantPlans | null }; variables: { id: string } }>({ query: variantPlanQuery, variables: { id } })
+    return res.body.data.node
+  })
 }
 
-export async function addToCart(
-  lines: { merchandiseId: string; quantity: number }[]
-): Promise<Cart> {
-  let cartId = (await cookies()).get('cartId')?.value;
+export async function createCart(lines: PurchaseLine[] = []): Promise<Cart> {
+  const prepared = await preparePurchaseLines(lines)
+  const res = await shopifyFetch<ShopifyCreateCartOperation>({
+    query: createCartMutation,
+    variables: { input: { lines: prepared }, language: (await getLocale()) === "ar" ? "AR" : "EN" }
+  } as any)
+  const result = res.body.data.cartCreate
+  if (result.userErrors?.length || !result.cart) throw new Error('Unable to create cart')
+  const cart = reshapeCart(result.cart)
+  if (!cart.id) throw new Error('Cart identity is missing')
+  ;(await cookies()).set('cartId', cart.id)
+  return cart
+}
 
-  // If no cart exists, create one with the items
-  if (!cartId) {
-    console.log('[Shopify] No cart found, creating new cart with items');
-    return await createCart(lines);
-  }
-
+export async function addToCart(lines: PurchaseLine[]): Promise<Cart> {
+  const cartId = (await cookies()).get('cartId')?.value
+  if (!cartId) return createCart(lines)
+  const prepared = await preparePurchaseLines(lines)
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
-    variables: {
-      cartId,
-      language: (await getLocale()) === "ar" ? "AR" : "EN",
-      lines
-    }
-  });
-  return reshapeCart(res.body.data.cartLinesAdd.cart);
+    variables: { cartId, language: (await getLocale()) === "ar" ? "AR" : "EN", lines: prepared }
+  })
+  const result = res.body.data.cartLinesAdd
+  if (result.userErrors?.length || !result.cart) throw new Error('Unable to add cart items')
+  return reshapeCart(result.cart)
 }
 
 export async function removeFromCart(lineIds: string[]): Promise<Cart> {

@@ -261,6 +261,7 @@ export type ShopifyProduct = {
   };
   // Collections that include this product
   collections?: Connection<{
+    id?: string;
     handle: string;
     title: string;
   }>;
@@ -277,13 +278,14 @@ export type ShopifyCartOperation = {
 };
 
 export type ShopifyCreateCartOperation = {
-  data: { cartCreate: { cart: ShopifyCart } };
+  data: { cartCreate: { cart: ShopifyCart; userErrors?: { message: string }[] } };
 };
 
 export type ShopifyAddToCartOperation = {
   data: {
     cartLinesAdd: {
       cart: ShopifyCart;
+      userErrors?: { message: string }[];
     };
   };
   variables: {

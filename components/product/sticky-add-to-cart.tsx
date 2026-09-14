@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { isMemberDiscountEligible } from "@/lib/shopify/member-product-eligibility";
 import Price from "@/components/price";
 import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useQuantity } from "@/components/product/quantity-selector";
@@ -28,7 +29,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
     const t = useTranslations("product");
     const { calculateServiceDiscount } = useMembershipDiscount();
     const isMembershipProduct = product.handle === "atp-membership" || product.tags.some(tag => tag.toLowerCase().includes("membership"));
-    const displayPrice = isMembershipProduct ? selectedVariant.price.amount : String(calculateServiceDiscount(Number(selectedVariant.price.amount)).finalPrice);
+    const displayPrice = isMembershipProduct || !isMemberDiscountEligible(product) ? selectedVariant.price.amount : String(calculateServiceDiscount(Number(selectedVariant.price.amount)).finalPrice);
 
     useEffect(() => {
         if (!triggerRef.current) return;

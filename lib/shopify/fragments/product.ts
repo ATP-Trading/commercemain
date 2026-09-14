@@ -104,9 +104,10 @@ const productFragment = /* GraphQL */ `
     }
     
     # Collections that include this product (for "View All" button)
-    collections(first: 1) {
+    collections(first: 100) {
       edges {
         node {
+          id
           handle
           title
         }

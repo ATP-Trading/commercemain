@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
+import { isMemberDiscountEligible } from "@/lib/shopify/member-product-eligibility";
 import { EnhancedMemberPricing } from "@/components/membership/enhanced-member-pricing";
 import { FreeDeliveryIndicator } from "@/components/membership/free-delivery-indicator";
 import Price from "@/components/price";
@@ -113,7 +114,7 @@ export function ATPProductDescription({
           </h1>
 
           {/* Enhanced ATP Member Pricing Display - Hidden for membership product */}
-          {!isMembershipProduct ? (
+          {!isMembershipProduct && isMemberDiscountEligible(product) ? (
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <EnhancedMemberPricing
                 originalPrice={price.amount}
@@ -134,7 +135,7 @@ export function ATPProductDescription({
                     currencyCode={price.currencyCode}
                   />
                 </span>
-                <span className="text-sm text-muted-foreground">{locale === "ar" ? "/سنة" : "/year"}</span>
+                {isMembershipProduct && <span className="text-sm text-muted-foreground">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
             </div>
           )}

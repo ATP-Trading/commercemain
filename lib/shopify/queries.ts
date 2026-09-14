@@ -1,6 +1,7 @@
 export const createCartMutation = `
   mutation cartCreate($input: CartInput, $language: LanguageCode, $country: CountryCode) @inContext(language: $language, country: $country) {
     cartCreate(input: $input) {
+      userErrors { field message }
       cart {
         id
         checkoutUrl
@@ -59,6 +60,7 @@ export const createCartMutation = `
 export const addToCartMutation = `
   mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!, $language: LanguageCode, $country: CountryCode) @inContext(language: $language, country: $country) {
     cartLinesAdd(cartId: $cartId, lines: $lines) {
+      userErrors { field message }
       cart {
         id
         checkoutUrl
@@ -582,9 +584,10 @@ export const getProductQuery = `
       tags
       updatedAt
       # Collections that include this product (for "View All" button)
-      collections(first: 1) {
+      collections(first: 100) {
         edges {
           node {
+            id
             handle
             title
           }
