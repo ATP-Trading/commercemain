@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { getProducts } from "@/lib/shopify/server";
 import { defaultSort, sorting } from "@/lib/constants";
 import { matchesLocalizedTitle } from "@/lib/localized-search";
 import SearchResults from "./search-results";
+
+export async function generateMetadata({ params }: { params: Promise<{locale: string}> }): Promise<Metadata> {
+ const { locale } = await params;
+ return { title: locale === 'ar' ? 'البحث عن المنتجات' : 'Search products', robots: { index: false, follow: true } };
+}
 
 // Force dynamic rendering - this page uses no-store fetch for fresh Shopify data
 export const dynamic = 'force-dynamic';

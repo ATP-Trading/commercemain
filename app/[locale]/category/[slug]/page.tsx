@@ -66,7 +66,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
       {/* Hero Section */}
       <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-atp-black via-atp-charcoal to-atp-black overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/category-hero-bg.jpg')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-atp-black/80 via-transparent to-atp-black/40"></div>
 
         <div className="relative z-10 container-premium text-center text-atp-white px-4">

@@ -15,7 +15,7 @@ export function generateCategoryMetadata(slug: string, locale: string): Metadata
   const url = `https://www.atpgroupservices.ae/${locale}/category/${slug}`;
 
   return {
-    title,
+    title: { absolute: title.includes("ATP Trading") ? title : `${title} | ATP Trading` },
     description,
     alternates: {
       canonical: url,
@@ -62,7 +62,7 @@ export function generateLocationMetadata(
   const url = `https://www.atpgroupservices.ae/${locale}/${service}/${city}`;
 
   return {
-    title,
+    title: { absolute: title.includes("ATP Trading") ? title : `${title} | ATP Trading` },
     description,
     alternates: {
       canonical: url,
@@ -151,7 +151,7 @@ export function generateCategoryStructuredData(
               "@type": "ListItem",
               position: 2,
               name: isAr ? "الفئات" : "Categories",
-              item: `https://www.atpgroupservices.ae/${locale}/categories`,
+              item: `https://www.atpgroupservices.ae/${locale}/search`,
             },
             {
               "@type": "ListItem",
@@ -236,13 +236,13 @@ export function generateLocationStructuredData(
             "@type": "ListItem",
             position: 2,
             name: isAr ? "الخدمات" : "Services",
-            item: `https://www.atpgroupservices.ae/${locale}/services`,
+            item: `https://www.atpgroupservices.ae/${locale}/search`,
           },
           {
             "@type": "ListItem",
             position: 3,
             name: isAr ? serviceData.nameAr : serviceData.name,
-            item: `https://www.atpgroupservices.ae/${locale}/${service}`,
+            item: `https://www.atpgroupservices.ae/${locale}/collections/${serviceData.collection}`,
           },
           {
             "@type": "ListItem",

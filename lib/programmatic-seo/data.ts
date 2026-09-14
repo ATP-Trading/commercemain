@@ -266,7 +266,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
         answer: "يرى معظم العملاء تحسينات واضحة في غضون 2-4 أسابيع من الاستخدام المنتظم. للحصول على أفضل النتائج، اتبع روتين العناية بالبشرة الموصى به واستخدم المنتجات باستمرار."
       }
     ],
-    image: "/images/category-skincare.jpg",
+    image: "/skincare-hero-banner.jpg",
     icon: "Sparkles"
   },
   
@@ -314,7 +314,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
         answer: "امزج كيس واحد مع 120 مل من الماء البارد واشرب مرة واحدة يوميًا. للحصول على أفضل النتائج، استخدم باستمرار لمدة 30 يومًا على الأقل."
       }
     ],
-    image: "/images/category-supplements.jpg",
+    image: "/supplements-thai.jpg",
     icon: "Heart"
   },
   
@@ -362,7 +362,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
         answer: "يعتمد استبدال المرشح على الاستخدام وجودة المياه. بشكل عام، يجب تغيير المرشحات الأولية كل 6 أشهر، والمرشح الرئيسي كل 12 شهرًا. ينبهك نظامنا عندما يحين وقت الاستبدال."
       }
     ],
-    image: "/images/category-water.jpg",
+    image: "/water.jpg",
     icon: "Droplets"
   },
   
@@ -410,7 +410,7 @@ export const CategoryData: Record<string, CategoryPageData> = {
         answer: "نعم، Transform Soil مثالي لكل من الحدائق المنزلية والمزارع واسعة النطاق. سهل الاستخدام - فقط ذوب في الماء وطبق على التربة حول النباتات."
       }
     ],
-    image: "/images/category-soil.jpg",
+    image: "/atp-products-hero.png",
     icon: "Leaf"
   }
 };

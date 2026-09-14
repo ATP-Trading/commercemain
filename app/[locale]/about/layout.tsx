@@ -35,7 +35,7 @@ export async function generateMetadata({
       url: `https://www.atpgroupservices.ae/${locale}/about`,
       siteName: isArabic ? 'ATP Trading' : 'ATP Trading',
       images: [{
-        url: 'https://www.atpgroupservices.ae/og-about.jpg',
+        url: 'https://www.atpgroupservices.ae/opengraph-image',
         width: 1200,
         height: 630,
         alt: title,
@@ -45,7 +45,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: ['https://www.atpgroupservices.ae/og-about.jpg'],
+      images: ['https://www.atpgroupservices.ae/opengraph-image'],
     },
     alternates: {
       canonical: `https://www.atpgroupservices.ae/${locale}/about`,

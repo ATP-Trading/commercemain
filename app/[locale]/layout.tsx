@@ -62,7 +62,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'common' });
 
   return {
-    title: t('siteTitle'),
+    title: { absolute: t('siteTitle') },
     description: t('siteDescription'),
     openGraph: {
       locale: locale === "ar" ? "ar_AE" : "en_AE",

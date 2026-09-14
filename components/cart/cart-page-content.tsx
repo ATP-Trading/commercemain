@@ -193,7 +193,7 @@ export function CartPageContent() {
                                 asChild 
                                 className="mb-4 text-neutral-400 hover:text-[#d4af37] hover:bg-[#d4af37]/10 transition-colors"
                             >
-                                <Link href={`/${locale}`} className="flex items-center gap-2">
+                                <Link href="/" className="flex items-center gap-2">
                                     <BackArrow className="w-4 h-4" />
                                     {tCart("continueShopping")}
                                 </Link>
@@ -235,7 +235,7 @@ export function CartPageContent() {
                                     asChild
                                     className="bg-gradient-to-r from-[#d4af37] to-[#c9a432] hover:from-[#e5c354] hover:to-[#d4af37] text-black font-semibold px-8 py-3 rounded-xl shadow-lg shadow-[#d4af37]/20 transition-all hover:shadow-[#d4af37]/30 hover:scale-[1.02]"
                                 >
-                                    <Link href={`/${locale}`}>
+                                    <Link href="/">
                                         <Sparkles className="w-4 h-4 me-2" />
                                         {tCart("page.startShopping")}
                                     </Link>
@@ -283,7 +283,7 @@ export function CartPageContent() {
                             asChild 
                             className="mb-4 text-neutral-400 hover:text-[#d4af37] hover:bg-[#d4af37]/10 transition-colors"
                         >
-                            <Link href={`/${locale}`} className="flex items-center gap-2">
+                            <Link href="/" className="flex items-center gap-2">
                                 <BackArrow className="w-4 h-4" />
                                 {tCart("continueShopping")}
                             </Link>
@@ -573,7 +573,7 @@ export function CartPageContent() {
                                         asChild 
                                         className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white hover:border-neutral-600 rounded-xl"
                                     >
-                                        <Link href={`/${locale}`}>{tCart("continueShopping")}</Link>
+                                        <Link href="/">{tCart("continueShopping")}</Link>
                                     </Button>
 
                                     {/* Security Note */}

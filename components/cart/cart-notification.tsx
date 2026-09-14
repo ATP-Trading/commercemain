@@ -83,6 +83,7 @@ export function CartNotification({ item, isVisible, onClose }: CartNotificationP
                                     variant="ghost"
                                     size="sm"
                                     onClick={onClose}
+                                    aria-label={locale === "ar" ? "إغلاق الإشعار" : "Close notification"}
                                     className="h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
                                 >
                                     <X className="w-4 h-4" />
