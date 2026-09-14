@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalyticsSettingsButton } from "@/components/analytics/google-analytics";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from 'next-intl';
@@ -170,7 +171,7 @@ export default function Footer() {
               © {currentYear} {SITE_NAME}. {t('allRightsReserved')}.
             </p>
             <div
-              className="flex items-center gap-4"
+              className="flex flex-wrap items-center gap-4"
             >
               <Link
                 href={`/${locale}/policies/privacy-policy`}
@@ -178,6 +179,7 @@ export default function Footer() {
               >
                 {t('privacyPolicy')}
               </Link>
+              <AnalyticsSettingsButton />
               <Link
                 href={`/${locale}/policies/refund-policy`}
                 className="hover:text-white transition-colors"

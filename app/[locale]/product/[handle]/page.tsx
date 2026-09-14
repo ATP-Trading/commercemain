@@ -1,3 +1,4 @@
+import { ProductAnalytics } from "@/components/analytics/google-analytics";
 import { getProductLanguageLinks } from "@/lib/shopify/product-language-links";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion } from "@/lib/publication-policy";
@@ -148,6 +149,7 @@ export default async function ProductPage(props: {
 
   return (
     <ProductProvider>
+      <ProductAnalytics item={{ item_id: product.id, item_name: product.title, price: Number(product.priceRange.minVariantPrice.amount), quantity: 1 }} currency={product.priceRange.minVariantPrice.currencyCode} />
       <ProductStructuredData {...productSchemaData} />
       <BreadcrumbStructuredData items={breadcrumbItems} />
       <div className="mx-auto max-w-(--breakpoint-2xl) px-4" dir="ltr">

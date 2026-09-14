@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
@@ -125,6 +126,7 @@ export default async function LocaleLayout({
                   <SkipToContentSimple label={isRTL ? 'انتقل إلى المحتوى الرئيسي' : 'Skip to main content'} />
                   <Navbar />
                   <MetaPixel />
+                  <GoogleAnalytics />
                   <main id="main-content" className="flex-1 pb-16 md:pb-0" tabIndex={-1}>
                     <PageTransitionProvider>
                       {children}
