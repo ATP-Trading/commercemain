@@ -446,11 +446,11 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
               : "Our expert team is ready to help you make the right choice"}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="/contact" className="btn-atp-gold">
+            <a href={`/${locale}/contact`} className="btn-atp-gold">
               {isAr ? "استشارة مجانية" : "Free Consultation"}
             </a>
             <a
-              href={`/${locale}/collections`}
+              href={`/${locale}/search`}
               className="btn-premium-outline text-atp-white border-atp-white hover:bg-atp-white hover:text-atp-black"
             >
               {isAr ? "تصفح جميع المنتجات" : "Browse All Products"}
