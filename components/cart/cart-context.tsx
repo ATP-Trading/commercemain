@@ -1,5 +1,6 @@
 "use client";
 
+import { trackProduct } from "@/lib/analytics/ga4";
 import type {
   Cart,
   CartItem,
@@ -371,6 +372,7 @@ export function useCart() {
       throw error;
     }
 
+    trackProduct("add_to_cart", { item_id: product.id, item_name: product.title, price: Number(variant.price.amount), quantity: 1 }, variant.price.currencyCode);
     return cartItem;
   };
 
