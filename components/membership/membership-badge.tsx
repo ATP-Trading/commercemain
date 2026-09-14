@@ -23,7 +23,7 @@ export function MembershipBadge({
   discount, 
   className, 
   showStatus = false,
-  showDiscount = true
+  showDiscount = discount !== undefined
 }: MembershipBadgeProps) {
   const t = useTranslations('membership');
   const locale = useLocale() as 'en' | 'ar';
@@ -111,7 +111,7 @@ export function MembershipBadge({
   if (!config) return null;
 
   const IconComponent = config.icon;
-  const memberDiscount = discount || config.discount;
+  const memberDiscount = discount ?? config.discount;
 
   // For ATP tier, show additional styling if expiring soon
   const badgeColor = normalizedTier === 'atp' && isExpiringSoon 

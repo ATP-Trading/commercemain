@@ -82,7 +82,7 @@ export function AtpMembershipWidget({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Join ATP Membership for 15% service discounts and free delivery.
+            Join ATP Membership for 15% off eligible supplements and skincare, 10% off water and soil products, and free UAE delivery.
           </p>
           <div className="flex items-center justify-between">
             <div className="text-sm flex items-center gap-2">
@@ -156,7 +156,7 @@ export function AtpMembershipWidget({
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm">
               <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <span>15% Service Discount</span>
+              <span>10–15% Category Discounts</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="w-2 h-2 bg-green-500 rounded-full" />

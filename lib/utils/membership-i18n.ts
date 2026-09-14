@@ -212,8 +212,8 @@ export class MembershipI18nService {
   getMembershipTierName(tier: string): string {
     const tierNames: Record<string, Record<Locale, string>> = {
       atp: {
-        en: 'ATP Premium',
-        ar: 'ATP المتميزة',
+        en: 'ATP Membership',
+        ar: 'عضوية ATP',
       },
       basic: {
         en: 'Basic',
