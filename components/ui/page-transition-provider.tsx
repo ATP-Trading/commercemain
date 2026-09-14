@@ -8,7 +8,6 @@
  */
 
 import { type ReactNode } from "react";
-import { PageTransition } from "@/components/ui/page-transition";
 
 interface PageTransitionProviderProps {
   children: ReactNode;
@@ -22,8 +21,8 @@ export function PageTransitionProvider({
   variant = "slideUp",
 }: PageTransitionProviderProps) {
   return (
-    <PageTransition variant={variant} className={className}>
-        {children}
-    </PageTransition>
+    <div className={className}>
+      {children}
+    </div>
   );
 }

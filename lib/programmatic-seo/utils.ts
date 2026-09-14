@@ -64,6 +64,7 @@ export function generateLocationMetadata(
   return {
     title: { absolute: title.includes("ATP Trading") ? title : `${title} | ATP Trading` },
     description,
+    robots: { index: false, follow: true },
     alternates: {
       canonical: url,
       languages: {

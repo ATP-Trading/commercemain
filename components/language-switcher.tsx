@@ -62,6 +62,7 @@ export function LanguageSwitcher({ showFullText = false, variant = 'default' }: 
   if (isFooter) {
     return (
       <select
+        aria-label={locale === "ar" ? "لغة الموقع" : "Site language"}
         value={locale}
         onChange={(e) => handleLocaleChange(e.target.value)}
         className="bg-neutral-800 border border-neutral-700 text-white px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"

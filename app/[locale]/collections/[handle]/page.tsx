@@ -1,6 +1,6 @@
 import { canonicalCollectionHandle } from "@/lib/collection-handle";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
-import { isEmsPromotion } from "@/lib/publication-policy";
+import { isInactiveCollection } from "@/lib/publication-policy";
 import { Suspense } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
@@ -15,7 +15,7 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
     const params = await props.params;
     const canonicalHandle = canonicalCollectionHandle(params.handle);
-  if (isEmsPromotion(params.handle)) return inactiveServiceMetadata(params.locale, `/collections/${params.handle}`);
+  if (isInactiveCollection(params.handle)) return inactiveServiceMetadata(params.locale, `/collections/${params.handle}`);
     const localeForApi = params.locale === 'ar'
         ? { language: 'AR', country: 'AE' }
         : { language: 'EN', country: 'AE' };
@@ -53,7 +53,7 @@ export default async function CollectionPage(props: {
     const searchParams = (await props.searchParams) || {};
     const params = await props.params;
     const canonicalHandle = canonicalCollectionHandle(params.handle);
-  if (isEmsPromotion(params.handle)) return <InactiveServicePage locale={params.locale} />;
+  if (isInactiveCollection(params.handle)) return <InactiveServicePage locale={params.locale} />;
 
     if (canonicalHandle !== params.handle) {
         const query = new URLSearchParams();

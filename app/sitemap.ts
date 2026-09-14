@@ -1,9 +1,9 @@
 import { canonicalCollectionHandle } from '@/lib/collection-handle';
-import { isEmsPromotion, isInactiveLocation } from '@/lib/publication-policy';
+import { isEmsPromotion, isInactiveCollection } from '@/lib/publication-policy';
 import { HIDDEN_PRODUCT_TAG } from '@/lib/constants';
 import { getSitemapResources, type SitemapResource } from '@/lib/shopify/sitemap';
 import { baseUrl, validateEnvironmentVariables } from '@/lib/utils';
-import { CategoryData, UAECities, LocationServices, BenefitData, IngredientData } from '@/lib/programmatic-seo/data';
+import { CategoryData, BenefitData, IngredientData } from '@/lib/programmatic-seo/data';
 import { ComparisonData } from '@/lib/programmatic-seo/comparison-data';
 import type { MetadataRoute } from 'next';
 
@@ -19,10 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ingredients: IngredientData, compare: ComparisonData })) {
     paths.push(...Object.keys(data).filter(slug => !isEmsPromotion(slug)).map(slug => `/${prefix}/${slug}`));
   }
-  for (const service of LocationServices) {
-    paths.push(...UAECities.filter(city => !isInactiveLocation(service.slug, city.slug))
-      .map(city => `/${service.slug}/${city.slug}`));
-  }
+  // Generic city templates remain available to visitors but are not promoted for indexing.
+
   // Omit lastModified when no actual content modification date is available.
   const routes: MetadataRoute.Sitemap = paths.flatMap(path => locales.map(locale => ({ url: `${baseUrl}/${locale}${path}` })));
   for (const kind of ['products', 'collections'] as const) {
@@ -30,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const catalogs = { en, ar };
     const visible = (item: SitemapResource) => Boolean(item.handle) &&
       !isEmsPromotion(`${item.handle} ${item.title}`) &&
-      (kind === 'products' ? !item.tags?.includes(HIDDEN_PRODUCT_TAG) : !item.handle.startsWith('hidden'));
+      (kind === 'products' ? !item.tags?.includes(HIDDEN_PRODUCT_TAG) : !item.handle.startsWith('hidden') && !isInactiveCollection(item.handle));
     const routePath = kind === 'products' ? 'product' : 'collections';
     for (const locale of locales) {
       for (const item of catalogs[locale].filter(visible)) {

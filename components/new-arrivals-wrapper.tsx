@@ -16,18 +16,14 @@ export async function NewArrivalsWrapper({ locale }: NewArrivalsWrapperProps) {
   // Fetch featured products from the dedicated collection (limit: 5)
   // To customize: Go to Shopify Admin → Products → Collections → "Featured Products"
   // Add exactly 5 products you want to feature in your preferred order
-  const featuredProducts = await getFeaturedProducts({
+  const [featuredProducts, carouselProducts] = await Promise.all([getFeaturedProducts({
     collection: "featured-products",
     limit: 5,
     locale: localeForApi,
-  })
-
-  // Fetch newest products for the carousel - automatically sorted by creation date (newest first)
-  // This uses the Shopify Storefront API with sortKey: CREATED_AT and reverse: true
-  const carouselProducts = await getNewestProducts({
-    limit: 10,
+  }), getNewestProducts({
+    limit: 4,
     locale: localeForApi,
-  })
+  })]);
 
   // Fallback to amazing-thai-products if featured-products collection is empty
   const products = featuredProducts?.length 

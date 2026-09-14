@@ -212,6 +212,10 @@ export default function ServiceHighlights() {
         {/* Active service showcase */}
         <m.div
           key={activeService}
+          id="service-tabs-panel"
+          role="tabpanel"
+          aria-labelledby={`service-tabs-${currentService.id}-tab`}
+          tabIndex={0}
           className="mb-20"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

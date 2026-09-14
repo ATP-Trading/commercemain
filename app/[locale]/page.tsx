@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
 import { NewArrivalsWrapper } from "@/components/new-arrivals-wrapper";
@@ -96,7 +97,7 @@ export default async function HomePage({ params }: HomePageProps) {
       <ATPWellnessHero />
 
       {/* New Arrivals and Products */}
-      <NewArrivalsWrapper locale={locale} />
+      <Suspense fallback={<div className="min-h-96 bg-[#faf9f6]" aria-busy="true" />}><NewArrivalsWrapper locale={locale} /></Suspense>
 
       {/* Interactive Service Highlights */}
       <ServiceHighlights />

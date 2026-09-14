@@ -401,10 +401,7 @@ export function ProductStructuredData(product: ProductSchemaData) {
     image: product.image,
     sku: product.sku,
     url: product.url,
-    brand: {
-      "@type": "Brand",
-      name: product.brand || ATP_COMPANY.name,
-    },
+    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand } } : {}),
     offers: {
       "@type": "Offer",
       url: product.url,
@@ -416,7 +413,6 @@ export function ProductStructuredData(product: ProductSchemaData) {
         "@type": "Organization",
         name: ATP_COMPANY.name,
       },
-      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     },
   };
 
