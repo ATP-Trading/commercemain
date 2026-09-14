@@ -296,7 +296,7 @@ export function CartPageContent() {
                                 {isMember && membershipTierForBadge && (
                                     <MembershipBadge 
                                         tier={membershipTierForBadge}
-                                        discount={Math.round(membership.discountRate * 100)}
+                                        showDiscount={false}
                                         className="text-sm" 
                                     />
                                 )}

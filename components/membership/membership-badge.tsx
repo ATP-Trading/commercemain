@@ -15,13 +15,15 @@ interface MembershipBadgeProps {
   discount?: number
   className?: string
   showStatus?: boolean
+  showDiscount?: boolean
 }
 
 export function MembershipBadge({ 
   tier, 
   discount, 
   className, 
-  showStatus = false 
+  showStatus = false,
+  showDiscount = true
 }: MembershipBadgeProps) {
   const t = useTranslations('membership');
   const locale = useLocale() as 'en' | 'ar';
@@ -130,7 +132,7 @@ export function MembershipBadge({
     >
       <IconComponent className={cn("w-3 h-3", getIconClasses('start'))} />
       <span>
-        {config.name} - {discountText}
+        {config.name}{showDiscount && <> - {discountText}</>}
       </span>
     </Badge>
   );

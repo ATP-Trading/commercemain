@@ -72,7 +72,7 @@ export function EnhancedMemberPricing({
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <MembershipBadge tier="atp" className="text-xs" />
+                  <MembershipBadge tier="atp" discount={Math.round(discountRate * 100)} className="text-xs" />
                 </div>
                 <p className="text-sm font-medium text-atp-black mb-1">
                   {t('savePercent', { percent: Math.round(discountRate * 100) })}

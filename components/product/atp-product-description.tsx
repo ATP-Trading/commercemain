@@ -139,6 +139,7 @@ export function ATPProductDescription({
                 </span>
                 {isMembershipProduct && <span className="text-base text-neutral-600">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
+              {isMembershipProduct && <p className="mt-3 text-base leading-relaxed text-neutral-700">{locale === 'ar' ? 'خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة، مع توصيل مجاني داخل الإمارات.' : '15% off eligible supplements and skincare, and 10% off water and soil products, with free delivery within the UAE.'}</p>}
               {isMembershipProduct && <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600">{locale === 'ar' ? 'تتجدد العضوية تلقائيًا كل سنة. يمكنك إلغاء التجديد من حسابك أو بالتواصل معنا. راجع شروط الاشتراك قبل الدفع.' : 'Membership renews automatically each year. You can cancel renewal through your account or by contacting us. Review the subscription terms before payment.'}</p>}
             </div>
           )}
