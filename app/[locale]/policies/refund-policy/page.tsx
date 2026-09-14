@@ -1,5 +1,4 @@
 import { getShopPolicy } from '@/lib/shopify/server';
-import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -46,7 +45,6 @@ export default async function RefundPolicyPage({
   params,
 }: RefundPolicyPageProps) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'common' });
   const isArabic = locale === 'ar';
 
   const policy = await getShopPolicy('refundPolicy', {
@@ -90,10 +88,10 @@ export default async function RefundPolicyPage({
           {isArabic ? '→ العودة للرئيسية' : '← Back to Home'}
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{policy.title}</h1>
+        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{isArabic ? 'سياسة الإرجاع والاسترداد' : 'Returns & Refunds Policy'}</h1>
 
         <div
-          className="prose prose-invert prose-lg max-w-none
+          className="prose prose-invert prose-base sm:prose-lg max-w-none
             prose-headings:text-white prose-headings:font-semibold
             prose-p:text-neutral-300 prose-p:leading-relaxed
             prose-a:text-atp-gold prose-a:no-underline hover:prose-a:underline
