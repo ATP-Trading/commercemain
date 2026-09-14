@@ -33,8 +33,8 @@ export function TrustBadges({ className, variant = "horizontal" }: TrustBadgesPr
     return (
         <div
             className={cn(
-                "flex gap-4 py-4",
-                variant === "horizontal" ? "flex-row flex-wrap justify-center" : "flex-col",
+                "gap-4 py-4",
+                variant === "horizontal" ? "grid grid-cols-1 sm:grid-cols-3" : "flex flex-col",
                 className
             )}
         >
@@ -43,17 +43,17 @@ export function TrustBadges({ className, variant = "horizontal" }: TrustBadgesPr
                     key={badge.labelKey}
                     className={cn(
                         "flex items-center gap-2 text-sm",
-                        variant === "horizontal" ? "flex-col text-center" : "flex-row"
+                        variant === "horizontal" ? "flex-row items-start sm:flex-col sm:items-center sm:text-center" : "flex-row"
                     )}
                 >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-atp-gold/10">
-                        <badge.icon className="w-5 h-5 text-atp-gold" />
+                    <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-atp-gold/10">
+                        <badge.icon className="w-5 h-5 text-[#876719]" />
                     </div>
-                    <div className={variant === "horizontal" ? "text-center" : ""}>
+                    <div className={variant === "horizontal" ? "text-start sm:text-center" : ""}>
                         <p className="font-medium text-gray-900 dark:text-white">
                             {t(badge.labelKey)}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                             {t(badge.descriptionKey)}
                         </p>
                     </div>

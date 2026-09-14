@@ -55,7 +55,7 @@ export default function TrustIndicators({ locale }: TrustIndicatorsProps) {
     {
       icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z",
       title: locale === "ar" ? "شحن مجاني" : "Free shipping",
-      description: locale === "ar" ? "أكثر من 250.00" : "Over 250.00",
+      description: locale === "ar" ? "من 250.00 داخل الإمارات" : "From 250.00 within the UAE",
       showSymbol: true,
     },
     {
@@ -68,7 +68,7 @@ export default function TrustIndicators({ locale }: TrustIndicatorsProps) {
     {
       icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 003 3z",
       title: locale === "ar" ? "دفع آمن" : "Secure payment",
-      description: locale === "ar" ? "دفع آمن 100%" : "100% Secure Payment",
+      description: locale === "ar" ? "الدفع عبر Shopify" : "Checkout powered by Shopify",
       showSymbol: false,
     },
   ];

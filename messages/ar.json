@@ -152,9 +152,9 @@
       "premiumCheckout": "الدفع المميز",
       "trustBadges": {
         "securePayment": "دفع آمن",
-        "sslDesc": "SSL 256-bit",
-        "fastDelivery": "توصيل سريع",
-        "deliveryTime": "2-4 أيام عمل",
+        "sslDesc": "عبر Shopify",
+        "fastDelivery": "التوصيل داخل الإمارات",
+        "deliveryTime": "المدة موضحة في صفحة المنتج",
         "easyReturns": "إرجاع سهل",
         "returnPolicy": "اطّلع على سياسة الإرجاع"
       }
@@ -178,7 +178,7 @@
     "yogaFitness": "اليوغا واللياقة البدنية",
     "emsTraining": "تدريب EMS",
     "emsDescription": "تحفيز العضلات الكهربائي - تكنولوجيا اللياقة الألمانية الدقيقة",
-    "heroSubtitle": "حيث نقدم لك مجموعة متميزة من المكملات الغذائية الطبيعية، ومستحضرات التجميل والعناية الشخصية، وحلول تنقية المياه المتقدمة ومعالجة التربة. جميع منتجاتنا مصدرها تايلاند بأعلى معايير الجودة، لدعم نمط حياة أكثر صحة وجودة.",
+    "heroSubtitle": "منتجات تايلندية مختارة للعناية والعافية، وحلول للمياه والتربة. اكتشف ما يناسب يومك، مع التوصيل داخل الإمارات.",
     "exploreAtpMembership": "استكشف عضوية ATP",
     "learnOurStory": "تعرف على قصتنا",
     "membershipBenefit1": "عضوية ATP Trading",
@@ -216,9 +216,9 @@
   },
   "trustBadges": {
     "securePayment": "دفع آمن",
-    "securePaymentDesc": "معاملات محمية 100٪",
+    "securePaymentDesc": "إتمام الدفع عبر Shopify",
     "freeShipping": "شحن مجاني",
-    "freeShippingDesc": "لطلبات الإمارات فوق 250 درهم؛ وتوصيل طلبات المنتجات مجاني للأعضاء ذوي العضوية السارية",
+    "freeShippingDesc": "مجاني من 250 درهم، وللأعضاء دون حد أدنى داخل الإمارات",
     "easyReturns": "إرجاع سهل",
     "easyReturnsDesc": "الإرجاع وفق شروط سياسة الاسترداد"
   },
@@ -307,13 +307,13 @@
     "premiumProduct3Price": "2,500.00 درهم إماراتي",
     "giftSetsTitle": "احتفل بكل موسم مع باقات العافية الخاصة بنا!",
     "freeShippingTitle": "شحن مجاني",
-    "freeShippingDescription": "على المشتريات فوق 250.00 درهم إماراتي",
+    "freeShippingDescription": "من 250 درهم داخل الإمارات",
     "customerSupportTitle": "دعم العملاء",
     "customerSupportDescription": "نحب خدمة عملائنا",
     "securePaymentTitle": "دفع آمن",
-    "securePaymentDescription": "دفع آمن 100%"
+    "securePaymentDescription": "الدفع عبر Shopify"
   },
-"auth": {
+  "auth": {
     "backToHome": "العودة إلى الصفحة الرئيسية",
     "newToAtp": "جديد لدى ATP Trading؟",
     "exploreMembershipBenefits": "استكشف مزايا عضوية ATP",
@@ -575,7 +575,6 @@
       "testimonialAuthor": "جيمس ك.",
       "testimonialRole": "ممارس العافية"
     }
-
   },
   "gallery": {
     "expandImage": "عرض بملء الشاشة",

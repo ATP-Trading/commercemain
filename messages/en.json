@@ -152,9 +152,9 @@
       "premiumCheckout": "Premium Checkout",
       "trustBadges": {
         "securePayment": "Secure Payment",
-        "sslDesc": "256-bit SSL",
-        "fastDelivery": "Fast Delivery",
-        "deliveryTime": "2-4 business days",
+        "sslDesc": "Powered by Shopify",
+        "fastDelivery": "UAE delivery",
+        "deliveryTime": "See product page for delivery time",
         "easyReturns": "Easy Returns",
         "returnPolicy": "See return policy"
       }
@@ -178,7 +178,7 @@
     "yogaFitness": "Yoga & Fitness",
     "emsTraining": "EMS Training",
     "emsDescription": "Electrical Muscle Stimulation - German precision fitness technology",
-    "heroSubtitle": "where we bring you a premium selection of natural food-supplements, cosmetics and personal care, and advanced water filtration & soil solutions. All our products are carefully sourced from Thailand with the highest quality standards, to support a healthier and better lifestyle.",
+    "heroSubtitle": "Thoughtfully selected Thai skincare, supplements, and water and soil solutions. Discover everyday essentials, delivered across the UAE.",
     "exploreAtpMembership": "Explore ATP Membership",
     "learnOurStory": "Learn Our Story",
     "membershipBenefit1": "ATP Trading Membership",
@@ -216,9 +216,9 @@
   },
   "trustBadges": {
     "securePayment": "Secure Payment",
-    "securePaymentDesc": "100% protected transactions",
+    "securePaymentDesc": "Checkout powered by Shopify",
     "freeShipping": "Free Shipping",
-    "freeShippingDesc": "UAE orders over AED 250; active members enjoy free delivery on product orders",
+    "freeShippingDesc": "Free from AED 250, or with active membership, within the UAE",
     "easyReturns": "Easy Returns",
     "easyReturnsDesc": "Returns subject to our refund policy"
   },
@@ -307,13 +307,13 @@
     "premiumProduct3Price": "AED 2,500.00",
     "giftSetsTitle": "Celebrate every season with our special wellness packages!",
     "freeShippingTitle": "Free shipping",
-    "freeShippingDescription": "Over AED 250.00",
+    "freeShippingDescription": "From AED 250 within the UAE",
     "customerSupportTitle": "Customer Support",
     "customerSupportDescription": "We Love To Serve Our Customers",
     "securePaymentTitle": "Secure payment",
-    "securePaymentDescription": "100% Secure Payment"
+    "securePaymentDescription": "Checkout powered by Shopify"
   },
-"auth": {
+  "auth": {
     "backToHome": "Back to Home",
     "newToAtp": "New to ATP Trading?",
     "exploreMembershipBenefits": "Explore ATP Membership Benefits",
@@ -575,7 +575,6 @@
       "testimonialAuthor": "James K.",
       "testimonialRole": "Wellness Practitioner"
     }
-
   },
   "gallery": {
     "expandImage": "View fullscreen",

@@ -46,7 +46,7 @@ export async function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-3 sm:py-4">
           {/* Mobile menu */}
-          <div className="block flex-none md:hidden">
+          <div className="block flex-none lg:hidden">
             <Suspense fallback={null}>
               <MobileMenu menuItems={menuItems} fallbackMenu={fallbackMenuItems} />
             </Suspense>
@@ -66,7 +66,7 @@ export async function Navbar() {
             </Link>
           </div>
 
-          <div className="hidden md:flex flex-col items-center flex-1 mx-8">
+          <div className="hidden lg:flex flex-col items-center flex-1 mx-4">
             <NavbarLinks locale={locale} menuItems={menuItems} fallbackMenu={fallbackMenuItems} />
           </div>
 

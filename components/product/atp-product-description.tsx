@@ -129,14 +129,16 @@ export function ATPProductDescription({
             /* Simple price display for membership product */
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-atp-gold">
+                <span className="text-2xl font-semibold text-neutral-900">
                   <Price
                     amount={price.amount}
+                    className="text-2xl font-semibold"
                     currencyCode={price.currencyCode}
                   />
                 </span>
-                {isMembershipProduct && <span className="text-sm text-muted-foreground">{locale === "ar" ? "/سنة" : "/year"}</span>}
+                {isMembershipProduct && <span className="text-base text-neutral-600">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
+              {isMembershipProduct && <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600">{locale === 'ar' ? 'تتجدد العضوية تلقائيًا كل سنة. يمكنك إلغاء التجديد من حسابك أو بالتواصل معنا. راجع شروط الاشتراك قبل الدفع.' : 'Membership renews automatically each year. You can cancel renewal through your account or by contacting us. Review the subscription terms before payment.'}</p>}
             </div>
           )}
 

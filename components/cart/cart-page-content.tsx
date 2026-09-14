@@ -343,7 +343,7 @@ export function CartPageContent() {
                                             asChild
                                             className="bg-gradient-to-r from-[#d4af37] to-[#c9a432] hover:from-[#e5c354] hover:to-[#d4af37] text-black font-semibold rounded-xl shadow-lg shadow-[#d4af37]/20 transition-all hover:shadow-[#d4af37]/30 hover:scale-[1.02] whitespace-nowrap"
                                         >
-                                            <Link href="/atp-membership">
+                                            <Link href="/product/atp-membership">
                                                 {tMembership("joinMembership")}
                                             </Link>
                                         </Button>
@@ -501,8 +501,8 @@ export function CartPageContent() {
                                     >
                                         <badge.icon className="w-5 h-5 text-[#d4af37]" />
                                         <div>
-                                            <p className="text-xs font-medium text-white">{tCart(badge.labelKey)}</p>
-                                            <p className="text-xs text-neutral-500">{tCart(badge.descKey)}</p>
+                                            <p className="text-sm font-medium text-white">{tCart(badge.labelKey)}</p>
+                                            <p className="text-sm leading-relaxed text-neutral-400">{tCart(badge.descKey)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -577,7 +577,7 @@ export function CartPageContent() {
                                     </Button>
 
                                     {/* Security Note */}
-                                    <div className="flex items-center justify-center gap-2 pt-2 text-xs text-neutral-500">
+                                    <div className="flex items-center justify-center gap-2 pt-2 text-sm leading-relaxed text-neutral-400">
                                         <Shield className="w-3 h-3" />
                                         <span>{tCart("page.secureCheckout")}</span>
                                     </div>

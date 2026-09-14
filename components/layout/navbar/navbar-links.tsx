@@ -374,10 +374,10 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
                     >
                         <Link
                             href={item.path}
-                            className="text-white hover:text-yellow-400 transition-all duration-300 text-xs font-medium tracking-wide uppercase relative group whitespace-nowrap"
+                            className="text-white hover:text-atp-gold transition-all duration-300 inline-flex min-h-9 items-center text-sm font-medium tracking-normal relative group whitespace-nowrap"
                         >
                             {item.title}
-                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-yellow-400 transition-all duration-300 group-hover:w-full"></span>
+                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-atp-gold transition-all duration-300 group-hover:w-full"></span>
                         </Link>
                     </div>
                 ))}
@@ -394,10 +394,10 @@ export function NavbarLinks({ locale, menuItems, fallbackMenu }: NavbarLinksProp
                     >
                         <Link
                             href={item.path}
-                            className="text-white hover:text-yellow-400 transition-all duration-300 text-xs font-medium tracking-wide uppercase relative group whitespace-nowrap"
+                            className="text-white hover:text-atp-gold transition-all duration-300 inline-flex min-h-9 items-center text-sm font-medium tracking-normal relative group whitespace-nowrap"
                         >
                             {item.title}
-                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-yellow-400 transition-all duration-300 group-hover:w-full"></span>
+                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-atp-gold transition-all duration-300 group-hover:w-full"></span>
                         </Link>
                     </div>
                 ))}

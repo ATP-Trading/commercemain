@@ -58,9 +58,9 @@ export default function Footer() {
       dir={isRTL ? "rtl" : "ltr"}
     >
       {/* Main Footer Content */}
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
         <div
-          className={`grid grid-cols-1 gap-12 lg:grid-cols-4 ${
+          className={`grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 ${
             isRTL ? "text-right" : ""
           }`}
         >
@@ -153,7 +153,7 @@ export default function Footer() {
         </div>
 
         {/* Payment Methods */}
-        <div className="mt-16 pt-8 border-t border-neutral-800">
+        <div className="mt-10 pt-8 border-t border-neutral-800">
           <div className="flex justify-center">
             <PaymentMethods />
           </div>
