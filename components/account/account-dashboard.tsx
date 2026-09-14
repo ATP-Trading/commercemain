@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { User, Mail, Phone, MapPin, Package, LogOut, Edit, Crown, CreditCard, Settings, ShoppingBag, Award, TrendingUp } from 'lucide-react'
-import Link from 'next/link'
+import { Link } from '@/src/i18n/navigation'
 import { formatDirhamWithSymbol } from '@/lib/utils'
 import { AtpMembershipWidget } from '@/components/membership/atp-membership-widget'
 import { MembershipProvider } from '@/hooks/use-atp-membership-context'
@@ -163,7 +163,7 @@ export function AccountDashboard() {
                                                 Profile Information
                                             </CardTitle>
                                             <Button variant="outline" size="sm" asChild>
-                                                <Link href="/account/profile/edit">
+                                                <Link href="/account/profile">
                                                     <Edit className="w-4 h-4 mr-2" />
                                                     Edit
                                                 </Link>
@@ -277,7 +277,7 @@ export function AccountDashboard() {
                                             </Link>
                                         </Button>
                                         <Button variant="outline" className="w-full justify-start hover:bg-orange-50 dark:hover:bg-orange-900/20" asChild>
-                                            <Link href="/account/profile/edit">
+                                            <Link href="/account/profile">
                                                 <Edit className="w-4 h-4 mr-2" />
                                                 Edit Profile
                                             </Link>
@@ -386,7 +386,7 @@ export function AccountDashboard() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-3">
                                     <Button variant="outline" className="w-full justify-start" asChild>
-                                        <Link href="/account/profile/edit">
+                                        <Link href="/account/profile">
                                             <Edit className="w-4 h-4 mr-2" />
                                             Edit Profile Information
                                         </Link>
