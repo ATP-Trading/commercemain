@@ -236,7 +236,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 768) {
+      if (window.innerWidth >= 1024) {
         setIsOpen(false)
       }
     }
@@ -253,7 +253,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
       <button
         onClick={openMobileMenu}
         aria-label={t('openMenu')}
-        className="flex h-11 w-11 items-center justify-center rounded-md border border-gray-600 bg-transparent text-white hover:bg-gray-800 hover:border-yellow-400 transition-all duration-300 md:hidden touch-target"
+        className="flex h-11 w-11 items-center justify-center rounded-md border border-gray-600 bg-transparent text-white hover:bg-gray-800 hover:border-yellow-400 transition-all duration-300 lg:hidden touch-target"
       >
         <Bars3Icon className="h-5 w-5" />
       </button>
@@ -283,7 +283,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
               className={`fixed bottom-0 top-0 flex h-full w-full flex-col bg-gradient-to-b from-black via-gray-900 to-black pb-6 ${isRTL ? "right-0 left-0" : "left-0 right-0"
                 }`}
             >
-              <div className={`flex flex-col h-full ${isRTL ? "text-right" : ""}`}>
+              <div className={`flex flex-col h-full overflow-y-auto ${isRTL ? "text-right" : ""}`}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-800">
                   <div className="flex items-center gap-3">
@@ -316,7 +316,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                 </div>
 
                 {/* Navigation Menu */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1">
                   <div className="p-6">
                     {resolvedMenu.length ? (
                       <ul className={`space-y-2 ${isRTL ? "text-right" : ""}`}>
@@ -332,7 +332,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                                 {IconComponent && (
                                   <IconComponent className="h-5 w-5 text-gray-400 group-hover:text-yellow-400 transition-colors duration-300" />
                                 )}
-                                <span className="text-lg font-medium">{item.title}</span>
+                                <span className="min-w-0 text-base leading-relaxed font-medium">{item.title}</span>
                               </Link>
                             </li>
                           );
@@ -378,7 +378,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                 </div>
 
                 {/* Footer with Language Switcher and Social Media */}
-                <div className="p-6 border-t border-gray-800 space-y-6">
+                <div className="p-6 border-t border-gray-800 space-y-4">
                   {/* Language Switcher */}
                   <div>
                     <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">
