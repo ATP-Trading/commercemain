@@ -28,6 +28,8 @@ it('keeps address edits when a save fails, without claiming success', async () =
  fireEvent.change(screen.getByLabelText('المبنى والشارع'), { target: { value: 'Building 1' } })
  fireEvent.change(screen.getByLabelText('المدينة / المنطقة'), { target: { value: 'Dubai' } })
  fireEvent.change(screen.getByLabelText('الإمارة / المنطقة'), { target: { value: 'DU' } })
+ fireEvent.change(screen.getByLabelText('رقم التواصل مع رمز الدولة (مطلوب)'), { target: { value: '+971501234567' } })
+ expect(screen.getByLabelText('رقم التواصل مع رمز الدولة (مطلوب)')).toBeRequired()
  fireEvent.click(screen.getByText('حفظ العنوان'))
  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('تعذر حفظ'))
  expect(screen.getByLabelText('الاسم الأول')).toHaveValue('سعود')

@@ -11,7 +11,7 @@ const schema = z.object({
     address1: z.string().trim().min(1).max(255), address2: optionalText, company: optionalText,
     city: z.string().trim().min(1).max(100), territoryCode: z.string().regex(/^[A-Z]{2}$/),
     zoneCode: optionalText, zip: optionalText,
-    phoneNumber: z.string().trim().max(30).refine(v => !v || /^\+[1-9]\d{6,14}$/.test(v)),
+    phoneNumber: z.string().trim().min(1).max(30).regex(/^\+[1-9]\d{6,14}$/),
   }).strict(),
 }).strict()
 export async function GET(request: NextRequest) {

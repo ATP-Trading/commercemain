@@ -46,7 +46,7 @@ describe('Authenticated account data', () => {
   auth.query.mockResolvedValue({ data: { customerAddressCreate: { customerAddress: null, userErrors: [] } } })
   expect((await save(request({ address }))).status).toBe(502)
  })
- it.each([{ address, customerId: 'foreign' }, { address: { ...address, city: '' } }, { address: { ...address, phoneNumber: '0501234567' } }])('rejects invalid address input', async input => {
+ it.each([{ address: { ...address, phoneNumber: '' } }, { address: { ...address, phoneNumber: undefined } }, { address, customerId: 'foreign' }, { address: { ...address, city: '' } }, { address: { ...address, phoneNumber: '0501234567' } }])('rejects invalid address input', async input => {
   expect((await save(request(input))).status).toBe(400)
   expect(auth.query).not.toHaveBeenCalled()
  })
