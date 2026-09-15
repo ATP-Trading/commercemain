@@ -10,7 +10,6 @@ import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
 import { useTranslations } from "next-intl";
-import { remainingStock } from "@/lib/shopify/inventory-limit";
 import type { Product } from "@/lib/shopify/types";
 import { useCart } from "./cart-context";
 import { useCartNotification } from "./cart-provider";
@@ -88,7 +87,7 @@ function SubmitButton({
 }
 
 export function ATPAddToCart({ product }: { product: Product }) {
-  const { addCartItem, cart } = useCart();
+  const { addCartItem } = useCart();
   const { isRTL } = useRTL();
   const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState(false);
@@ -105,9 +104,6 @@ export function ATPAddToCart({ product }: { product: Product }) {
     isMember && selectedVariant
       ? calculateServiceDiscount(Number.parseFloat(selectedVariant.price.amount), 'cosmetics-supplements').savings
       : 0;
-
-  const inCart = cart?.lines?.filter(line => line.merchandise.id === selectedVariantId).reduce((sum, line) => sum + line.quantity, 0) ?? 0;
-  const remaining = remainingStock(selectedVariant, inCart);
 
   const handleAddToCart = async () => {
     if (submitting.current) return;
@@ -128,7 +124,10 @@ export function ATPAddToCart({ product }: { product: Product }) {
       submitting.current = true;
       setPending(true);
       try {
-        await addCartItem(selectedVariant, product, undefined, quantity);
+        // Add the item multiple times based on selected quantity
+        for (let i = 0; i < quantity; i++) {
+          await addCartItem(selectedVariant, product);
+        }
 
         // Create a cart item for notification with the correct quantity
         const cartItem = {
@@ -179,13 +178,13 @@ export function ATPAddToCart({ product }: { product: Product }) {
     >
       <fieldset disabled={pending} aria-busy={pending}>
       <SubmitButton
-        availableForSale={availableForSale && remaining !== 0}
+        availableForSale={availableForSale}
         selectedVariantId={selectedVariantId}
         isMember={isMember}
         memberSavings={memberSavings}
       />
       </fieldset>
-      {failed && <p role="alert" className="mt-3 text-sm text-red-600">{isRTL ? "لم تكتمل الإضافة. قد تكون الكمية المطلوبة أكثر من المتوفر؛ راجع سلتك قبل المحاولة مجددًا." : "The addition did not complete. The requested quantity may exceed available stock; check your cart before trying again."}</p>}
+      {failed && <p role="alert" className="mt-3 text-sm text-red-600">{isRTL ? "لم تكتمل الإضافة. راجع سلتك قبل المحاولة مجددًا." : "The addition did not complete. Check your cart before trying again."}</p>}
     </form>
   );
 }

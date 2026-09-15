@@ -1,6 +1,5 @@
 "use client";
 
-import { assertStockQuantity } from "@/lib/shopify/inventory-limit";
 import { trackProduct } from "@/lib/analytics/ga4";
 import type {
   Cart,
@@ -28,7 +27,7 @@ type CartAction =
     }
   | {
       type: "ADD_ITEM";
-      payload: { variant: ProductVariant; product: Product; quantity: number };
+      payload: { variant: ProductVariant; product: Product };
     };
 
 type CartContextType = {
@@ -73,10 +72,9 @@ function updateCartItem(
 function createOrUpdateCartItem(
   existingItem: CartItem | undefined,
   variant: ProductVariant,
-  product: Product,
-  addedQuantity = 1
+  product: Product
 ): CartItem {
-  const quantity = (existingItem?.quantity ?? 0) + addedQuantity;
+  const quantity = existingItem ? existingItem.quantity + 1 : 1;
   const totalAmount = calculateItemCost(quantity, variant.price.amount);
 
   const cartItem = {
@@ -91,9 +89,6 @@ function createOrUpdateCartItem(
     merchandise: {
       id: variant.id,
       title: variant.title,
-      quantityAvailable: variant.quantityAvailable,
-      availableForSale: variant.availableForSale,
-      currentlyNotInStock: variant.currentlyNotInStock,
       selectedOptions: variant.selectedOptions,
       product: {
         id: product.id,
@@ -177,15 +172,14 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
       };
     }
     case "ADD_ITEM": {
-      const { variant, product, quantity } = action.payload;
+      const { variant, product } = action.payload;
       const existingItem = safeLines.find(
         (item) => item.merchandise.id === variant.id
       );
       const updatedItem = createOrUpdateCartItem(
         existingItem,
         variant,
-        product,
-        quantity
+        product
       );
 
       const updatedLines = existingItem
@@ -256,8 +250,6 @@ export function useCart() {
       customerId
     });
 
-    const current = optimisticCart?.lines?.find(line => line.merchandise.id === merchandiseId);
-    if (current && updateType === "plus") assertStockQuantity(current.merchandise, current.quantity + 1);
     // First do the optimistic update for immediate UI feedback
     startTransition(() => {
       console.log(
@@ -331,7 +323,6 @@ export function useCart() {
               "❌ Update quantity server action failed:",
               result.error
             );
-            throw new Error(result.error);
           } else {
             console.log("✅ Update quantity server action succeeded");
           }
@@ -341,15 +332,14 @@ export function useCart() {
       }
     } catch (error) {
       console.error("❌ Error calling server action:", error);
-      throw error;
+      // Optionally revert the optimistic update here
     }
   };
 
   const addCartItem = async (
     variant: ProductVariant, 
     product: Product, 
-    customerId?: string,
-    quantity = 1
+    customerId?: string
   ) => {
     console.log("🔄 Cart context: addCartItem called", { variant, product, customerId });
 
@@ -357,20 +347,19 @@ export function useCart() {
     const existingItem = optimisticCart?.lines?.find(
       (item) => item.merchandise.id === variant.id
     );
-    assertStockQuantity(variant, (existingItem?.quantity ?? 0) + quantity);
-    const cartItem = createOrUpdateCartItem(existingItem, variant, product, quantity);
+    const cartItem = createOrUpdateCartItem(existingItem, variant, product);
 
     // First do the optimistic update for immediate UI feedback
     startTransition(() => {
       console.log("🔄 Cart context: Starting optimistic update");
-      updateOptimisticCart({ type: "ADD_ITEM", payload: { variant, product, quantity } });
+      updateOptimisticCart({ type: "ADD_ITEM", payload: { variant, product } });
     });
 
     // Then call the server action to persist the change
     try {
       console.log("🔄 Cart context: Calling server action");
       const { addToCartOptimistic } = await import("./actions");
-      const result = await addToCartOptimistic(variant.id, quantity, customerId);
+      const result = await addToCartOptimistic(variant.id, 1, customerId);
 
       if (!result.success) {
         console.error("❌ Server action failed:", result.error);
@@ -383,7 +372,7 @@ export function useCart() {
       throw error;
     }
 
-    trackProduct("add_to_cart", { item_id: product.id, item_name: product.title, price: Number(variant.price.amount), quantity }, variant.price.currencyCode);
+    trackProduct("add_to_cart", { item_id: product.id, item_name: product.title, price: Number(variant.price.amount), quantity: 1 }, variant.price.currencyCode);
     return cartItem;
   };
 

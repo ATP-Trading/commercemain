@@ -88,6 +88,6 @@ export function useUpdateURL() {
     Object.entries(state).forEach(([key, value]) => {
       newParams.set(key, value);
     });
-    router.replace(`?${newParams.toString()}`, { scroll: false });
+    router.push(`?${newParams.toString()}`, { scroll: false });
   };
 }

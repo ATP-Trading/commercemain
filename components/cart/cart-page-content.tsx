@@ -106,7 +106,7 @@ function CartStockIndicator({
     tCart,
     tProduct
 }: { 
-    quantityAvailable?: number | null;
+    quantityAvailable?: number;
     tCart: Translator;
     tProduct: Translator;
 }) {

@@ -61,7 +61,6 @@ export async function addToCartWithMembership(
     };
 
   } catch (error) {
-    updateTag(TAGS.cart);
     console.error('Error adding item to cart with membership:', error);
     return { 
       success: false, 

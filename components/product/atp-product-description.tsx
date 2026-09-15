@@ -197,7 +197,7 @@ export function ATPProductDescription({
         {/* Quantity Selector - hidden for membership/digital products */}
         {!isMembershipProduct && (
           <div className="mb-4">
-            <QuantitySelector product={product} />
+            <QuantitySelector productId={product.id} />
           </div>
         )}
 

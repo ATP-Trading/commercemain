@@ -51,7 +51,7 @@ export function ProductDescription({ product }: { product: Product }) {
 
       {/* Quantity Selector */}
       <div className="mb-6">
-        <QuantitySelector product={product} />
+        <QuantitySelector productId={product.id} />
       </div>
 
       {/* Add to Cart Button */}
