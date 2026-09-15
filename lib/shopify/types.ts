@@ -69,7 +69,9 @@ export type CartItem = {
     id: string;
     title: string;
     sku?: string;
-    quantityAvailable?: number;
+    quantityAvailable?: number | null;
+    availableForSale?: boolean;
+    currentlyNotInStock?: boolean;
     compareAtPrice?: Money;
     selectedOptions: {
       name: string;
@@ -177,6 +179,8 @@ export type ProductOption = {
 };
 
 export type ProductVariant = {
+  quantityAvailable?: number | null;
+  currentlyNotInStock?: boolean;
   id: string;
   title: string;
   availableForSale: boolean;
@@ -314,6 +318,7 @@ export type ShopifyRemoveFromCartOperation = {
 export type ShopifyUpdateCartOperation = {
   data: {
     cartLinesUpdate: {
+      userErrors?: { message: string }[];
       cart: ShopifyCart;
     };
   };

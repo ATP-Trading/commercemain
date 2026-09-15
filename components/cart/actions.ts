@@ -250,6 +250,7 @@ export async function addToCartOptimistic(
 
     return { success: true }
   } catch (e) {
+    updateTag(TAGS.cart)
     console.error('Error adding to cart:', e)
     return { success: false, error: 'Failed to add item to cart' }
   }
@@ -334,6 +335,7 @@ export async function updateCartQuantityOptimistic(
     
     return { success: true }
   } catch (e) {
+    updateTag(TAGS.cart)
     console.error('Error updating cart quantity:', e)
     return { success: false, error: 'Failed to update cart quantity' }
   }

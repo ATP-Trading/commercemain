@@ -27,6 +27,9 @@ export const createCartMutation = `
               }
               merchandise {
                 ... on ProductVariant {
+                  availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                   id
                   title
                   selectedOptions {
@@ -85,6 +88,9 @@ export const addToCartMutation = `
               }
               merchandise {
                 ... on ProductVariant {
+                  availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                   id
                   title
                   selectedOptions {
@@ -143,6 +149,9 @@ export const removeFromCartMutation = `
               }
               merchandise {
                 ... on ProductVariant {
+                  availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                   id
                   title
                   selectedOptions {
@@ -201,6 +210,9 @@ export const editCartItemsMutation = `
               }
               merchandise {
                 ... on ProductVariant {
+                  availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                   id
                   title
                   selectedOptions {
@@ -258,6 +270,9 @@ export const getCartQuery = `
             }
             merchandise {
               ... on ProductVariant {
+                  availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                 id
                 title
                 selectedOptions {
@@ -359,6 +374,8 @@ export const getCollectionProductsQuery = `
                   id
                   title
                   availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                   selectedOptions {
                     name
                     value
@@ -552,6 +569,8 @@ export const getProductQuery = `
             id
             title
             availableForSale
+            quantityAvailable
+            currentlyNotInStock
             selectedOptions {
               name
               value
@@ -638,6 +657,8 @@ export const getProductRecommendationsQuery = `
             id
             title
             availableForSale
+            quantityAvailable
+            currentlyNotInStock
             selectedOptions {
               name
               value
@@ -710,6 +731,8 @@ export const getFeaturedProductsQuery = `
                   id
                   title
                   availableForSale
+                  quantityAvailable
+                  currentlyNotInStock
                   selectedOptions {
                     name
                     value
@@ -784,6 +807,8 @@ export const getNewestProductsQuery = `
                 id
                 title
                 availableForSale
+                quantityAvailable
+                currentlyNotInStock
                 selectedOptions {
                   name
                   value
@@ -849,6 +874,8 @@ export const getProductsQuery = `
                 id
                 title
                 availableForSale
+                quantityAvailable
+                currentlyNotInStock
                 selectedOptions {
                   name
                   value
