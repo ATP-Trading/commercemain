@@ -1,0 +1,19 @@
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+const data = vi.hoisted(() => ({ variant: { id: 'red', availableForSale: true, quantityAvailable: 5 }, lines: [{ quantity: 3, merchandise: { id: 'red' } }, { quantity: 7, merchandise: { id: 'blue' } }] }));
+vi.mock('@/hooks/use-selected-variant', () => ({ useSelectedVariant: () => ({ selectedVariant: data.variant }) }));
+vi.mock('@/components/cart/cart-context', () => ({ useCart: () => ({ cart: { lines: data.lines } }) }));
+vi.mock('next-intl', () => ({ useLocale: () => 'en', useTranslations: () => (key: string) => key }));
+import { QuantityProvider, QuantitySelector } from '@/components/product/quantity-selector';
+import type { Product } from '@/lib/shopify/types';
+afterEach(cleanup);
+it('caps typed and clicked quantities at remaining variant stock, excluding other variants', () => {
+ render(<QuantityProvider><QuantitySelector product={{ id: 'p' } as Product} /></QuantityProvider>);
+ const input = screen.getByRole('spinbutton');
+ expect(input).toHaveAttribute('max', '2');
+ fireEvent.change(input, { target: { value: '999' } });
+ expect(input).toHaveValue(2);
+ expect(screen.getByRole('button', { name: 'Increase quantity' })).toBeDisabled();
+ fireEvent.click(screen.getByRole('button', { name: 'Decrease quantity' }));
+ expect(input).toHaveValue(1);
+});

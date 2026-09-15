@@ -1,11 +1,15 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { Label } from "@/components/ui/label"
 import { Minus, Plus } from "lucide-react"
 import { useCart } from "@/components/cart/cart-context"
 import { useTranslations, useLocale } from "next-intl"
 import { m, LazyMotion, domAnimation } from "framer-motion"
+
+import type { Product } from "@/lib/shopify/types"
+import { useSelectedVariant } from "@/hooks/use-selected-variant"
+import { remainingStock } from "@/lib/shopify/inventory-limit"
 
 // Context for sharing quantity state
 interface QuantityContextType {
@@ -34,24 +38,22 @@ export function useQuantity() {
 }
 
 interface QuantitySelectorProps {
-  productId: string
+  product: Product
   className?: string
 }
 
-export function QuantitySelector({ productId, className }: QuantitySelectorProps) {
+export function QuantitySelector({ product, className }: QuantitySelectorProps) {
   const { quantity, setQuantity } = useQuantity()
   const { cart } = useCart()
 
-  // Find if this product is already in cart
-  const cartItem = cart?.lines?.find(
-    (line) => line.merchandise.product.id === productId
-  )
-  const cartQuantity = cartItem?.quantity || 0
-
+  const { selectedVariant } = useSelectedVariant(product)
+  const cartQuantity = cart?.lines?.filter(line => line.merchandise.id === selectedVariant?.id).reduce((sum, line) => sum + line.quantity, 0) ?? 0
+  const remaining = remainingStock(selectedVariant, cartQuantity)
+  const max = remaining === undefined ? undefined : Math.max(1, remaining)
+  useEffect(() => { setQuantity(1) }, [selectedVariant?.id])
+  useEffect(() => { if (max !== undefined && quantity > max) setQuantity(max) }, [max, quantity, setQuantity])
   const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity)
-    }
+    if (Number.isSafeInteger(newQuantity) && newQuantity >= 1) setQuantity(Math.min(newQuantity, max ?? newQuantity))
   }
 
   const incrementQuantity = () => {
@@ -88,6 +90,7 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
           )}
         </div>
 
+        {remaining !== undefined && <p role="status" className="text-sm text-neutral-300">{remaining === 0 ? (ar ? "الكمية المتوفرة موجودة في سلتك أو نفدت." : "Available stock is already in your cart or sold out.") : (ar ? `يمكنك إضافة ${remaining} قطعة كحد أقصى.` : `You can add up to ${remaining} more.`)}</p>}
         <div className="group relative w-fit">
           {/* Enhanced glow backing on hover */}
           <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-[#d4af37]/0 via-[#d4af37]/20 to-[#d4af37]/0 opacity-0 blur-lg transition-opacity duration-500 group-hover:opacity-100" />
@@ -113,6 +116,8 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
               aria-label={t("quantity")}
               type="number"
               min="1"
+              max={max}
+              disabled={remaining === 0}
               value={quantity}
               onChange={handleInputChange}
               className="h-12 w-16 text-center border-0 bg-transparent text-white text-lg font-medium tabular-nums caret-[#d4af37] focus:outline-none focus:ring-0 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none p-0 selection:bg-[#d4af37]/30"
@@ -127,6 +132,7 @@ export function QuantitySelector({ productId, className }: QuantitySelectorProps
               type="button"
               aria-label={ar ? "زيادة الكمية" : "Increase quantity"}
               onClick={incrementQuantity}
+              disabled={remaining !== undefined && quantity >= remaining}
               className="flex items-center justify-center w-12 h-12 text-neutral-400 hover:text-white transition-colors active:text-[#d4af37]"
             >
               <Plus className="h-4 w-4 transition-transform group-hover:scale-110" />

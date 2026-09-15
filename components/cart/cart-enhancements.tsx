@@ -276,13 +276,13 @@ export function StockIndicator({
   quantityInCart,
   className = "",
 }: {
-  quantityAvailable?: number
+  quantityAvailable?: number | null
   quantityInCart: number
   className?: string
 }) {
   const t = useTranslations('cart')
 
-  if (quantityAvailable === undefined) return null
+  if (quantityAvailable == null) return null
 
   const isOutOfStock = quantityAvailable === 0
   const isLowStock = quantityAvailable > 0 && quantityAvailable < 5
