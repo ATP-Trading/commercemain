@@ -1,4 +1,5 @@
-import { assertStockQuantity, variantStockQuery, type Stock } from "./inventory-limit"
+import { getOnlineStock } from "./stock-server"
+import { assertStockQuantity } from "./inventory-limit"
 import { prepareMembershipLines, variantPlanQuery, type PurchaseLine, type VariantPlans } from './membership-purchase'
 import 'server-only'
 import { getLocale } from 'next-intl/server'
@@ -233,9 +234,7 @@ async function validateStock(lines: (PurchaseLine & { id?: string })[], existing
     totals.set(line.merchandiseId, (totals.get(line.merchandiseId) ?? 0) - previous + line.quantity);
   }
   await Promise.all([...new Set(lines.map(line => line.merchandiseId))].map(async id => {
-    const res = await shopifyFetch<{ data: { node: Stock | null }; variables: { id: string } }>({ query: variantStockQuery, variables: { id } });
-    if (!res.body.data.node) throw new Error('STOCK_LIMIT');
-    assertStockQuantity(res.body.data.node, totals.get(id)!);
+    assertStockQuantity(await getOnlineStock(id), totals.get(id)!);
   }));
 }
 

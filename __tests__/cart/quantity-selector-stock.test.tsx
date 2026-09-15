@@ -4,11 +4,12 @@ const data = vi.hoisted(() => ({ variant: { id: 'red', availableForSale: true, q
 vi.mock('@/hooks/use-selected-variant', () => ({ useSelectedVariant: () => ({ selectedVariant: data.variant }) }));
 vi.mock('@/components/cart/cart-context', () => ({ useCart: () => ({ cart: { lines: data.lines } }) }));
 vi.mock('next-intl', () => ({ useLocale: () => 'en', useTranslations: () => (key: string) => key }));
+vi.mock('@/lib/hooks/use-inventory-quantity', () => ({ useInventoryQuantity: () => ({ stock: data.variant, isLoading: false, error: null }) }));
 import { QuantityProvider, QuantitySelector } from '@/components/product/quantity-selector';
 import type { Product } from '@/lib/shopify/types';
 afterEach(cleanup);
 it('caps typed and clicked quantities at remaining variant stock, excluding other variants', () => {
- render(<QuantityProvider><QuantitySelector product={{ id: 'p' } as Product} /></QuantityProvider>);
+ render(<QuantityProvider product={{ id: 'p' } as Product}><QuantitySelector product={{ id: 'p' } as Product} /></QuantityProvider>);
  const input = screen.getByRole('spinbutton');
  expect(input).toHaveAttribute('max', '2');
  fireEvent.change(input, { target: { value: '999' } });

@@ -4,6 +4,7 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline"
 import clsx from "clsx"
 import type { CartItem } from "@/lib/shopify/types"
 import { useRef, useState } from "react"
+import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity"
 import { stockLimit } from "@/lib/shopify/inventory-limit"
 import { useLocale, useTranslations } from "next-intl"
 
@@ -48,7 +49,8 @@ export function EditItemQuantityButton({
   const [failed, setFailed] = useState(false)
   const busy = useRef(false)
   const ar = useLocale() === 'ar'
-  const limit = stockLimit(item.merchandise)
+  const inventory = useInventoryQuantity(item.merchandise.id)
+  const limit = stockLimit(inventory.stock)
   const capped = type === 'plus' && limit !== undefined && item.quantity >= limit
   const handleUpdate = async () => {
     if (busy.current || capped) return
@@ -57,6 +59,6 @@ export function EditItemQuantityButton({
     catch { setFailed(true) }
     finally { busy.current = false; setPending(false) }
   }
-  return <><SubmitButton type={type} onClick={handleUpdate} disabled={pending || capped} />
+  return <><SubmitButton type={type} onClick={handleUpdate} disabled={pending || capped || (type === "plus" && (inventory.isLoading || !!inventory.error))} />
     {failed && <span role="alert" className="text-xs text-red-600">{ar ? "تعذر تحديث الكمية. تحقق من المخزون وحدّث السلة." : "Could not update quantity. Check stock and refresh the cart."}</span>}</>
 }

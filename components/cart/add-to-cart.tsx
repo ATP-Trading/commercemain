@@ -66,12 +66,12 @@ function SubmitButton({
 export function AddToCart({ product }: { product: Product }) {
   const { addCartItem, cart } = useCart();
   const { showNotification } = useCartNotification();
-  const { quantity } = useQuantity();
+  const { quantity, inventory } = useQuantity();
   const { selectedVariant, selectedVariantId, availableForSale } =
     useSelectedVariant(product);
 
   const inCart = cart?.lines?.filter(line => line.merchandise.id === selectedVariantId).reduce((sum, line) => sum + line.quantity, 0) ?? 0;
-  const remaining = remainingStock(selectedVariant, inCart);
+  const remaining = remainingStock(inventory.stock, inCart);
 
   const handleAddToCart = async () => {
     console.log("🛒 Add to cart clicked!", {
@@ -133,10 +133,10 @@ export function AddToCart({ product }: { product: Product }) {
         await handleAddToCart();
       }}
     >
-      <SubmitButton
+      <fieldset disabled={inventory.isLoading || !!inventory.error}><SubmitButton
         availableForSale={availableForSale && remaining !== 0}
         selectedVariantId={selectedVariantId}
-      />
+      /></fieldset>
     </form>
   );
 }

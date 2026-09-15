@@ -7,8 +7,9 @@ vi.mock('@/hooks/use-atp-membership', () => ({ useAtpMembership: () => ({ isActi
 vi.mock('@/components/membership/membership-badge', () => ({ MembershipBadge: () => null }));
 vi.mock('@/hooks/use-rtl', () => ({ useRTL: () => ({ isRTL: true }) }));
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
-vi.mock('@/components/product/quantity-selector', () => ({ useQuantity: () => ({ quantity: 1 }) }));
+vi.mock('@/components/product/quantity-selector', () => ({ useQuantity: () => ({ quantity: 1, inventory: { stock: undefined, isLoading: false, error: null } }) }));
 vi.mock('@/hooks/use-selected-variant', () => ({ useSelectedVariant: () => ({ availableForSale: true, selectedVariantId: 'variant', selectedVariant: { id: 'variant', title: 'Default', price: { amount: '180', currencyCode: 'AED' }, selectedOptions: [] } }) }));
+vi.mock('@/lib/hooks/use-inventory-quantity', () => ({ useInventoryQuantity: () => ({ stock: undefined, isLoading: false, error: null }) }));
 import { ATPAddToCart } from '@/components/cart/atp-add-to-cart';
 import type { Product } from '@/lib/shopify/types';
 const product = { id: 'product', title: 'Product', handle: 'product', featuredImage: {} } as Product;

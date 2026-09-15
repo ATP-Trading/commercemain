@@ -96,7 +96,7 @@ export function ATPAddToCart({ product }: { product: Product }) {
   const { isMember } = useMembership();
   const { calculateServiceDiscount } = useMembershipDiscount();
   const { showNotification } = useCartNotification();
-  const { quantity } = useQuantity();
+  const { quantity, inventory } = useQuantity();
   const { selectedVariant, selectedVariantId, availableForSale } =
     useSelectedVariant(product);
 
@@ -107,7 +107,7 @@ export function ATPAddToCart({ product }: { product: Product }) {
       : 0;
 
   const inCart = cart?.lines?.filter(line => line.merchandise.id === selectedVariantId).reduce((sum, line) => sum + line.quantity, 0) ?? 0;
-  const remaining = remainingStock(selectedVariant, inCart);
+  const remaining = remainingStock(inventory.stock, inCart);
 
   const handleAddToCart = async () => {
     if (submitting.current) return;
@@ -177,7 +177,7 @@ export function ATPAddToCart({ product }: { product: Product }) {
         await handleAddToCart();
       }}
     >
-      <fieldset disabled={pending} aria-busy={pending}>
+      <fieldset disabled={pending || inventory.isLoading || !!inventory.error} aria-busy={pending}>
       <SubmitButton
         availableForSale={availableForSale && remaining !== 0}
         selectedVariantId={selectedVariantId}

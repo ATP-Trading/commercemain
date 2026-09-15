@@ -5,13 +5,13 @@ vi.mock('next-intl/server', () => ({ getLocale: async () => 'en' }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'cart' }), set: vi.fn() }), headers: async () => new Headers() }));
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); vi.resetModules(); });
 for (const action of ['add', 'update']) it(`rejects excess ${action} on the server before a mutation`, async () => {
- vi.stubEnv('SHOPIFY_STORE_DOMAIN', 'test.myshopify.com'); vi.stubEnv('SHOPIFY_STOREFRONT_ACCESS_TOKEN', 'test-only');
+ vi.stubEnv('SHOPIFY_STORE_DOMAIN', 'test.myshopify.com'); vi.stubEnv('SHOPIFY_STOREFRONT_ACCESS_TOKEN', 'test-only'); vi.stubEnv('SHOPIFY_ADMIN_ACCESS_TOKEN', 'test-only');
  vi.spyOn(console, 'log').mockImplementation(() => {});
  const requests: string[] = [];
  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
   const { query } = JSON.parse(options.body); requests.push(query);
   const cart = { id: 'cart', lines: { edges: [{ node: { id: 'line', quantity: 3, merchandise: { id: 'variant', product: { id: 'p', handle: 'p', title: 'P' } }, cost: { totalAmount: { amount: '30', currencyCode: 'AED' } } } }] }, cost: { totalAmount: { amount: '30', currencyCode: 'AED' } } };
-  const data = query.includes('VariantStock') ? { node: { availableForSale: true, quantityAvailable: 5 } } : { cart };
+  const data = query.includes('OnlineStock') ? { productVariant: { availableForSale: true, sellableOnlineQuantity: 5, inventoryPolicy: 'DENY', inventoryItem: { tracked: true } } } : { cart };
   return { ok: true, status: 200, headers: new Headers({'content-type':'application/json'}), json: async () => ({ data }) };
  }));
  const server = await import('@/lib/shopify/server');

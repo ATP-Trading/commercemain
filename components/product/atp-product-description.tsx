@@ -73,7 +73,7 @@ export function ATPProductDescription({
   ) || product.handle.toLowerCase().includes("membership");
 
   return (
-    <QuantityProvider>
+    <QuantityProvider product={product}>
       <div className={isRTL ? "font-arabic" : ""}>
         <div
           className={`mb-6 flex flex-col border-b border-atp-light-gray pb-6 ${isRTL ? "text-right" : ""

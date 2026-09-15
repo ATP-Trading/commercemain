@@ -9,21 +9,25 @@ import { m, LazyMotion, domAnimation } from "framer-motion"
 
 import type { Product } from "@/lib/shopify/types"
 import { useSelectedVariant } from "@/hooks/use-selected-variant"
+import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity"
 import { remainingStock } from "@/lib/shopify/inventory-limit"
 
 // Context for sharing quantity state
 interface QuantityContextType {
   quantity: number
+  inventory: ReturnType<typeof useInventoryQuantity>
   setQuantity: (quantity: number) => void
 }
 
 const QuantityContext = createContext<QuantityContextType | undefined>(undefined)
 
-export function QuantityProvider({ children }: { children: ReactNode }) {
+export function QuantityProvider({ children, product }: { children: ReactNode; product: Product }) {
+  const { selectedVariantId } = useSelectedVariant(product)
+  const inventory = useInventoryQuantity(selectedVariantId)
   const [quantity, setQuantity] = useState(1)
 
   return (
-    <QuantityContext.Provider value={{ quantity, setQuantity }}>
+    <QuantityContext.Provider value={{ quantity, setQuantity, inventory }}>
       {children}
     </QuantityContext.Provider>
   )
@@ -43,12 +47,12 @@ interface QuantitySelectorProps {
 }
 
 export function QuantitySelector({ product, className }: QuantitySelectorProps) {
-  const { quantity, setQuantity } = useQuantity()
+  const { quantity, setQuantity, inventory } = useQuantity()
   const { cart } = useCart()
 
   const { selectedVariant } = useSelectedVariant(product)
   const cartQuantity = cart?.lines?.filter(line => line.merchandise.id === selectedVariant?.id).reduce((sum, line) => sum + line.quantity, 0) ?? 0
-  const remaining = remainingStock(selectedVariant, cartQuantity)
+  const remaining = remainingStock(inventory.stock, cartQuantity)
   const max = remaining === undefined ? undefined : Math.max(1, remaining)
   useEffect(() => { setQuantity(1) }, [selectedVariant?.id])
   useEffect(() => { if (max !== undefined && quantity > max) setQuantity(max) }, [max, quantity, setQuantity])
@@ -90,6 +94,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
           )}
         </div>
 
+        {inventory.error && <p role="alert" className="text-sm">{ar ? "تعذر التحقق من المخزون." : "Stock could not be checked."} <button type="button" onClick={inventory.refetch} className="underline">{ar ? "أعد المحاولة" : "Try again"}</button></p>}
         {remaining !== undefined && <p role="status" className="text-sm text-neutral-300">{remaining === 0 ? (ar ? "الكمية المتوفرة موجودة في سلتك أو نفدت." : "Available stock is already in your cart or sold out.") : (ar ? `يمكنك إضافة ${remaining} قطعة كحد أقصى.` : `You can add up to ${remaining} more.`)}</p>}
         <div className="group relative w-fit">
           {/* Enhanced glow backing on hover */}
@@ -117,7 +122,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               type="number"
               min="1"
               max={max}
-              disabled={remaining === 0}
+              disabled={inventory.isLoading || !!inventory.error || remaining === 0}
               value={quantity}
               onChange={handleInputChange}
               className="h-12 w-16 text-center border-0 bg-transparent text-white text-lg font-medium tabular-nums caret-[#d4af37] focus:outline-none focus:ring-0 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none p-0 selection:bg-[#d4af37]/30"
@@ -132,7 +137,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               type="button"
               aria-label={ar ? "زيادة الكمية" : "Increase quantity"}
               onClick={incrementQuantity}
-              disabled={remaining !== undefined && quantity >= remaining}
+              disabled={inventory.isLoading || !!inventory.error || (remaining !== undefined && quantity >= remaining)}
               className="flex items-center justify-center w-12 h-12 text-neutral-400 hover:text-white transition-colors active:text-[#d4af37]"
             >
               <Plus className="h-4 w-4 transition-transform group-hover:scale-110" />
