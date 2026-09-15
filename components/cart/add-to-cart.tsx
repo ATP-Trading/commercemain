@@ -3,6 +3,7 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
+import { remainingStock } from "@/lib/shopify/inventory-limit";
 import type { Product } from "@/lib/shopify/types";
 import { useCart } from "./cart-context";
 import { useCartNotification } from "./cart-provider";
@@ -63,11 +64,14 @@ function SubmitButton({
 }
 
 export function AddToCart({ product }: { product: Product }) {
-  const { addCartItem } = useCart();
+  const { addCartItem, cart } = useCart();
   const { showNotification } = useCartNotification();
   const { quantity } = useQuantity();
   const { selectedVariant, selectedVariantId, availableForSale } =
     useSelectedVariant(product);
+
+  const inCart = cart?.lines?.filter(line => line.merchandise.id === selectedVariantId).reduce((sum, line) => sum + line.quantity, 0) ?? 0;
+  const remaining = remainingStock(selectedVariant, inCart);
 
   const handleAddToCart = async () => {
     console.log("🛒 Add to cart clicked!", {
@@ -84,10 +88,7 @@ export function AddToCart({ product }: { product: Product }) {
       );
 
       try {
-        // Add the item multiple times based on selected quantity
-        for (let i = 0; i < quantity; i++) {
-          await addCartItem(selectedVariant, product);
-        }
+        await addCartItem(selectedVariant, product, undefined, quantity);
 
         // Create a cart item for notification with the correct quantity
         const cartItem = {
@@ -133,7 +134,7 @@ export function AddToCart({ product }: { product: Product }) {
       }}
     >
       <SubmitButton
-        availableForSale={availableForSale}
+        availableForSale={availableForSale && remaining !== 0}
         selectedVariantId={selectedVariantId}
       />
     </form>

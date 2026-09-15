@@ -105,6 +105,8 @@ const cartFragment = /* GraphQL */ `
               title
               sku
               quantityAvailable
+              availableForSale
+              currentlyNotInStock
               compareAtPrice {
                 amount
                 currencyCode
