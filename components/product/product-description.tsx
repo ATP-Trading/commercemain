@@ -14,7 +14,7 @@ export function ProductDescription({ product }: { product: Product }) {
   const localizedTitle = getLocalizedProductTitle(product, locale);
 
   return (
-    <QuantityProvider>
+    <QuantityProvider product={product}>
       <div className="mb-6 flex flex-col border-b border-atp-light-gray pb-6">
         <h1 className="mb-4 text-5xl font-medium">{localizedTitle}</h1>
         <div className="mb-6">
@@ -51,7 +51,7 @@ export function ProductDescription({ product }: { product: Product }) {
 
       {/* Quantity Selector */}
       <div className="mb-6">
-        <QuantitySelector productId={product.id} />
+        <QuantitySelector product={product} />
       </div>
 
       {/* Add to Cart Button */}

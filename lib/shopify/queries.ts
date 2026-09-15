@@ -177,6 +177,7 @@ export const removeFromCartMutation = `
 export const editCartItemsMutation = `
   mutation cartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!, $language: LanguageCode, $country: CountryCode) @inContext(language: $language, country: $country) {
     cartLinesUpdate(cartId: $cartId, lines: $lines) {
+      userErrors { message }
       cart {
         id
         checkoutUrl

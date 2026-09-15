@@ -1,3 +1,5 @@
+import { getOnlineStock } from "./stock-server"
+import { assertStockQuantity } from "./inventory-limit"
 import { prepareMembershipLines, variantPlanQuery, type PurchaseLine, type VariantPlans } from './membership-purchase'
 import 'server-only'
 import { getLocale } from 'next-intl/server'
@@ -214,7 +216,30 @@ async function preparePurchaseLines(lines: PurchaseLine[]) {
   })
 }
 
+function assertCartAccepted(cart: Cart, lines: PurchaseLine[], existing?: Cart) {
+  for (const id of new Set(lines.map(line => line.merchandiseId))) {
+    const requested = lines.filter(line => line.merchandiseId === id).reduce((sum, line) => sum + line.quantity, 0)
+      + (existing?.lines.filter(line => line.merchandise.id === id).reduce((sum, line) => sum + line.quantity, 0) ?? 0);
+    const accepted = cart.lines.filter(line => line.merchandise.id === id).reduce((sum, line) => sum + line.quantity, 0);
+    if (accepted !== requested) throw new Error('STOCK_LIMIT');
+  }
+}
+
+async function validateStock(lines: (PurchaseLine & { id?: string })[], existing: Cart | undefined, updating = false) {
+  const totals = new Map<string, number>();
+  for (const line of existing?.lines ?? []) totals.set(line.merchandise.id, (totals.get(line.merchandise.id) ?? 0) + line.quantity);
+  for (const line of lines) {
+    if (!Number.isSafeInteger(line.quantity) || line.quantity < 1) throw new Error('STOCK_LIMIT');
+    const previous = updating ? existing?.lines.find(item => item.id === line.id)?.quantity ?? 0 : 0;
+    totals.set(line.merchandiseId, (totals.get(line.merchandiseId) ?? 0) - previous + line.quantity);
+  }
+  await Promise.all([...new Set(lines.map(line => line.merchandiseId))].map(async id => {
+    assertStockQuantity(await getOnlineStock(id), totals.get(id)!);
+  }));
+}
+
 export async function createCart(lines: PurchaseLine[] = []): Promise<Cart> {
+  await validateStock(lines, undefined)
   const prepared = await preparePurchaseLines(lines)
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
@@ -225,12 +250,15 @@ export async function createCart(lines: PurchaseLine[] = []): Promise<Cart> {
   const cart = reshapeCart(result.cart)
   if (!cart.id) throw new Error('Cart identity is missing')
   ;(await cookies()).set('cartId', cart.id)
+  assertCartAccepted(cart, lines)
   return cart
 }
 
 export async function addToCart(lines: PurchaseLine[]): Promise<Cart> {
   const cartId = (await cookies()).get('cartId')?.value
   if (!cartId) return createCart(lines)
+  const existing = await getCart()
+  await validateStock(lines, existing)
   const prepared = await preparePurchaseLines(lines)
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
@@ -238,7 +266,9 @@ export async function addToCart(lines: PurchaseLine[]): Promise<Cart> {
   })
   const result = res.body.data.cartLinesAdd
   if (result.userErrors?.length || !result.cart) throw new Error('Unable to add cart items')
-  return reshapeCart(result.cart)
+  const cart = reshapeCart(result.cart)
+  assertCartAccepted(cart, lines, existing)
+  return cart
 }
 
 export async function removeFromCart(lineIds: string[]): Promise<Cart> {
@@ -259,6 +289,7 @@ export async function updateCart(
   lines: { id: string; merchandiseId: string; quantity: number }[]
 ): Promise<Cart> {
   const cartId = (await cookies()).get('cartId')?.value!;
+  await validateStock(lines.filter(line => line.quantity !== 0), await getCart(), true)
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
     query: editCartItemsMutation,
     variables: {
@@ -268,7 +299,13 @@ export async function updateCart(
     }
   });
 
-  return reshapeCart(res.body.data.cartLinesUpdate.cart);
+  const result = res.body.data.cartLinesUpdate;
+  if (result.userErrors?.length || !result.cart) throw new Error("STOCK_LIMIT");
+  const cart = reshapeCart(result.cart);
+  for (const line of lines) {
+    if ((cart.lines.find(item => item.id === line.id)?.quantity ?? 0) !== line.quantity) throw new Error("STOCK_LIMIT");
+  }
+  return cart;
 }
 
 export async function updateCartBuyerIdentity(

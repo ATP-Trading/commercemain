@@ -73,7 +73,7 @@ export function ATPProductDescription({
   ) || product.handle.toLowerCase().includes("membership");
 
   return (
-    <QuantityProvider>
+    <QuantityProvider product={product}>
       <div className={isRTL ? "font-arabic" : ""}>
         <div
           className={`mb-6 flex flex-col border-b border-atp-light-gray pb-6 ${isRTL ? "text-right" : ""
@@ -197,7 +197,7 @@ export function ATPProductDescription({
         {/* Quantity Selector - hidden for membership/digital products */}
         {!isMembershipProduct && (
           <div className="mb-4">
-            <QuantitySelector productId={product.id} />
+            <QuantitySelector product={product} />
           </div>
         )}
 
