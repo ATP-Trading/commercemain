@@ -1,7 +1,6 @@
 export type Stock = { availableForSale?: boolean; quantityAvailable?: number | null; currentlyNotInStock?: boolean };
 export function stockLimit(stock?: Stock): number | undefined {
   if (stock?.availableForSale === false) return 0;
-  if (stock?.availableForSale && stock.quantityAvailable === 0) return undefined;
   if (stock?.currentlyNotInStock || stock?.quantityAvailable == null) return undefined;
   return Math.max(0, stock.quantityAvailable);
 }
