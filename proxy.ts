@@ -1,8 +1,20 @@
+import { NextRequest, NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './src/i18n/routing';
 
 // Export as 'proxy' instead of 'default' for Next.js 16
-export const proxy = createMiddleware(routing);
+const localeMiddleware = createMiddleware(routing);
+
+export function proxy(request: NextRequest) {
+  // A stable permanent destination consolidates the bare homepage with /en.
+  // Explicit locale paths and language detection on other routes stay intact.
+  if (request.nextUrl.pathname === '/') {
+    const destination = request.nextUrl.clone();
+    destination.pathname = '/en';
+    return NextResponse.redirect(destination, 308);
+  }
+  return localeMiddleware(request);
+}
 
 export default proxy;
 
