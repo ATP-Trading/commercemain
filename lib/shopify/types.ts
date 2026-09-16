@@ -57,6 +57,7 @@ export type CartLineDiscountAllocation = {
 export type CartItem = {
   id: string | undefined;
   quantity: number;
+  sellingPlanAllocation?: { sellingPlan: { id: string } } | null;
   attributes?: CartAttribute[];
   cost: {
     amountPerQuantity?: Money;
@@ -508,10 +509,10 @@ export type CartBuyerIdentity = {
 };
 
 export type CartBuyerIdentityInput = {
-  email?: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
   countryCode?: string;
-  customerAccessToken?: string;
+  customerAccessToken?: string | null;
   deliveryAddressPreferences?: MailingAddress[];
 };
 

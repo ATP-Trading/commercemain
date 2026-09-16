@@ -71,6 +71,9 @@ const cartFragment = /* GraphQL */ `
         node {
           id
           quantity
+          sellingPlanAllocation {
+            sellingPlan { id }
+          }
           attributes {
             key
             value

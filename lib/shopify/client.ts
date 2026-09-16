@@ -166,15 +166,16 @@ export const reshapeCart = (cart: ShopifyCart): Cart => {
     console.warn(`[Cart] Dropped ${droppedCount} cart lines with missing essential data (no cost or merchandise ID)`);
   }
 
-  // CRITICAL: Recalculate totals to match the filtered lines
-  // This prevents the split-state bug where totals show but items don't
+  // Shopify's total includes order discounts and any calculated delivery costs.
+  // Summing line totals would silently discard those adjustments. Only use
+  // the legacy fallback when malformed lines had to be removed.
   const recalculatedTotals = recalculateCartTotals(validLines, cart.cost);
 
   return {
     ...cart,
     lines: validLines,
     totalQuantity: recalculatedTotals.totalQuantity,
-    cost: recalculatedTotals.cost,
+    cost: droppedCount > 0 ? recalculatedTotals.cost : cart.cost,
   };
 };
 
