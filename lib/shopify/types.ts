@@ -508,10 +508,10 @@ export type CartBuyerIdentity = {
 };
 
 export type CartBuyerIdentityInput = {
-  email?: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
   countryCode?: string;
-  customerAccessToken?: string;
+  customerAccessToken?: string | null;
   deliveryAddressPreferences?: MailingAddress[];
 };
 

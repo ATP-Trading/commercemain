@@ -1,5 +1,7 @@
 import { safeReturnPath } from '@/lib/auth/return-path'
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { updateCartBuyerIdentity } from '@/lib/shopify/server'
 import {
   getTokens,
   clearTokens,
@@ -16,6 +18,25 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleLogout(request: NextRequest) {
+  // A cart can outlive the login cookies. Remove the previous buyer so that
+  // customer-specific prices and checkout identity do not survive sign-out.
+  const cookieStore = await cookies()
+  if (cookieStore.get('cartId')?.value) {
+    try {
+      const { cart, userErrors } = await updateCartBuyerIdentity({
+        customerAccessToken: null,
+        email: null,
+        phone: null,
+      })
+      if (!cart || userErrors.length || cart.buyerIdentity?.customer) {
+        cookieStore.delete('cartId')
+      }
+    } catch {
+      // Never retain a customer-linked cart if Shopify cannot detach it.
+      // The remote cart is not deleted; only this browser's reference is reset.
+      cookieStore.delete('cartId')
+    }
+  }
   try {
     const config = getConfig()
     
