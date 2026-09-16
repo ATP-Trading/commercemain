@@ -3,10 +3,10 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 const mock = vi.hoisted(() => ({
   cartId: 'cart' as string | undefined,
-  remove: vi.fn(), update: vi.fn(), clear: vi.fn(),
+  remove: vi.fn(), update: vi.fn(), clear: vi.fn(), getCart: vi.fn(), create: vi.fn(),
 }))
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => mock.cartId ? {value: mock.cartId} : undefined, delete: mock.remove }) }))
-vi.mock('@/lib/shopify/server', () => ({ updateCartBuyerIdentity: mock.update }))
+vi.mock('@/lib/shopify/server', () => ({ updateCartBuyerIdentity: mock.update, getCart: mock.getCart, createCart: mock.create }))
 vi.mock('@/lib/shopify/customer-account-oauth', () => ({
   getTokens: async () => ({}), clearTokens: mock.clear,
   getConfig: () => ({ siteUrl: 'https://example.com' }), buildLogoutUrl: vi.fn(),
@@ -15,6 +15,8 @@ import { GET, POST } from '@/app/api/auth/logout/route'
 beforeEach(() => {
   vi.clearAllMocks(); mock.cartId = 'cart'
   mock.update.mockResolvedValue({ cart: { buyerIdentity: {customer: null} }, userErrors: [] })
+  mock.getCart.mockResolvedValue({lines:[{quantity:2,merchandise:{id:'variant'},sellingPlanAllocation:{sellingPlan:{id:'plan'}}}]})
+  mock.create.mockResolvedValue({id:'guest-cart'})
 })
 it('detaches the buyer while retaining the cart and signs out', async () => {
   const response = await POST(new NextRequest('https://example.com/api/auth/logout?returnTo=/en/cart', {method:'POST'}))
@@ -28,7 +30,16 @@ it.each(['error', 'linked', 'missing', 'network'])('forgets the browser cart saf
   else mock.update.mockResolvedValue({cart: failure === 'missing' ? null : {buyerIdentity:{customer: failure === 'linked' ? {id:'customer'} : null}},userErrors: failure === 'error' ? [{message:'failed'}] : []})
   await GET(new NextRequest('https://example.com/api/auth/logout'))
   expect(mock.remove).toHaveBeenCalledWith('cartId')
+  expect(mock.create).toHaveBeenCalledWith([{merchandiseId:'variant',quantity:2,sellingPlanId:'plan'}])
   expect(mock.clear).toHaveBeenCalled()
+})
+it('still signs out when replacement cart creation fails', async () => {
+  mock.update.mockRejectedValue(new Error('expired cart'))
+  mock.create.mockRejectedValue(new Error('stock changed'))
+  const response = await GET(new NextRequest('https://example.com/api/auth/logout'))
+  expect(mock.remove).toHaveBeenCalledWith('cartId')
+  expect(mock.clear).toHaveBeenCalled()
+  expect(response.status).toBe(307)
 })
 it('does not call Shopify without a cart', async () => {
   mock.cartId = undefined
