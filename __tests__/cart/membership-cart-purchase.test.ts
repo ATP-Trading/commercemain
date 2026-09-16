@@ -2,6 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 const state=vi.hoisted(()=>({cartId:undefined as string|undefined,set:vi.fn()}))
 vi.mock('server-only',()=>({}))
+vi.mock('@/lib/shopify/customer-account-oauth',()=>({getValidAccessToken:async()=>null}))
 vi.mock('next-intl/server',()=>({getLocale:async()=> 'ar'}))
 vi.mock('next/headers',()=>({cookies:async()=>({get:()=>state.cartId?{value:state.cartId}:undefined,set:state.set}),headers:async()=>new Headers()}))
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();vi.restoreAllMocks();vi.resetModules();state.set.mockClear()})
@@ -13,7 +14,7 @@ for(const existing of [false,true]) it(`sends the allocated plan when ${existing
  const cart={id:'saved-cart',checkoutUrl:'https://example.com/checkout',lines:{edges:[{node:{id:'line',quantity:1,merchandise:{id:'gid://shopify/ProductVariant/46301020094702',product:{id:'membership',handle:'atp-membership',title:'Membership'}},cost:{totalAmount:{amount:'99',currencyCode:'AED'}}}}]},cost:{totalAmount:{amount:'99',currencyCode:'AED'},subtotalAmount:{amount:'99',currencyCode:'AED'}},totalQuantity:1}
  vi.stubGlobal('fetch',vi.fn(async(_url,options)=>{
   const request=JSON.parse(options.body);requests.push(request)
-  const data=request.query.includes('query OnlineStock')?{productVariant:{availableForSale:true,sellableOnlineQuantity:-4,inventoryPolicy:'CONTINUE',inventoryItem:{tracked:true}}}:request.query.includes('query getCart')?{cart:{...cart,lines:{edges:[]}}}:request.query.includes('query VariantPlan')?{node:{product:{requiresSellingPlan:true},sellingPlanAllocations:{nodes:[{sellingPlan:{id:'gid://shopify/SellingPlan/123',name:'Annual'}}]}}}:existing?{cartLinesAdd:{cart,userErrors:[]}}:{cartCreate:{cart,userErrors:[]}}
+  const data=request.query.includes('mutation updateCartBuyerIdentity')?{cartBuyerIdentityUpdate:{cart,userErrors:[]}}:request.query.includes('query OnlineStock')?{productVariant:{availableForSale:true,sellableOnlineQuantity:-4,inventoryPolicy:'CONTINUE',inventoryItem:{tracked:true}}}:request.query.includes('query getCart')?{cart:{...cart,lines:{edges:[]}}}:request.query.includes('query VariantPlan')?{node:{product:{requiresSellingPlan:true},sellingPlanAllocations:{nodes:[{sellingPlan:{id:'gid://shopify/SellingPlan/123',name:'Annual'}}]}}}:existing?{cartLinesAdd:{cart,userErrors:[]}}:{cartCreate:{cart,userErrors:[]}}
   return {ok:true,status:200,headers:new Headers({'content-type':'application/json'}),json:async()=>({data})}
  }))
  const {addToCart}=await import('@/lib/shopify/server')
