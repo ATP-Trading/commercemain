@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
 
   return {
     title: { absolute: isAr
-      ? "ATP Trading | العافية والتكنولوجيا في الإمارات"
-      : "ATP Trading | Premium Wellness & Technology UAE" },
+      ? "ATP Trading | المكملات والعناية في الإمارات"
+      : "ATP Trading | Supplements & Skincare UAE" },
     description: isAr
       ? "اكتشف حلول العافية المتميزة - العناية بالبشرة، المكملات الغذائية، تقنية المياه. منتجات متاحة داخل الإمارات."
       : "Discover premium wellness solutions - Skincare, Supplements, Water Technology. Available within the UAE.",
@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
     openGraph: {
       title: isAr ? "ATP Trading" : "ATP Trading",
       description: isAr
-        ? "حلول العافية المتميزة والتكنولوجيا المتقدمة في الإمارات"
-        : "Premium wellness and technology solutions in UAE",
+        ? "مكملات ومنتجات عناية تايلندية مختارة، مع التوصيل داخل الإمارات"
+        : "Selected Thai supplements and skincare, delivered across the UAE",
       url: `https://www.atpgroupservices.ae/${locale}`,
       type: 'website',
       siteName: isAr ? "ATP Trading" : "ATP Trading",
@@ -55,8 +55,8 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
       card: 'summary_large_image',
       title: isAr ? "ATP Trading" : "ATP Trading",
       description: isAr
-        ? "حلول العافية المتميزة والتكنولوجيا المتقدمة"
-        : "Premium wellness and technology solutions",
+        ? "مكملات ومنتجات عناية تايلندية مختارة"
+        : "Selected Thai supplements and skincare",
       images: ['https://www.atpgroupservices.ae/images/atp-logo.png'],
     },
     robots: {

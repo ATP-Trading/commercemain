@@ -5,9 +5,9 @@ interface CollectionHeroProps { title: string; subtitle?: string; description?: 
 export default function CollectionHero({ title, subtitle, description, image, isRTL = false, editorial = false }: CollectionHeroProps) {
  const [expanded, setExpanded] = useState(false)
  if (editorial) return <section dir={isRTL ? 'rtl' : 'ltr'} aria-label={title} className="overflow-hidden border-b border-neutral-800 bg-neutral-950 text-white">
-  <div className="mx-auto grid max-w-7xl lg:grid-cols-2 lg:items-center">
-   <div className="relative aspect-[3/2] w-full lg:order-2"><Image src={image.src} alt={image.alt} fill priority sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw" className="object-contain" /></div>
-   <div className="space-y-5 px-5 py-8 sm:px-8 sm:py-10 lg:order-1 lg:px-10">
+  <div className="mx-auto grid max-w-7xl md:grid-cols-2 md:items-center">
+   <div className="relative order-2 aspect-[2/1] w-full md:aspect-[3/2]"><Image src={image.src} alt={image.alt} fill priority sizes="(min-width: 1280px) 640px, (min-width: 768px) 50vw, 100vw" className="object-cover" /></div>
+   <div className="order-1 space-y-4 px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
     {subtitle && <p className="text-sm font-medium tracking-wide text-atp-gold sm:text-base">{subtitle}</p>}
     <h1 className="text-3xl font-semibold leading-snug sm:text-4xl lg:text-[2.75rem]">{title}</h1>
     {description && <><p id="collection-description" className={`max-w-2xl text-base leading-relaxed text-neutral-200 sm:text-lg ${expanded ? '' : 'line-clamp-3'}`}>{description}</p>{description.length > 160 && <button type="button" aria-expanded={expanded} aria-controls="collection-description" onClick={() => setExpanded(!expanded)} className="min-h-11 text-base text-atp-gold underline underline-offset-4">{expanded ? (isRTL ? 'عرض أقل' : 'Read less') : (isRTL ? 'قراءة الوصف كاملًا' : 'Read full description')}</button>}</>}

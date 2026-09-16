@@ -223,6 +223,11 @@ export function ATPProductDescription({
           <ATPAddToCart product={product} />
         </div>
 
+        <a href="https://wa.me/971569586422" target="_blank" rel="noopener noreferrer"
+          className="mb-4 flex min-h-11 items-center justify-center rounded-lg border border-atp-gold px-4 text-base font-medium text-atp-black md:hidden">
+          {isRTL ? 'سؤال عن المنتج؟ تواصل عبر واتساب' : 'Questions? Chat with us on WhatsApp'}
+        </a>
+
         {/* Trust Badges - below Add to Cart */}
         <div className="mb-6 border-b border-atp-light-gray pb-6">
           <TrustBadges variant="horizontal" />

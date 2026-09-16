@@ -1,8 +1,11 @@
 'use client'
 
 import { useLocale } from 'next-intl'
+import { usePathname } from 'next/navigation'
 
 export function WhatsAppButton() {
+  const pathname = usePathname()
+  const isProductPage = /\/product\//.test(pathname || '')
   const locale = useLocale()
   const isAR = locale === 'ar'
   const tooltip = isAR ? 'تواصل معنا' : 'Chat with us'
@@ -14,7 +17,7 @@ export function WhatsAppButton() {
       rel="noopener noreferrer"
       aria-label={tooltip}
       title={tooltip}
-      className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95"
+      className={`${isProductPage ? 'hidden md:flex' : 'flex'} fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 items-center justify-center w-14 h-14 rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95`}
       style={{ backgroundColor: '#25D366' }}
     >
       <svg

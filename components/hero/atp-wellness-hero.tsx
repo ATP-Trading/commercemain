@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import { Link } from "@/src/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -46,7 +44,7 @@ export default function ATPWellnessHero({
             <source src={videoSrc} type="video/mp4" />
           </video>
         ) : (
-          <Image src={imageSrc} alt={imageAlt || t("heroImageAlt")} fill preload fetchPriority="high" sizes="(min-width: 1100px) 1100px, 100vw" quality={85} className="object-cover object-bottom" />
+          <Image src={imageSrc} alt={imageAlt || t("heroImageAlt")} fill preload fetchPriority="high" sizes="(min-width: 1100px) 1100px, 100vw" quality={75} className="object-cover object-bottom" />
         )}
       </div>
     </section>
