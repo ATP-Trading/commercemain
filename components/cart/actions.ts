@@ -10,11 +10,10 @@ import {
   getCart,
   createCart,
   getCollectionProducts,
-  updateCartBuyerIdentity,
+  syncCartBuyerSession,
 } from "@/lib/shopify/server"
 import { updateTag } from "next/cache"
 import { redirect } from "next/navigation"
-import { getValidAccessToken } from "@/lib/shopify/customer-account-oauth"
 
 interface CartActionState {
   error?: string
@@ -141,27 +140,9 @@ export async function getCheckoutUrl(): Promise<string> {
     throw new Error('No cart found')
   }
 
-  let checkoutCart = cart
-
-  // Keep checkout logged in by syncing buyer identity when possible.
-  // Shopify docs require buyerIdentity.customerAccessToken on the cart before checkout redirect.
-  const accessToken = await getValidAccessToken()
-  if (accessToken) {
-    try {
-      const { cart: updatedCart, userErrors } = await updateCartBuyerIdentity({
-        customerAccessToken: accessToken,
-      })
-
-      if (userErrors.length > 0) {
-        console.warn('[Checkout] Failed to sync buyer identity, continuing as guest:', userErrors)
-      } else if (updatedCart) {
-        checkoutCart = updatedCart
-      }
-    } catch (error) {
-      // Fail open: checkout should still work as guest if identity sync fails.
-      console.warn('[Checkout] Buyer identity sync failed, continuing as guest checkout:', error)
-    }
-  }
+  const checkoutCart = await syncCartBuyerSession()
+  if (!checkoutCart) throw new Error('Unable to refresh cart pricing')
+  updateTag(TAGS.cart)
   
   let checkoutUrl = checkoutCart.checkoutUrl
   

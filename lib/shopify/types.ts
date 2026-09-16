@@ -511,7 +511,7 @@ export type CartBuyerIdentityInput = {
   email?: string;
   phone?: string;
   countryCode?: string;
-  customerAccessToken?: string;
+  customerAccessToken?: string | null;
   deliveryAddressPreferences?: MailingAddress[];
 };
 
