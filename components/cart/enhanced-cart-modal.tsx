@@ -13,7 +13,6 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useCart } from './cart-context';
 import { useMembershipCart } from '@/hooks/use-membership-cart';
 import { MembershipBenefitsDisplay, FreeDeliveryIndicator, ServiceDiscountIndicator } from './membership-benefits-display';
-import { trackInitiateCheckout } from '@/components/analytics/meta-pixel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -86,11 +85,6 @@ export function EnhancedCartModal({
     
     // Redirect to checkout
     if (displayCart?.checkoutUrl) {
-      trackInitiateCheckout(
-        displayCart.cost?.totalAmount?.amount || '0',
-        displayCart.lines?.length || 0,
-        displayCart.cost?.totalAmount?.currencyCode || 'AED'
-      )
       window.location.href = displayCart.checkoutUrl;
     }
   };
