@@ -793,7 +793,7 @@ export function ProductDescriptionAccordion({
         <div className={cn("space-y-3", className)} dir={isRTL ? "rtl" : "ltr"}>
             <Accordion
                 type="multiple"
-                defaultValue={sections.map(s => s.id)}
+                defaultValue={sections.slice(0, 1).map(s => s.id)}
                 className="w-full"
             >
                 {sections.map((section) => (
