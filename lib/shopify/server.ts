@@ -3,7 +3,6 @@ import { assertStockQuantity } from "./inventory-limit"
 import { prepareMembershipLines, variantPlanQuery, type PurchaseLine, type VariantPlans } from './membership-purchase'
 import 'server-only'
 import { getLocale } from 'next-intl/server'
-import { getValidAccessToken } from './customer-account-oauth'
 import { isEmsPromotion } from '@/lib/publication-policy'
 
 import { TAGS } from "@/lib/constants"
@@ -244,7 +243,7 @@ export async function createCart(lines: PurchaseLine[] = []): Promise<Cart> {
   const prepared = await preparePurchaseLines(lines)
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
-    variables: { input: { lines: prepared, buyerIdentity: { countryCode: 'AE', customerAccessToken: await getValidAccessToken() } }, language: (await getLocale()) === "ar" ? "AR" : "EN" }
+    variables: { input: { lines: prepared }, language: (await getLocale()) === "ar" ? "AR" : "EN" }
   } as any)
   const result = res.body.data.cartCreate
   if (result.userErrors?.length || !result.cart) throw new Error('Unable to create cart')
@@ -261,7 +260,6 @@ export async function addToCart(lines: PurchaseLine[]): Promise<Cart> {
   const existing = await getCart()
   await validateStock(lines, existing)
   const prepared = await preparePurchaseLines(lines)
-  await syncCartBuyerSession()
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
     variables: { cartId, language: (await getLocale()) === "ar" ? "AR" : "EN", lines: prepared }
@@ -292,7 +290,6 @@ export async function updateCart(
 ): Promise<Cart> {
   const cartId = (await cookies()).get('cartId')?.value!;
   await validateStock(lines.filter(line => line.quantity !== 0), await getCart(), true)
-  await syncCartBuyerSession()
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
     query: editCartItemsMutation,
     variables: {
@@ -341,17 +338,6 @@ export async function updateCartBuyerIdentity(
     cart: payload.cart ? reshapeCart(payload.cart) : null,
     userErrors: payload.userErrors || [],
   }
-}
-
-/** Reprice an existing cart for the current session, including expired/guest sessions. */
-export async function syncCartBuyerSession(): Promise<Cart | null> {
-  if (!(await cookies()).get('cartId')?.value) return null
-  const result = await updateCartBuyerIdentity({
-    countryCode: 'AE',
-    customerAccessToken: await getValidAccessToken(),
-  })
-  if (result.userErrors.length || !result.cart) throw new Error('Unable to refresh cart pricing')
-  return result.cart
 }
 
 export async function getCart(): Promise<Cart | undefined> {
