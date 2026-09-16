@@ -1,6 +1,7 @@
 "use server"
 
 import { getLocale } from "next-intl/server"
+import { cartForSession } from "@/lib/cart/session-cart"
 import { localizeCheckoutUrl } from "@/lib/cart/checkout-locale"
 import { TAGS } from "@/lib/constants"
 import {
@@ -141,11 +142,11 @@ export async function getCheckoutUrl(): Promise<string> {
     throw new Error('No cart found')
   }
 
-  let checkoutCart = cart
 
   // Keep checkout logged in by syncing buyer identity when possible.
   // Shopify docs require buyerIdentity.customerAccessToken on the cart before checkout redirect.
   const accessToken = await getValidAccessToken()
+  let checkoutCart = await cartForSession(cart, accessToken)
   if (accessToken) {
     try {
       const { cart: updatedCart, userErrors } = await updateCartBuyerIdentity({
