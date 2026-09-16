@@ -1,3 +1,5 @@
+import { cartForSession } from '@/lib/cart/session-cart'
+import { getValidAccessToken } from '@/lib/shopify/customer-account-oauth'
 import { NextRequest, NextResponse } from 'next/server'
 import { 
   getCart, 
@@ -28,7 +30,8 @@ const removeFromCartSchema = z.object({
 // Get current cart
 export async function GET(request: NextRequest) {
   try {
-    const cart = await getCart()
+    const existing = await getCart()
+    const cart = existing ? await cartForSession(existing, await getValidAccessToken()) : undefined
     
     return NextResponse.json({
       success: true,

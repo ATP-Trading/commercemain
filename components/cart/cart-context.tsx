@@ -12,10 +12,12 @@ import type React from "react";
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useOptimistic,
   startTransition,
 } from "react";
+import { useRouter } from "next/navigation";
 import { UAE_DIRHAM_CODE } from "@/lib/constants";
 import { useMembershipCart } from "@/hooks/use-membership-cart";
 
@@ -212,6 +214,30 @@ export function CartProvider({
   children: React.ReactNode;
   initialCart: Cart | undefined;
 }) {
+  const router = useRouter();
+  const cartId = initialCart?.id;
+  const hasBuyer = !!initialCart?.buyerIdentity?.customer;
+  useEffect(() => {
+    if (!cartId || !hasBuyer) return;
+    let cancelled = false;
+    let pending = false;
+    const reconcile = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const response = await fetch('/api/cart', { cache: 'no-store' });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (!cancelled && result.success && result.cart?.id !== cartId) router.refresh();
+      } catch {
+        // Checkout independently verifies the session before returning its URL.
+      } finally { pending = false; }
+    };
+    void reconcile();
+    window.addEventListener('focus', reconcile);
+    return () => { cancelled = true; window.removeEventListener('focus', reconcile); };
+  }, [cartId, hasBuyer, router]);
+
   // Ensure cart data is properly structured
   const safeInitialCart = initialCart
     ? {
