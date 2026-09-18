@@ -31,8 +31,8 @@ const generateMetaDescription = (product: any, locale: "en" | "ar") => {
   const truncated = baseDesc.slice(0, 120);
 
   return locale === "ar"
-    ? `${truncated}... | ${price} | ${availability} | شحن مجاني للإمارات`
-    : `${truncated}... | ${price} | ${availability} | Free UAE Shipping`;
+    ? `${truncated}... | ${price} | ${availability} | شحن مجاني من 250 درهم داخل الإمارات`
+    : `${truncated}... | ${price} | ${availability} | Free UAE shipping from AED 250`;
 };
 
 // Helper function to ensure proper alt text for images
@@ -128,6 +128,7 @@ export default async function ProductPage(props: {
     price: product.priceRange.minVariantPrice.amount,
     priceCurrency: product.priceRange.minVariantPrice.currencyCode,
     availability: product.availableForSale ? "InStock" as const : "OutOfStock" as const,
+    isMembership: product.handle === "atp-membership",
     // Omit unverified manufacturer brands rather than labeling the reseller as the brand.
     brand: product.handle === "atp-membership" ? "ATP Trading" : undefined,
   };

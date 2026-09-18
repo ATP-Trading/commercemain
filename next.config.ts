@@ -1,6 +1,7 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import path from 'path';
 import { indexingHeaders } from './lib/indexing-headers';
+import { legacyRedirects } from './lib/legacy-redirects';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -96,6 +97,9 @@ export default withNextIntl({
     };
 
     return config;
+  },
+  async redirects() {
+    return legacyRedirects;
   },
   async headers() {
     return [

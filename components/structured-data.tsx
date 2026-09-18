@@ -1,3 +1,4 @@
+import { merchantOfferPolicy } from '@/lib/merchant-offer-policy';
 /**
  * Enhanced Structured Data Component
  * 
@@ -119,19 +120,6 @@ export function StructuredData({ type, data }: StructuredDataProps) {
         return {
           "@context": "https://schema.org",
           "@type": "Product",
-          brand: {
-            "@type": "Brand",
-            name: data.brandName || ATP_COMPANY.name,
-          },
-          seller: {
-            "@type": "Organization",
-            name: ATP_COMPANY.name,
-            url: ATP_COMPANY.url,
-          },
-          manufacturer: {
-            "@type": "Organization",
-            name: data.manufacturer || ATP_COMPANY.name,
-          },
           ...data,
           // Ensure offers are properly formatted
           offers: data.offers
@@ -142,35 +130,6 @@ export function StructuredData({ type, data }: StructuredDataProps) {
                 seller: {
                   "@type": "Organization",
                   name: ATP_COMPANY.name,
-                },
-                shippingDetails: {
-                  "@type": "OfferShippingDetails",
-                  shippingDestination: {
-                    "@type": "DefinedRegion",
-                    addressCountry: "AE",
-                  },
-                  deliveryTime: {
-                    "@type": "ShippingDeliveryTime",
-                    handlingTime: {
-                      "@type": "QuantitativeValue",
-                      minValue: 1,
-                      maxValue: 2,
-                      unitCode: "d",
-                    },
-                    transitTime: {
-                      "@type": "QuantitativeValue",
-                      minValue: 1,
-                      maxValue: 3,
-                      unitCode: "d",
-                    },
-                  },
-                },
-                hasMerchantReturnPolicy: {
-                  "@type": "MerchantReturnPolicy",
-                  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-                  merchantReturnDays: 14,
-                  returnMethod: "https://schema.org/ReturnByMail",
-                  returnFees: "https://schema.org/FreeReturn",
                 },
                 ...(data.offers as Record<string, unknown>),
               }
@@ -368,6 +327,7 @@ interface ProductSchemaData {
   availability: "InStock" | "OutOfStock" | "PreOrder" | "Discontinued";
   condition?: "NewCondition" | "UsedCondition" | "RefurbishedCondition";
   brand?: string;
+  isMembership?: boolean;
   manufacturer?: string;
   rating?: number;
   reviewCount?: number;
@@ -407,6 +367,7 @@ export function ProductStructuredData(product: ProductSchemaData) {
       url: product.url,
       price: product.price,
       priceCurrency: product.priceCurrency,
+      ...merchantOfferPolicy(product.url, product.price, product.priceCurrency, product.isMembership),
       availability: availabilityMap[product.availability],
       itemCondition: conditionMap[product.condition || "NewCondition"],
       seller: {
