@@ -9,6 +9,10 @@ export function resolveMembershipEntitlement(tags: unknown, value: string | null
   startedAt: validDate(active.membershipStartDate),
   nextBillingDate: validDate(active.nextBillingDate),
  }
+ // Explicit merchant grants remain valid independently of paid subscription cancellation.
+ if (Array.isArray(tags) && tags.includes('atp-member-granted')) return {
+  id: 'merchant-grant', status: 'active' as const, source: 'merchant' as const,
+ }
  if (value) {
   let subscriptions: unknown
   try { subscriptions = JSON.parse(value) } catch { throw new Error('Invalid membership data') }
