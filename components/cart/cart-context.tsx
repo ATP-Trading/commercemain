@@ -19,7 +19,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { UAE_DIRHAM_CODE } from "@/lib/constants";
-import { useMembershipCart } from "@/hooks/use-membership-cart";
 
 type UpdateType = "plus" | "minus" | "delete";
 
