@@ -4,16 +4,10 @@ type CachedToken = { key: string; value: string; expiresAt: number };
 let cached: CachedToken | undefined;
 let pending: { key: string; promise: Promise<string> } | undefined;
 
-/** New ATP-owned apps use expiring tokens; legacy production remains compatible. */
+/** Only ATP-owned client credentials are accepted after the production migration. */
 export async function getAdminAccessToken(): Promise<string> {
   const clientId = process.env.SHOPIFY_ADMIN_CLIENT_ID;
   const clientSecret = process.env.SHOPIFY_ADMIN_CLIENT_SECRET;
-  if (!clientId && !clientSecret) {
-    const legacy = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
-    if (!legacy) throw new Error('Shopify Admin authentication is not configured');
-    return legacy;
-  }
-  // Never silently fall back to a legacy credential after partial migration.
   if (!clientId || !clientSecret) throw new Error('Shopify Admin client credentials are incomplete');
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
   if (!domain || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(domain)) {

@@ -7,11 +7,11 @@ function configure() {
   vi.stubEnv('SHOPIFY_ADMIN_CLIENT_ID', 'test-client');
   vi.stubEnv('SHOPIFY_ADMIN_CLIENT_SECRET', 'test-secret');
 }
-it('retains legacy authentication without requesting a new token', async () => {
+it('rejects a legacy token when ATP-owned credentials are missing', async () => {
   vi.stubEnv('SHOPIFY_ADMIN_CLIENT_ID', ''); vi.stubEnv('SHOPIFY_ADMIN_CLIENT_SECRET', '');
   vi.stubEnv('SHOPIFY_ADMIN_ACCESS_TOKEN', 'test-legacy');
   const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
-  expect(await (await import('@/lib/shopify/admin-access-token')).getAdminAccessToken()).toBe('test-legacy');
+  await expect((await import('@/lib/shopify/admin-access-token')).getAdminAccessToken()).rejects.toThrow('incomplete');
   expect(fetch).not.toHaveBeenCalled();
 });
 it('shares concurrent requests and renews before the token expires', async () => {
