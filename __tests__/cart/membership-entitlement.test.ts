@@ -24,11 +24,16 @@ it('does not invent dates for grants or malformed Appstle dates', () => {
  expect(resolve([], JSON.stringify([{...subscription, nextBillingDate:'invalid'}]))?.nextBillingDate).toBeUndefined()
 })
 
-it('labels an explicitly granted active membership without discarding its Appstle source', () => {
- const result = resolve(['atp-member', 'atp-member-granted'], JSON.stringify([subscription]))
- expect(result).toMatchObject({source: 'appstle', merchantGranted: true})
- expect(resolve(['atp-member'], JSON.stringify([subscription]))).toMatchObject({source: 'appstle', merchantGranted: false})
+it('keeps an explicit merchant grant independent of paid subscription status', () => {
+ for (const status of ['cancelled', 'expired', 'paused']) {
+  expect(resolve(['atp-member-granted'], JSON.stringify([{...subscription, status}]))).toEqual({id:'merchant-grant',status:'active',source:'merchant'})
+ }
+ expect(resolve(['atp-member-granted'], null)?.source).toBe('merchant')
 })
-it('a display-only grant marker does not revive a cancelled subscription', () => {
- expect(resolve(['atp-member', 'atp-member-granted'], JSON.stringify([{...subscription, status: 'cancelled'}]))).toBeNull()
+it('does not mistake the ordinary Appstle tag for an explicit grant', () => {
+ expect(resolve(['atp-member'], JSON.stringify([{...subscription,status:'cancelled'}]))).toBeNull()
+})
+
+it('keeps active billing visible alongside an explicit grant', () => {
+ expect(resolve(['atp-member-granted'], JSON.stringify([subscription]))).toMatchObject({source:'appstle', merchantGranted:true})
 })
