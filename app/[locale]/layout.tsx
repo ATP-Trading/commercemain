@@ -1,3 +1,4 @@
+import { PromotionBanner } from "@/components/layout/promotion-banner";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { type ReactNode } from "react";
 import { notFound } from "next/navigation";
@@ -124,6 +125,7 @@ export default async function LocaleLayout({
               <CartNotificationProvider>
                 <MembershipProvider>
                   <SkipToContentSimple label={isRTL ? 'انتقل إلى المحتوى الرئيسي' : 'Skip to main content'} />
+                  <PromotionBanner expiresAt="2026-09-21T23:59:00+04:00" deadlineLabelAr="حتى الاثنين ٢١ سبتمبر، ١١:٥٩ مساءً بتوقيت الإمارات" deadlineLabelEn="Until Mon 21 Sep, 11:59 PM UAE time" />
                   <Navbar />
                   <MetaPixel />
                   <GoogleAnalytics />
