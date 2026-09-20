@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getValidAccessToken, queryCustomerAccountApi } from '@/lib/shopify/customer-account-oauth'
 import { config } from '@/lib/config'
 import { resolveMembershipEntitlement } from '@/lib/shopify/membership-entitlement'
+import { getAdminAccessToken } from '@/lib/shopify/admin-access-token'
 
 const noMembership = { isMember: false, tier: null, discountRate: 0, membership: null }
 const headers = { 'Cache-Control': 'private, no-store' }
@@ -18,7 +19,7 @@ export async function GET() {
     if (identity.errors?.length || !identity.data?.customer?.id) {
       return NextResponse.json({ ...noMembership, error: 'Unable to verify customer' }, { status: 401, headers })
     }
-    const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN
+    const adminToken = await getAdminAccessToken()
     if (!adminToken || !config.shopify.domain) throw new Error('Membership lookup is not configured')
     const response = await fetch(`https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/graphql.json`, {
       method: 'POST', cache: 'no-store',

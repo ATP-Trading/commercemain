@@ -9,6 +9,7 @@ interface MembershipData {
   tier: MembershipTier
   isActive: boolean
   source?: "appstle" | "merchant"
+  merchantGranted?: boolean
   startedAt?: string
   nextBillingDate?: string
   expiresAt?: string
@@ -74,6 +75,7 @@ export function useMembership() {
           setMembership({
             tier: data.tier,
             source: data.membership.source,
+            merchantGranted: data.membership.merchantGranted === true,
             isActive: true,
             expiresAt: data.membership.expirationDate,
             startedAt: data.membership.startedAt,
