@@ -5,6 +5,7 @@ export function resolveMembershipEntitlement(tags: unknown, value: string | null
  const active = getActiveAtpSubscription(value)
  if (active) return {
   id: String(active.id), status: 'active' as const, source: 'appstle' as const,
+  merchantGranted: Array.isArray(tags) && tags.includes('atp-member-granted'),
   startedAt: validDate(active.membershipStartDate),
   nextBillingDate: validDate(active.nextBillingDate),
  }
