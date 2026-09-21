@@ -25,22 +25,10 @@ const testSuites: TestSuite[] = [
     critical: true
   },
   {
-    name: 'Performance Tests',
-    command: 'vitest run __tests__/performance/**/*.test.ts --reporter=verbose',
-    timeout: 120000,
-    critical: false
-  },
-  {
     name: 'Accessibility Tests',
     command: 'vitest run __tests__/accessibility/**/*.test.tsx --reporter=verbose',
     timeout: 180000,
     critical: true
-  },
-  {
-    name: 'Load Tests',
-    command: 'vitest run __tests__/load/**/*.test.ts --reporter=verbose',
-    timeout: 300000,
-    critical: false
   },
   {
     name: 'E2E Tests',

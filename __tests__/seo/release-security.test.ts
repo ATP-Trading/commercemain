@@ -2,8 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const handlers = vi.hoisted(() => ({ daily: vi.fn(), hourly: vi.fn(), weekly: vi.fn() }));
-vi.mock('@/lib/services/membership-cron-service', () => ({ cronHandlers: handlers }));
+// The retired scheduler implementation no longer exists. The retirement suite
+// also checks these handlers have no executable imports or job dependencies.
 import * as daily from '@/app/api/cron/membership/daily/route';
 import * as hourly from '@/app/api/cron/membership/hourly/route';
 import * as weekly from '@/app/api/cron/membership/weekly/route';
@@ -35,9 +35,6 @@ for (const [name, routes] of Object.entries({ daily, hourly, weekly })) {
         expect(response.status).toBe(404);
         expect(await response.json()).toEqual({ error: 'Not found' });
         expect(response.headers.get('set-cookie')).toBeNull();
-        expect(handlers.daily).not.toHaveBeenCalled();
-        expect(handlers.hourly).not.toHaveBeenCalled();
-        expect(handlers.weekly).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalled();
       });
     }

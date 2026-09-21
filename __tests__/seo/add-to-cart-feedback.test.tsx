@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ add: vi.fn(), notify: vi.fn() }));
 vi.mock('@/components/cart/cart-context', () => ({ useCart: () => ({ addCartItem: mocks.add }) }));
 vi.mock('@/components/cart/cart-provider', () => ({ useCartNotification: () => ({ showNotification: mocks.notify }) }));
-vi.mock('@/hooks/use-atp-membership', () => ({ useAtpMembership: () => ({ isActive: false }), useMembershipDiscount: () => ({ calculateServiceDiscount: vi.fn() }) }));
+vi.mock('@/hooks/use-membership', () => ({ useMembership: () => ({ isMember: false, isLoading: false, membership: { isActive: false, tier: null, discountRate: 0 } }) }));
 vi.mock('@/components/membership/membership-badge', () => ({ MembershipBadge: () => null }));
 vi.mock('@/hooks/use-rtl', () => ({ useRTL: () => ({ isRTL: true }) }));
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
