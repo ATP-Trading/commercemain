@@ -1,4 +1,4 @@
-name: Legacy translation dependency audit
+name: Translation reachability audit
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch the exact PR33 source without merchant credentials
+      - name: Fetch pinned PR33 source
         run: |
           set -eu
           git init source
@@ -27,59 +27,55 @@ jobs:
           git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-legacy-customer-api-clients
           git checkout --detach eec6a5e00e6c961a4468c365e3f99b7f367253b8
           test "$(git rev-parse HEAD)" = eec6a5e00e6c961a4468c365e3f99b7f367253b8
-      - name: Install unchanged locked static-analysis tooling
+      - name: Install unchanged locked analysis tools
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
-      - name: Inspect all tracked source and configuration without executing the app
+      - name: Trace every resolved import without running application code
         working-directory: source
         run: |
           set -o pipefail
-          node <<'JS' | tee translation-audit.json
-          const fs = require('node:fs');
-          const path = require('node:path');
-          const {execFileSync} = require('node:child_process');
-          const ts = require('typescript');
-          const root = process.cwd();
-          const tracked = execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
-          const textFiles = tracked.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml|po)$/.test(f)&&!/(?:^|\/)(?:package-lock\.json|pnpm-lock\.yaml)$/.test(f));
-          const live = new Set(['src/i18n/navigation.ts','src/i18n/navigation-server.ts','src/i18n/routing.ts','src/i18n/request.ts']);
-          const candidates = tracked.filter(f=>f.startsWith('src/i18n/')&&/\.[cm]?[jt]sx?$/.test(f)&&!live.has(f));
-          const candidateSet = new Set(candidates);
-          const cfg = ts.readConfigFile('tsconfig.json',ts.sys.readFile);
-          if(cfg.error) throw new Error('Unable to read tsconfig');
-          const parsed = ts.parseJsonConfigFileContent(cfg.config,ts.sys,root);
-          if(parsed.errors.length) throw new Error('Invalid tsconfig');
-          const cache = ts.createModuleResolutionCache(root,p=>p,parsed.options);
-          const incoming=[],outgoing=[],ambient=[],mentions=[],dynamic=[],linguiImports=[],declarations=[];
-          for(const file of textFiles) {
-            const content = fs.readFileSync(file,'utf8');
-            if(!candidateSet.has(file)) content.split('\n').forEach((line,i)=>{
-              if(/lingui|Lingui|I18nReady|I18nErrorBoundary|useSafeLingui|src\/i18n(?:['"`\s]|$)|i18n\/(?:types|server|message-utils|dev-tools|index)/.test(line)) mentions.push({file,line:i+1,text:line.trim().slice(0,180)});
-            });
-            if(!/\.[cm]?[jt]sx?$/.test(file)) continue;
-            const sf = ts.createSourceFile(file,content,ts.ScriptTarget.Latest,true);
-            if(candidateSet.has(file)) declarations.push({file,lines:content.split('\n').length,exports:sf.statements.filter(n=>n.modifiers?.some(m=>m.kind===ts.SyntaxKind.ExportKeyword)).flatMap(n=>n.name?[n.name.text]:[])});
-            function visit(n) {
-              if(ts.isStringLiteralLike(n)) {
-                const r=ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys,cache).resolvedModule;
+          node <<'JS' | tee translation-reachability.json
+          const fs=require('node:fs'),path=require('node:path'),ts=require('typescript');
+          const {execFileSync}=require('node:child_process');
+          const root=process.cwd();
+          const tracked=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const sourceFiles=tracked.filter(f=>/\.[cm]?[jt]sx?$/.test(f));
+          const cfg=ts.readConfigFile('tsconfig.json',ts.sys.readFile);
+          const parsed=ts.parseJsonConfigFileContent(cfg.config,ts.sys,root);
+          if(cfg.error||parsed.errors.length) throw new Error('Invalid tsconfig');
+          const cache=ts.createModuleResolutionCache(root,p=>p,parsed.options);
+          const graph=new Map(sourceFiles.map(f=>[f,new Set()]));
+          const back=new Map(sourceFiles.map(f=>[f,new Set()]));
+          const extra=['components/membership/membership-analytics-dashboard.tsx','components/membership/membership-notifications.tsx','components/search/predictive-search.tsx','components/test/I18nTest.tsx','components/ui/localized-currency.tsx','__tests__/__mocks__/test-providers.tsx'];
+          const targets=sourceFiles.filter(f=>f.startsWith('src/i18n/')||extra.includes(f));
+          const declarations=[];
+          for(const f of sourceFiles){
+            const text=fs.readFileSync(f,'utf8');
+            const sf=ts.createSourceFile(f,text,ts.ScriptTarget.Latest,true);
+            function visit(n){
+              if(ts.isStringLiteralLike(n)){
+                const r=ts.resolveModuleName(n.text,path.resolve(f),parsed.options,ts.sys,cache).resolvedModule;
                 const to=r?path.relative(root,r.resolvedFileName):null;
-                if(to&&candidateSet.has(to)) incoming.push({from:file,to,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,specifier:n.text});
-                if(to&&candidateSet.has(file)&&!candidateSet.has(to)&&!to.startsWith('node_modules/')) outgoing.push({from:file,to,specifier:n.text});
-                if(n.text.startsWith('@lingui/')) linguiImports.push({file,specifier:n.text});
+                if(to&&graph.has(to)){graph.get(f).add(to);back.get(to).add(f);}
               }
-              if(candidateSet.has(file)&&ts.isModuleDeclaration(n)) ambient.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,name:n.name.getText(sf),global:!!(n.flags&ts.NodeFlags.GlobalAugmentation)});
-              if(ts.isCallExpression(n)&&(n.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(n.expression)&&n.expression.text==='require'))&&(!n.arguments[0]||!ts.isStringLiteralLike(n.arguments[0]))) dynamic.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,expression:n.getText(sf).slice(0,160)});
+              if(extra.includes(f)&&ts.isModuleDeclaration(n))declarations.push({file:f,name:n.name.getText(sf)});
               ts.forEachChild(n,visit);
             }
             visit(sf);
           }
-          const result={source:'eec6a5e00e6c961a4468c365e3f99b7f367253b8',trackedFiles:tracked.length,scannedFiles:textFiles.length,candidates:declarations,incoming,outgoing,ambient,linguiImports,mentions,dynamic,localeFiles:tracked.filter(f=>/locales|lingui|i18n/.test(f)),scope:'Static dependency audit only. No application execution, secrets, Shopify requests, deletion or merge.'};
-          console.log(JSON.stringify(result,null,2));
+          const roots=sourceFiles.filter(f=>(f.startsWith('app/')&&!/\.(?:test|spec)\./.test(f))||/^(?:src\/)?(?:middleware|proxy|instrumentation|instrumentation-client|next\.config)\.[cm]?[jt]s$/.test(f));
+          function closure(starts,g){const found=new Set(starts),todo=[...starts];while(todo.length){for(const n of g.get(todo.pop())||[])if(!found.has(n)){found.add(n);todo.push(n);}}return found;}
+          const reachable=closure(roots,graph);
+          const names=['PredictiveSearch','I18nTest','I18nErrorBoundary','I18nReady','LocalizedCurrency','MembershipPrice','SavingsAmount','CompactPrice','MembershipAnalyticsDashboard','MembershipNotifications'];
+          const mentions=[];
+          for(const f of tracked.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml|po)$/.test(f)&&!/(?:pnpm-lock\.yaml|package-lock\.json)$/.test(f))){
+            const matches=[];
+            fs.readFileSync(f,'utf8').split('\n').forEach((line,i)=>{for(const name of names)if(new RegExp('\\b'+name+'\\b').test(line))matches.push({name,line:i+1});});
+            if(matches.length)mentions.push({file:f,matches});
+          }
+          console.log(JSON.stringify({source:'eec6a5e00e6c961a4468c365e3f99b7f367253b8',runtimeRoots:roots.length,sourceFiles:sourceFiles.length,reachable:reachable.size,targets:targets.map(f=>({file:f,reachableFromAppOrFramework:reachable.has(f),importedBy:[...back.get(f)],externalDependencies:[...graph.get(f)].filter(n=>!n.startsWith('src/i18n/')),transitiveDependents:[...closure([f],back)].filter(n=>n!==f&&!n.startsWith('src/i18n/'))})),ambientInExtraCandidates:declarations,mentions,scope:'Static graph; dynamic locale catalog loaders and ambient declarations assessed separately. No source writes or live calls.'},null,2));
           JS
-      - name: Record audit scope
-        if: always()
+      - name: Save summary
         working-directory: source
         run: |
-          if [ -f translation-audit.json ]; then
-            { echo '## Legacy translation audit'; echo '```json'; cat translation-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          fi
+          { echo '## Translation reachability'; echo '```json'; cat translation-reachability.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
