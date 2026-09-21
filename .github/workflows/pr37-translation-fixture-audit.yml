@@ -1,0 +1,76 @@
+name: PR37 translation fixture and declaration audit
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr37-translation-fixture-audit.yml]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable reviewed candidate without merchant credentials
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach a6ec9e5cc380f11f0d367a767529df89a397f74c
+          test "$(git rev-parse HEAD)" = a6ec9e5cc380f11f0d367a767529df89a397f74c
+          mkdir -p ../evidence
+      - name: Install unchanged frozen tooling without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Record all remaining translation references and immutable text-source snapshot
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process'),path=require('node:path'),ts=require('typescript');
+          const files=cp.execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const textFiles=files.filter(f=>/\.(?:[cm]?[jt]sx?|json|md|ya?ml|po|css)$/.test(f)&&!/(^|\/)(?:\.env|credentials|secrets)(?:[.\/]|$)/i.test(f));
+          const cfg=ts.readConfigFile('tsconfig.json',ts.sys.readFile);if(cfg.error)throw Error('tsconfig error');
+          const parsed=ts.parseJsonConfigFileContent(cfg.config,ts.sys,process.cwd());if(parsed.errors.length)throw Error('tsconfig parse error');
+          const targets=new Set(['__tests__/__mocks__/test-providers.tsx','src/i18n/types.ts','src/i18n/lingui-types.d.ts','lingui.config.ts']);
+          const refs=[],incoming=[];
+          for(const file of textFiles){
+            const text=fs.readFileSync(file,'utf8');
+            if(!/(?:pnpm-lock\.yaml|package-lock\.json)$/.test(file))text.split('\n').forEach((line,i)=>{if(/lingui|src\/locales|test-providers|src\/i18n\/types/i.test(line))refs.push({file,line:i+1,text:line.slice(0,500)});});
+            if(!/\.[cm]?[jt]sx?$/.test(file))continue;
+            const source=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);
+            function visit(n){if(ts.isStringLiteralLike(n)){const r=ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys).resolvedModule;if(r){const target=path.relative(process.cwd(),r.resolvedFileName);if(targets.has(target))incoming.push({file,target,specifier:n.text});}}ts.forEachChild(n,visit);}visit(source);
+          }
+          const result={source:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),trackedFiles:files.length,incoming,refs};
+          fs.writeFileSync('../evidence/audit.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+          fs.writeFileSync('../evidence/source-manifest.txt',cp.execFileSync('git',['ls-tree','-r','HEAD'],{encoding:'utf8'}));
+          cp.execFileSync('tar',['-czf','../evidence/pinned-text-source.tar.gz','--',...textFiles]);
+          JS
+      - name: Observe baseline accessibility suite without modifying or suppressing its assertions
+        working-directory: source
+        run: |
+          cat > .pr37-no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('PR37_ISOLATED_NETWORK_BLOCKED');};
+          for(const name of ['node:http','node:https']){const t=require(name);t.request=fail;t.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+          set +e
+          NODE_OPTIONS="--require=$(pwd)/.pr37-no-network.cjs" ./node_modules/.bin/vitest run __tests__/accessibility/membership-components.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/baseline-accessibility.json >../evidence/baseline-accessibility.log 2>&1
+          status=$?
+          echo "$status" >../evidence/baseline-exit-code.txt
+          node <<'JS'
+          const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('../evidence/baseline-accessibility.json','utf8'));
+          console.log(JSON.stringify({success:r.success,tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,files:r.testResults.map(f=>({file:f.name,message:f.message,status:f.status}))},null,2));
+          JS
+          test -f ../evidence/baseline-accessibility.json
+      - name: Preserve exact baseline and audit on the verification branch only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr37-translation-fixture-audit
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
