@@ -1,25 +1,50 @@
-import { expect, it, vi, afterEach } from 'vitest'
-import { NextRequest } from 'next/server'
-const handlers = vi.hoisted(() => ({ daily: vi.fn(), hourly: vi.fn(), weekly: vi.fn() }))
-vi.mock('@/lib/services/membership-cron-service', () => ({ cronHandlers: handlers }))
-import { GET as daily } from '@/app/api/cron/membership/daily/route'
-import { GET as hourly } from '@/app/api/cron/membership/hourly/route'
-import { GET as weekly } from '@/app/api/cron/membership/weekly/route'
-import { POST as review } from '@/app/api/reviews/route'
-import { GET as reviews } from '@/app/api/reviews/product/[productId]/route'
-import { POST as vote } from '@/app/api/reviews/vote/[reviewId]/route'
-afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks() })
-it.each([daily, hourly, weekly])('does not execute scheduled work without a configured secret', async handler => {
- vi.stubEnv('CRON_SECRET', '')
- expect((await handler(new NextRequest('https://example.com/api/cron'))).status).toBe(401)
- expect(handlers.daily).not.toHaveBeenCalled()
- expect(handlers.hourly).not.toHaveBeenCalled()
- expect(handlers.weekly).not.toHaveBeenCalled()
-})
-it.each([daily, hourly, weekly])('rejects invalid scheduled-task credentials', async handler => {
- vi.stubEnv('CRON_SECRET', 'test-only-secret')
- expect((await handler(new NextRequest('https://example.com/api/cron', {headers:{authorization:'Bearer incorrect'}}))).status).toBe(401)
-})
-it.each([review,reviews,vote])('does not return mock review success or fake customer feedback', async handler => {
- expect((await handler()).status).toBe(503)
-})
+// @vitest-environment node
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+
+const handlers = vi.hoisted(() => ({ daily: vi.fn(), hourly: vi.fn(), weekly: vi.fn() }));
+vi.mock('@/lib/services/membership-cron-service', () => ({ cronHandlers: handlers }));
+import * as daily from '@/app/api/cron/membership/daily/route';
+import * as hourly from '@/app/api/cron/membership/hourly/route';
+import * as weekly from '@/app/api/cron/membership/weekly/route';
+import { POST as review } from '@/app/api/reviews/route';
+import { GET as reviews } from '@/app/api/reviews/product/[productId]/route';
+import { POST as vote } from '@/app/api/reviews/vote/[reviewId]/route';
+
+beforeEach(() => { vi.clearAllMocks(); vi.stubGlobal('fetch', vi.fn()); });
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+
+// These routes were retired, not left running behind a secret. Even a matching
+// historical secret must not restart membership work or return fake success.
+for (const [name, routes] of Object.entries({ daily, hourly, weekly })) {
+  describe(`retired ${name} membership schedule`, () => {
+    for (const method of ['GET', 'POST'] as const) {
+      it.each([
+        { label: 'no configured secret', secret: '', authorization: undefined },
+        { label: 'no credentials', secret: 'test-only-secret', authorization: undefined },
+        { label: 'incorrect credentials', secret: 'test-only-secret', authorization: 'Bearer incorrect' },
+        { label: 'matching former credentials', secret: 'test-only-secret', authorization: 'Bearer test-only-secret' },
+      ])(`${method} stays retired with $label`, async ({ secret, authorization }) => {
+        vi.stubEnv('CRON_SECRET', secret);
+        const request = new NextRequest(`https://example.test/api/cron/membership/${name}`, {
+          method,
+          headers: authorization ? { authorization } : {},
+        });
+        const handler: (request?: NextRequest) => Promise<Response> = routes[method];
+        const response = await handler(request);
+        expect(response.status).toBe(404);
+        expect(await response.json()).toEqual({ error: 'Not found' });
+        expect(response.headers.get('set-cookie')).toBeNull();
+        expect(handlers.daily).not.toHaveBeenCalled();
+        expect(handlers.hourly).not.toHaveBeenCalled();
+        expect(handlers.weekly).not.toHaveBeenCalled();
+        expect(fetch).not.toHaveBeenCalled();
+      });
+    }
+  });
+}
+
+it.each([review, reviews, vote])('does not return mock review success or fake customer feedback', async handler => {
+  expect((await handler()).status).toBe(503);
+  expect(fetch).not.toHaveBeenCalled();
+});

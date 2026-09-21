@@ -34,6 +34,8 @@ interface MobileMenuProps {
 export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  // Compare URL content, not object identity: same-URL refreshes must not close the menu.
+  const searchQuery = searchParams.toString()
   const t = useTranslations('navbar')
   const locale = useLocale()
   const isRTL = locale === 'ar'
@@ -246,7 +248,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
 
   useEffect(() => {
     setIsOpen(false)
-  }, [pathname, searchParams])
+  }, [pathname, searchQuery])
 
   return (
     <div className={isRTL ? "font-arabic" : ""}>
