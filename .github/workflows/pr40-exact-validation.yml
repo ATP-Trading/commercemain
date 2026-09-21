@@ -1,0 +1,130 @@
+name: PR40 exact verification tooling repair
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr40-exact-validation.yml]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Read exact candidate and verify bounded changes
+        run: |
+          set -eu
+          git init source; cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch origin refs/heads/fix/verification-entrypoints-and-variant-tests
+          git checkout --detach a5933d5da8ee23689746087427250c4760eb544c
+          mkdir -p ../evidence
+          node <<'JS'
+          const cp=require('node:child_process'),fs=require('node:fs'),assert=require('node:assert/strict');
+          const base='3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c',git=(...a)=>cp.execFileSync('git',a,{encoding:'utf8',maxBuffer:32*1024*1024});
+          const diff=git('diff','--no-renames','--name-only',base,'HEAD').trim().split('\n');
+          const empty=['__tests__/components/enhanced-member-pricing.test.tsx','__tests__/components/membership-renewal-system.test.tsx','__tests__/membership/membership-i18n.test.tsx','__tests__/services/admin-membership-service.test.ts','lib/utils/membership-i18n.test.ts'];
+          const expected=[...empty,'.eslintrc.json','eslint.config.mjs','vitest.config.ts','package.json','__tests__/use-selected-variant.test.tsx','__tests__/services/shopify-integration-service-simple.test.ts','__tests__/services/shopify-integration-service.test.ts','scripts/run-comprehensive-tests.ts','docs/legacy-membership/membership-signup-flow.test.ts.txt','__tests__/e2e/membership-signup-flow.test.ts','__tests__/e2e/global-teardown.ts','__tests__/e2e/global-setup.ts','__tests__/e2e/storefront-guest-routes.spec.ts','playwright.config.ts','__tests__/tooling/verification-entrypoints.test.ts','docs/TESTING.md','__tests__/README.md'];
+          assert.deepEqual(diff.sort(),expected.sort());
+          for(const p of empty)assert.equal(git('show',base+':'+p).trim(),'');
+          assert.deepEqual(diff.filter(p=>/^(app|components|hooks|src|lib)\//.test(p)),['lib/utils/membership-i18n.test.ts']);
+          for(const p of ['pnpm-lock.yaml','tsconfig.json','vitest.setup.ts']) assert.equal(git('show',base+':'+p),fs.readFileSync(p,'utf8'));
+          const before=JSON.parse(git('show',base+':package.json')),after=JSON.parse(fs.readFileSync('package.json','utf8'));delete before.scripts;delete after.scripts;assert.deepEqual(before,after);
+          assert.equal(git('show',base+':__tests__/e2e/membership-signup-flow.test.ts'),fs.readFileSync('docs/legacy-membership/membership-signup-flow.test.ts.txt','utf8'));
+          fs.writeFileSync('../evidence/boundary.json',JSON.stringify({source:git('rev-parse','HEAD').trim(),base,changed:diff,activeRuntimeUnchanged:true,compilerAndLockUnchanged:true,oldBrowserSuiteArchivedVerbatim:true},null,2));
+          JS
+      - name: Install only frozen tools without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Establish no-merchant-network guard
+        working-directory: source
+        run: |
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('PR40_EXTERNAL_TEST_NETWORK_BLOCKED');};
+          for(const n of ['node:http','node:https']){const t=require(n);t.request=fail;t.get=fail;}
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          const net=require('node:net');for(const k of ['connect','createConnection']){const fn=net[k];net[k]=function(...args){const a=args[0];if((typeof a==='string'&&a.startsWith('/'))||(a&&typeof a==='object'&&typeof a.path==='string'))return fn.apply(this,args);return fail();};}
+          JS
+      - name: TypeScript and entire default Vitest discovery
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/tsc --noEmit --incremental false >../evidence/typecheck.log 2>&1
+          types=$?
+          ./node_modules/.bin/vitest run --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/full.json >../evidence/full.log 2>&1
+          tests=$?
+          echo "$types" >../evidence/typecheck-exit.txt
+          echo "$tests" >../evidence/test-exit.txt
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');const r=JSON.parse(fs.readFileSync('../evidence/full.json','utf8'));
+          const s={files:r.testResults.length,total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,suiteFailures:r.testResults.filter(f=>f.status==='failed').map(f=>({name:f.name,message:f.message}))};console.log(JSON.stringify(s,null,2));fs.writeFileSync('../evidence/summary.json',JSON.stringify(s,null,2));
+          assert.equal(s.pending,0);assert.ok(r.testResults.every(f=>!f.name.includes('/e2e/')));
+          JS
+          test "$types" -eq 0 && test "$tests" -eq 0
+      - name: Randomized repaired variant and runner checks
+        if: success()
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/use-selected-variant.test.tsx __tests__/tooling/verification-entrypoints.test.ts --sequence.shuffle --sequence.seed=4001 --maxWorkers=2 --reporter=json --outputFile=../evidence/shuffled.json >../evidence/shuffled.log 2>&1
+      - name: Execute actual repaired npm commands and discover Playwright without browser requests
+        if: success()
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          node <<'JS'
+          const cp=require('node:child_process'),fs=require('node:fs');const names=['test:components','test:accessibility','test:membership','test:webhooks','test:unit'];const results=[];
+          for(const name of names){const result=cp.spawnSync('npm',['run',name,'--','--maxWorkers=2','--no-file-parallelism','--reporter=json','--outputFile=../evidence/'+name.replace(':','-')+'.json'],{encoding:'utf8',timeout:150000,maxBuffer:8*1024*1024});fs.writeFileSync('../evidence/'+name.replace(':','-')+'.log',(result.stdout||'')+(result.stderr||''));results.push({name,status:result.status,error:result.error?.message});}
+          const listed=cp.spawnSync('npm',['run','test:e2e','--','--list','--reporter=list'],{encoding:'utf8',timeout:60000});fs.writeFileSync('../evidence/playwright-list.log',(listed.stdout||'')+(listed.stderr||''));results.push({name:'Playwright discovery ONLY',status:listed.status});
+          const denied=cp.spawnSync('npm',['run','test:release'],{encoding:'utf8',timeout:30000,env:{...process.env,TEST_BASE_URL:''}});fs.writeFileSync('../evidence/browser-target-guard.log',(denied.stdout||'')+(denied.stderr||''));results.push({name:'No browser target fails closed',status:denied.status===1&&denied.stderr.includes('Browser smoke NOT RUN')?0:1});
+          fs.writeFileSync('../evidence/commands.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results,null,2));if(results.some(r=>r.status!==0))process.exit(1);
+          JS
+      - name: Preserve exact-source test and command results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr40-tests-and-commands
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Read immutable candidate without merchant data
+        run: |
+          git init source; cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch origin refs/heads/fix/verification-entrypoints-and-variant-tests
+          git checkout --detach a5933d5da8ee23689746087427250c4760eb544c
+          mkdir -p ../evidence
+      - name: Install unchanged frozen tooling
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Run actual restored lint gate and report original-policy errors
+        working-directory: source
+        run: |
+          set +e
+          npm run lint -- --format=json --output-file=../evidence/lint.json >../evidence/lint.log 2>&1
+          code=$?
+          echo "$code" >../evidence/exit.txt
+          node <<'JS'
+          const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('../evidence/lint.json','utf8')),rules={};
+          for(const f of r)for(const m of f.messages){const key=String(m.ruleId);rules[key]??={errors:0,warnings:0};rules[key][m.severity===2?'errors':'warnings']++;}
+          const s={files:r.length,errors:r.reduce((n,f)=>n+f.errorCount,0),warnings:r.reduce((n,f)=>n+f.warningCount,0),rules};fs.writeFileSync('../evidence/summary.json',JSON.stringify(s,null,2));console.log(JSON.stringify(s,null,2));
+          JS
+          exit "$code"
+      - name: Preserve lint failures, not a false green gate
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr40-restored-lint
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
