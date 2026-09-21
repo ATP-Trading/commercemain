@@ -7,7 +7,6 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { routing } from '@/src/i18n/routing';
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartNotificationProvider } from "@/components/cart/cart-provider";
-import { MembershipProvider } from "@/hooks/use-atp-membership-context";
 import { Navbar } from "@/components/layout/navbar";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import Footer from "@/components/layout/footer";
@@ -123,7 +122,6 @@ export default async function LocaleLayout({
           <NextIntlClientProvider messages={messages}>
             <CartProvider initialCart={cart}>
               <CartNotificationProvider>
-                <MembershipProvider>
                   <SkipToContentSimple label={isRTL ? 'انتقل إلى المحتوى الرئيسي' : 'Skip to main content'} />
                   <PromotionBanner expiresAt="2026-09-21T23:59:00+04:00" deadlineLabelAr="حتى الاثنين ٢١ سبتمبر، ١١:٥٩ مساءً بتوقيت الإمارات" deadlineLabelEn="Until Mon 21 Sep, 11:59 PM UAE time" />
                   <Navbar />
@@ -149,7 +147,6 @@ export default async function LocaleLayout({
                   <Footer />
                   <MobileBottomNav />
                   <WhatsAppButton />
-                </MembershipProvider>
               </CartNotificationProvider>
             </CartProvider>
           </NextIntlClientProvider>
