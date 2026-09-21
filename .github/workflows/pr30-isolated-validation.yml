@@ -1,4 +1,4 @@
-name: PR33 legacy customer API retirement validation
+name: Legacy translation dependency audit
 
 on:
   push:
@@ -9,14 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 8
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch immutable PR33 source and existing review harness
+      - name: Fetch the exact PR33 source without merchant credentials
         run: |
           set -eu
           git init source
@@ -24,93 +24,62 @@ jobs:
           git config gc.auto 0
           git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-legacy-customer-api-clients
-          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-legacy-customer-api-clients
           git checkout --detach eec6a5e00e6c961a4468c365e3f99b7f367253b8
           test "$(git rev-parse HEAD)" = eec6a5e00e6c961a4468c365e3f99b7f367253b8
-          node <<'JS'
-          const {execFileSync} = require('node:child_process');
-          const assert = require('node:assert/strict');
-          const base = '16a33a143c76e9f74629d115cb0eed2b4f8b9914';
-          const list = args => execFileSync('git',args,{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD']),['__tests__/auth/legacy-auth-retirement.test.ts','lib/shopify/customer-account.ts','lib/shopify/customer-account-server.ts'].sort());
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=D',base,'HEAD']),['lib/shopify/customer-account.ts','lib/shopify/customer-account-server.ts'].sort());
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD','--','app','components','hooks','src','package.json','pnpm-lock.yaml','next.config.ts','tsconfig.json','lib/shopify/customer-account-oauth.ts','lib/types/browser-analytics.d.ts']),[]);
-          console.log('PASS: only two dead customer API modules removed and retirement test extended; all live routes, hooks, UI, OAuth types and settings unchanged.');
-          JS
-      - name: Install unchanged locked dependencies without lifecycle scripts
+      - name: Install unchanged locked static-analysis tooling
         working-directory: source
-        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Prepare isolated no-network tests and truthful reporting
-        id: prepare
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Inspect all tracked source and configuration without executing the app
         working-directory: source
         run: |
-          cat > .pr33-no-network.cjs <<'JS'
-          const fail = () => { throw new Error('PR33_TEST_NETWORK_BLOCKED: mock external requests'); };
-          for (const name of ['node:http','node:https']) {
-            const transport = require(name); transport.request = fail; transport.get = fail;
-          }
-          const net = require('node:net'); net.connect = fail; net.createConnection = fail;
-          require('node:tls').connect = fail;
-          globalThis.fetch = async () => fail();
-          JS
-          cat > .pr33-summary.cjs <<'JS'
+          set -o pipefail
+          node <<'JS' | tee translation-audit.json
           const fs = require('node:fs');
-          const file = process.argv[2];
-          if (!fs.existsSync(file)) { console.error('RESULT_FILE_MISSING',file); process.exit(1); }
-          const r = JSON.parse(fs.readFileSync(file,'utf8'));
-          console.log(JSON.stringify({report:file,success:r.success,files:r.testResults.length,
-            tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,
-            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1200),
-              assertions:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,errors:a.failureMessages.map(m=>m.slice(0,1200))}))}))},null,2));
+          const path = require('node:path');
+          const {execFileSync} = require('node:child_process');
+          const ts = require('typescript');
+          const root = process.cwd();
+          const tracked = execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const textFiles = tracked.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml|po)$/.test(f)&&!/(?:^|\/)(?:package-lock\.json|pnpm-lock\.yaml)$/.test(f));
+          const live = new Set(['src/i18n/navigation.ts','src/i18n/navigation-server.ts','src/i18n/routing.ts','src/i18n/request.ts']);
+          const candidates = tracked.filter(f=>f.startsWith('src/i18n/')&&/\.[cm]?[jt]sx?$/.test(f)&&!live.has(f));
+          const candidateSet = new Set(candidates);
+          const cfg = ts.readConfigFile('tsconfig.json',ts.sys.readFile);
+          if(cfg.error) throw new Error('Unable to read tsconfig');
+          const parsed = ts.parseJsonConfigFileContent(cfg.config,ts.sys,root);
+          if(parsed.errors.length) throw new Error('Invalid tsconfig');
+          const cache = ts.createModuleResolutionCache(root,p=>p,parsed.options);
+          const incoming=[],outgoing=[],ambient=[],mentions=[],dynamic=[],linguiImports=[],declarations=[];
+          for(const file of textFiles) {
+            const content = fs.readFileSync(file,'utf8');
+            if(!candidateSet.has(file)) content.split('\n').forEach((line,i)=>{
+              if(/lingui|Lingui|I18nReady|I18nErrorBoundary|useSafeLingui|src\/i18n(?:['"`\s]|$)|i18n\/(?:types|server|message-utils|dev-tools|index)/.test(line)) mentions.push({file,line:i+1,text:line.trim().slice(0,180)});
+            });
+            if(!/\.[cm]?[jt]sx?$/.test(file)) continue;
+            const sf = ts.createSourceFile(file,content,ts.ScriptTarget.Latest,true);
+            if(candidateSet.has(file)) declarations.push({file,lines:content.split('\n').length,exports:sf.statements.filter(n=>n.modifiers?.some(m=>m.kind===ts.SyntaxKind.ExportKeyword)).flatMap(n=>n.name?[n.name.text]:[])});
+            function visit(n) {
+              if(ts.isStringLiteralLike(n)) {
+                const r=ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys,cache).resolvedModule;
+                const to=r?path.relative(root,r.resolvedFileName):null;
+                if(to&&candidateSet.has(to)) incoming.push({from:file,to,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,specifier:n.text});
+                if(to&&candidateSet.has(file)&&!candidateSet.has(to)&&!to.startsWith('node_modules/')) outgoing.push({from:file,to,specifier:n.text});
+                if(n.text.startsWith('@lingui/')) linguiImports.push({file,specifier:n.text});
+              }
+              if(candidateSet.has(file)&&ts.isModuleDeclaration(n)) ambient.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,name:n.name.getText(sf),global:!!(n.flags&ts.NodeFlags.GlobalAugmentation)});
+              if(ts.isCallExpression(n)&&(n.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(n.expression)&&n.expression.text==='require'))&&(!n.arguments[0]||!ts.isStringLiteralLike(n.arguments[0]))) dynamic.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,expression:n.getText(sf).slice(0,160)});
+              ts.forEachChild(n,visit);
+            }
+            visit(sf);
+          }
+          const result={source:'eec6a5e00e6c961a4468c365e3f99b7f367253b8',trackedFiles:tracked.length,scannedFiles:textFiles.length,candidates:declarations,incoming,outgoing,ambient,linguiImports,mentions,dynamic,localeFiles:tracked.filter(f=>/locales|lingui|i18n/.test(f)),scope:'Static dependency audit only. No application execution, secrets, Shopify requests, deletion or merge.'};
+          console.log(JSON.stringify(result,null,2));
           JS
-      - name: Run all previously selected auth cart analytics RTL and navigation tests
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr33-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr33-results.json >pr33-validation.log 2>&1
-          result=$?
-          node .pr33-summary.cjs pr33-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr33-validation.log; fi
-          exit "$result"
-      - name: Repeat extended retirement checks with shuffled execution order
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr33-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth/legacy-auth-retirement.test.ts --sequence.shuffle --sequence.seed=3301 --reporter=json --outputFile=pr33-shuffled-results.json >pr33-shuffled.log 2>&1
-          result=$?
-          node .pr33-summary.cjs pr33-shuffled-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr33-shuffled.log; fi
-          exit "$result"
-      - name: Recheck actual EN AR login and mobile-menu interactions
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set -eu
-          mkdir -p __tests__/review
-          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr33-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr33-ui-results.json >pr33-ui.log 2>&1
-          result=$?
-          node .pr33-summary.cjs pr33-ui-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr33-ui.log; fi
-          exit "$result"
-      - name: Record exact scope without suppressing failures
+      - name: Record audit scope
         if: always()
         working-directory: source
         run: |
-          {
-            echo '## PR33 customer API retirement validation'
-            echo 'Exact source: eec6a5e00e6c961a4468c365e3f99b7f367253b8; base: PR32 16a33a1.'
-            echo 'No merchant secrets, live service calls, purchases, customer changes, merges or Production promotion.'
-            echo 'Isolated actual-source regression coverage, not a deployed-preview browser or real OAuth checkout test.'
-            for report in pr33-results.json pr33-shuffled-results.json pr33-ui-results.json; do
-              echo '```json'
-              if [ -f "$report" ]; then node .pr33-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
-              echo '```'
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f translation-audit.json ]; then
+            { echo '## Legacy translation audit'; echo '```json'; cat translation-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
