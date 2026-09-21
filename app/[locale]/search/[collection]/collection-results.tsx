@@ -1,5 +1,7 @@
 "use client";
 
+import type { Product, Collection } from "@/lib/shopify/types";
+
 import Grid from "@/components/grid";
 import ProductGridItems from "@/components/layout/product-grid-items";
 import CollectionHero from "@/components/collection/collection-hero";
@@ -11,8 +13,8 @@ import { useTranslations } from "next-intl";
 import { staggerSlow, fadeInUp, getAccessibleVariants, defaultViewport } from "@/lib/animations";
 
 interface CollectionResultsProps {
-  products: any[];
-  collection: any;
+  products: Product[];
+  collection: Collection | undefined;
   locale: "en" | "ar";
 }
 

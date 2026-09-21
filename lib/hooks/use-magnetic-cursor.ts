@@ -11,7 +11,7 @@
 'use client';
 
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { useMotionValue, useSpring, useTransform, MotionValue } from 'framer-motion';
+import { useMotionValue, useSpring, MotionValue } from 'framer-motion';
 
 interface MagneticConfig {
   /** Strength of the magnetic pull (0-1). Default: 0.3 */
@@ -67,6 +67,7 @@ export function useMagneticCursor(config: MagneticConfig = {}): MagneticReturn {
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
   const rawScale = useMotionValue(1);
+  const neutralScale = useMotionValue(1);
 
   // Spring configuration for smooth animation
   const springConfig = { damping, stiffness, mass };
@@ -136,7 +137,7 @@ export function useMagneticCursor(config: MagneticConfig = {}): MagneticReturn {
     ref: ref as React.RefObject<HTMLElement>,
     x,
     y,
-    scale: enableScale ? scale : useMotionValue(1),
+    scale: enableScale ? scale : neutralScale,
     isActive,
     handlers: {
       onMouseMove,

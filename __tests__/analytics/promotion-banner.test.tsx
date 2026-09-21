@@ -2,7 +2,7 @@ import React from 'react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { render, screen, act, cleanup } from '@testing-library/react'
 vi.mock('next-intl', () => ({useLocale: () => 'en'}))
-vi.mock('@/src/i18n/navigation', () => ({Link: ({children, ...props}: any) => <a {...props}>{children}</a>}))
+vi.mock('@/src/i18n/navigation', () => ({Link: ({children, ...props}: React.ComponentProps<"a">) => <a {...props}>{children}</a>}))
 import { PromotionBanner } from '@/components/layout/promotion-banner'
 afterEach(() => { cleanup(); vi.useRealTimers() })
 it('hides at the deadline without requiring a refresh', () => {

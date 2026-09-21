@@ -61,7 +61,7 @@ const MagneticButton = React.forwardRef<HTMLButtonElement, MagneticButtonProps>(
 
     return (
       <Component
-        ref={magneticRef as any}
+        ref={magneticRef}
         style={{ x, y }}
         className={cn(
           'relative overflow-hidden rounded-full font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 disabled:pointer-events-none disabled:opacity-50 group inline-flex items-center justify-center',

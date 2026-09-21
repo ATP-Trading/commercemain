@@ -34,7 +34,7 @@ for (const existing of [false, true]) {
   it(`sends the allocated plan when ${existing ? 'adding to' : 'creating'} a cart`, async () => {
     state.cartId = existing ? 'existing-cart' : undefined;
     vi.spyOn(console, 'log').mockImplementation(() => {});
-    const requests: Array<{ query: string; variables: Record<string, any> }> = [];
+    const requests: Array<{ query: string; variables: { lines?: unknown[]; input?: { lines: unknown[] }; language?: string } }> = [];
     const cart = {
       id: 'saved-cart', checkoutUrl: 'https://example.com/checkout', totalQuantity: 1,
       lines: { edges: [{ node: {
@@ -69,7 +69,7 @@ for (const existing of [false, true]) {
     const mutations = requests.filter(request => request.query.includes(existing ? 'mutation cartLinesAdd' : 'mutation cartCreate'));
     expect(mutations).toHaveLength(1);
     const mutation = mutations[0]!;
-    expect(existing ? mutation.variables.lines : mutation.variables.input.lines).toEqual(expected);
+    expect(existing ? mutation.variables.lines : mutation.variables.input?.lines).toEqual(expected);
     expect(mutation.variables.language).toBe('AR');
     expect(state.adminToken).toHaveBeenCalledTimes(1);
     if (!existing) expect(state.set).toHaveBeenCalledWith('cartId', 'saved-cart');

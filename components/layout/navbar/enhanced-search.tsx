@@ -58,7 +58,7 @@ export default function EnhancedSearch({
   const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Safe translation helper with fallback
-  const safeT = (key: string, params?: Record<string, any>, fallback?: string): string => {
+  const safeT = (key: string, params?: Record<string, string | number>, fallback?: string): string => {
     try {
       const result = t(key, params);
       return typeof result === 'string' ? result : fallback || key;
@@ -103,7 +103,7 @@ export default function EnhancedSearch({
 
         // Extract product results for visual display
         if (data.products && data.products.length > 0) {
-          setProductResults(data.products.slice(0, 4).map((p: any) => ({
+          setProductResults(data.products.slice(0, 4).map((p: ProductResult) => ({
             id: p.id,
             handle: p.handle,
             title: p.title,

@@ -116,9 +116,9 @@ export enum MembershipErrorCode {
 
 export interface MembershipErrorDetails {
   field?: string;
-  value?: any;
-  expected?: any;
-  context?: Record<string, any>;
+  value?: unknown;
+  expected?: unknown;
+  context?: Record<string, unknown>;
   timestamp?: string;
   requestId?: string;
 }
@@ -204,7 +204,7 @@ export interface MembershipErrorResponse {
   error: {
     code: MembershipErrorCode;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   timestamp: string;
   requestId?: string;

@@ -18,7 +18,7 @@ async function callback(state?: string) {
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(getOAuthState).mockResolvedValue({ state: 'expected-token', codeVerifier: 'verifier', nonce: 'nonce' })
-  vi.mocked(exchangeCodeForTokens).mockResolvedValue({ access_token: 'test-token' } as any)
+  vi.mocked(exchangeCodeForTokens).mockResolvedValue({ access_token: 'test-token', refresh_token: 'test-refresh', id_token: 'test-id', expires_in: 3600, token_type: 'Bearer', scope: 'openid' })
 })
 describe('OAuth callback state validation', () => {
   it.each([undefined, '', 'wrong-token', encoded({ returnTo: '/ar/account' }), encoded({ csrf: '' }), encoded({ csrf: 'wrong-token' }), encoded(null)])('rejects invalid state %s before exchanging tokens', async state => {
@@ -28,7 +28,7 @@ describe('OAuth callback state validation', () => {
     expect(storeTokens).not.toHaveBeenCalled()
   })
   it('rejects a missing stored state', async () => {
-    vi.mocked(getOAuthState).mockResolvedValue({ codeVerifier: 'verifier' } as any)
+    vi.mocked(getOAuthState).mockResolvedValue({ state: undefined, codeVerifier: 'verifier', nonce: undefined })
     await callback(encoded({ csrf: 'expected-token' }))
     expect(exchangeCodeForTokens).not.toHaveBeenCalled()
   })

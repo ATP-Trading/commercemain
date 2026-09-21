@@ -511,7 +511,7 @@ function parseDescriptionHtml(
 
     // Map: sectionType → accumulated contents
     const sectionMap = new Map<SectionType, { config: SectionConfig; contents: string[] }>();
-    let introContent: string[] = [];
+    const introContent: string[] = [];
     let currentSectionType: SectionType | null = null;
 
     function addToSection(sectionType: SectionType, content: string) {
