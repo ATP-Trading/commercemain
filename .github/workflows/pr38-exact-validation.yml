@@ -49,7 +49,9 @@ jobs:
           // Parse all JS/TS source and compiler config, not unrelated JSON log exports.
           const original=new Map(tracked.filter(p=>/\.[cm]?[jt]sx?$/.test(p)||p==='tsconfig.json').map(p=>[path.resolve(p),git('show',base+':'+p)]));
           const host={...ts.sys,fileExists:p=>original.has(path.resolve(p))||ts.sys.fileExists(p),readFile:p=>original.get(path.resolve(p))??ts.sys.readFile(p)};
-          const config=ts.parseJsonConfigFileContent(JSON.parse(original.get(path.resolve('tsconfig.json'))),host,process.cwd());
+          const parsedConfig=ts.parseConfigFileTextToJson('tsconfig.json',original.get(path.resolve('tsconfig.json')));
+          assert.equal(parsedConfig.error,undefined);
+          const config=ts.parseJsonConfigFileContent(parsedConfig.config,host,process.cwd());
           const removedSet=new Set(removed.map(p=>path.resolve(p))),outside=[],ambient=[],dynamic=[],edges=new Map();
           for(const [file,text] of original){
             if(!/\.[cm]?[jt]sx?$/.test(file))continue;
