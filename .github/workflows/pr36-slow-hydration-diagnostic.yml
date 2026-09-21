@@ -1,0 +1,72 @@
+name: PR36 controlled slow-hydration diagnosis
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr36-slow-hydration-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Prepare read-only browser observation of unchanged Production
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach e47def917ac067f2ede3d05b22b0d2b302ff411a
+          git show "$GITHUB_SHA:__tests__/review/pr35-browser-confirmation.cjs" > .diagnostic.cjs
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');let s=fs.readFileSync('.diagnostic.cjs','utf8');
+          const replace=(a,b)=>{assert.ok(s.includes(a),'Missing anchor '+a);s=s.replace(a,()=>b);};
+          replace('const url=await receive();browser=await chromium.launch({headless:true});','browser=await chromium.launch({headless:true});');
+          replace("report.results.push(await inspect(browser,'preview',`https://${previewHost}`,url));",'// Production only. No shared Preview credential.');
+          replace("for(const locale of ['en','ar']){","for(const [iteration,locale] of Array.from({length:3},(_,i)=>['en','ar'].map(l=>[i,l])).flat()){");
+          replace('`${locale} mobile menu opens, shows guest login and closes`','`${locale} slow-JS cycle ${iteration+1}: early menu click`');
+          replace("for(const suffix of ['/atp-membership','/product/atp-membership'])","for(const suffix of (iteration===0?['/atp-membership','/product/atp-membership']:[]))");
+          replace("const req=route.request(),u=new URL(req.url());","const req=route.request(),u=new URL(req.url());\n  if(u.origin===origin&&u.pathname.includes('/_next/')&&u.pathname.endsWith('.js'))await sleep(1200);");
+          replace("await page.goto(`${origin}/${locale}`,{waitUntil:'domcontentloaded',timeout:45000});","await page.goto(`${origin}/${locale}`,{waitUntil:'commit',timeout:45000});");
+          replace("const page=await context.newPage();",`await context.addInitScript(() => {
+            window.__menuInputAudit = [];
+            document.addEventListener('click', event => {
+              const button = event.target instanceof Element ? event.target.closest('button') : null;
+              if (!button) return;
+              const label = button.getAttribute('aria-label') || '';
+              if (!/menu|القائمة/i.test(label)) return;
+              const key = Object.keys(button).find(k => k.startsWith('__reactProps$'));
+              const record = {label, disabled:button.disabled, handlerAttached:!!(key && typeof button[key]?.onClick==='function'), readyState:document.readyState, at:Math.round(performance.now()), path:location.pathname};
+              window.__menuInputAudit.push(record);
+              setTimeout(() => { record.connectedAfter100ms=button.isConnected;record.dialogAfter100ms=!!document.querySelector('[role="dialog"]'); },100);
+            }, true);
+          });
+          const page=await context.newPage();`);
+          replace("status:'failed',error:redact(e.message)","status:'failed',error:redact(e.message),inputAudit:await page.evaluate(()=>window.__menuInputAudit||[]).catch(()=>[])");
+          replace("return {viewport:'390x844',open:true,guestLogin:true,closed:true};","return {viewport:'390x844',open:true,guestLogin:true,closed:true,inputAudit:await page.evaluate(()=>window.__menuInputAudit||[])};");
+          replace('const file=`${label}-${locale}-menu.png`;await page.screenshot({path:path.join(out,file)});result.screenshots.push(file);','if(iteration===0){const file=`${label}-${locale}-menu.png`;await page.screenshot({path:path.join(out,file)});result.screenshots.push(file);}');
+          replace('const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);','if(iteration===0){const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);}');
+          replace("scope:'Guest browser confirmation.","scope:'Controlled diagnostic: delay same-origin JavaScript delivery by 1200ms, attempt menu input as soon as server-rendered button is visible. Not a normal-latency pass/fail benchmark. Guest browser confirmation.");
+          fs.writeFileSync('.diagnostic.cjs',s);
+          JS
+          node --check .diagnostic.cjs
+      - name: Install unchanged test tooling and Chromium
+        working-directory: source
+        run: |
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Observe early clicks without overriding or mocking application handlers
+        working-directory: source
+        run: node .diagnostic.cjs
+      - name: Preserve all observations even if early clicks fail
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-slow-hydration-diagnostic
+          path: source/confirmation-evidence/
+          retention-days: 3
+          if-no-files-found: warn
