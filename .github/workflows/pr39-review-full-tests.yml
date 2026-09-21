@@ -1,0 +1,72 @@
+name: PR39 full default test review without storefront changes
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr39-review-full-tests.yml]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Read exact candidate with no application modifications or test exclusions
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-custom-membership-engine
+          git checkout --detach 3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c
+          test "$(git rev-parse HEAD)" = 3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c
+          mkdir -p ../evidence
+      - name: Install only unchanged frozen dependency lock without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Deny external requests before reviewing all test execution
+        working-directory: source
+        run: |
+          cat > .review-no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('REVIEW_UNMOCKED_NETWORK_BLOCKED');};
+          for(const n of ['node:http','node:https']){const t=require(n);t.request=fail;t.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Execute raw default discovery and bounded declared tooling, preserving every result
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process'),path=require('node:path');
+          const options={encoding:'utf8',timeout:180000,maxBuffer:16*1024*1024,env:{...process.env,NODE_OPTIONS:'--require='+path.resolve('.review-no-network.cjs')}};
+          const cases=[
+            ['full-vitest','./node_modules/.bin/vitest',['run','--maxWorkers=2','--no-file-parallelism','--reporter=json','--outputFile=../evidence/full-vitest.json']],
+            ['declared-components','npm',['run','test:components','--','--maxWorkers=2','--no-file-parallelism']],
+            ['declared-accessibility','npm',['run','test:accessibility','--','--maxWorkers=2','--no-file-parallelism']],
+            ['direct-eslint','./node_modules/.bin/eslint',['.','--no-fix']]
+          ];
+          const summary=[];
+          for(const [name,command,args] of cases){
+            const r=cp.spawnSync(command,args,options);
+            fs.writeFileSync('../evidence/'+name+'.log',(r.stdout||'')+(r.stderr||''));
+            const row={name,command,args,status:r.status,signal:r.signal,error:r.error?.code||null};
+            summary.push(row);console.log(JSON.stringify(row));
+          }
+          const full=JSON.parse(fs.readFileSync('../evidence/full-vitest.json','utf8'));
+          const failed=full.testResults.filter(f=>f.status!=='passed').map(f=>({name:f.name,status:f.status,message:f.message,failedTests:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,messages:a.failureMessages}))}));
+          const report={source:'3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c',success:full.success,files:full.testResults.length,total:full.numTotalTests,passed:full.numPassedTests,failed:full.numFailedTests,pending:full.numPendingTests,failedFiles:failed,commands:summary};
+          fs.writeFileSync('../evidence/review-summary.json',JSON.stringify(report,null,2));
+          const status=cp.execFileSync('git',['status','--porcelain','--untracked-files=no'],{encoding:'utf8'});if(status.trim())throw new Error('Tracked candidate source was modified: '+status);
+          console.log(JSON.stringify({files:report.files,total:report.total,passed:report.passed,failed:report.failed,pending:report.pending,failedFiles:failed.map(f=>({name:f.name,message:f.message})),trackedSourceUnchanged:true}));
+          if(summary.some(r=>r.status!==0))process.exitCode=1;
+          JS
+      - name: Preserve raw failures as review evidence, not green quality gates
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr39-full-default-test-review
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
