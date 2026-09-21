@@ -1,120 +1,76 @@
-name: PR34 legacy translation UI validation
-
+name: Legacy translation core audit
 on:
   push:
     branches: [test/pr30-isolated-validation]
     paths: [.github/workflows/pr30-isolated-validation.yml]
-
 permissions:
   contents: read
-
 jobs:
-  verify:
+  audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 6
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch exact source and existing review harness without merchant credentials
+      - name: Fetch immutable PR34 source
         run: |
           set -eu
           git init source
           cd source
           git config gc.auto 0
-          git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-unused-lingui-ui
-          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-unused-lingui-ui
           git checkout --detach 0d71a61ba3626faed096911d15bdda90432f49a8
           test "$(git rev-parse HEAD)" = 0d71a61ba3626faed096911d15bdda90432f49a8
-          node <<'JS'
-          const {execFileSync} = require('node:child_process');
-          const assert = require('node:assert/strict');
-          const base = 'eec6a5e00e6c961a4468c365e3f99b7f367253b8';
-          const removed = ['components/membership/membership-analytics-dashboard.tsx','components/membership/membership-notifications.tsx','components/search/predictive-search.tsx','components/test/I18nTest.tsx','components/ui/localized-currency.tsx','src/i18n/I18nErrorBoundary.tsx','src/i18n/I18nReady.tsx','src/i18n/safe-translate.ts'].sort();
-          const added = ['__tests__/i18n/current-request-config.test.ts','__tests__/i18n/legacy-ui-retirement.test.ts'].sort();
-          const list = args => execFileSync('git',args,{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD']),[...removed,...added].sort());
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=D',base,'HEAD']),removed);
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=A',base,'HEAD']),added);
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=M',base,'HEAD']),[]);
-          console.log('PASS: only eight audited orphan files removed and two regression files added. All other source, existing tests, live translations, dependencies and settings are unchanged.');
-          JS
-      - name: Install the unchanged frozen dependency lockfile without lifecycle scripts
+      - name: Install unchanged locked static-analysis tooling
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
-      - name: Prepare no-network test process and result reporting
-        id: prepare
+      - name: Verify removal boundary and preserve unrelated global declarations
         working-directory: source
         run: |
-          cat > .pr34-no-network.cjs <<'JS'
-          const fail = () => { throw new Error('PR34_TEST_NETWORK_BLOCKED: mock external requests'); };
-          for (const name of ['node:http','node:https']) {
-            const transport = require(name); transport.request = fail; transport.get = fail;
+          set -o pipefail
+          node <<'JS' | tee translation-core-audit.json
+          const fs=require('node:fs'),path=require('node:path'),ts=require('typescript');
+          const {execFileSync}=require('node:child_process');
+          const root=process.cwd();
+          const runtime=['src/i18n/LinguiClientProvider.tsx','src/i18n/dev-tools.ts','src/i18n/index.ts','src/i18n/message-utils.ts','src/i18n/server.ts','src/i18n/useSafeLingui.ts','src/i18n/navigation-server.ts'];
+          const retiredTests=['__tests__/i18n/LinguiClientProvider.test.tsx','__tests__/i18n/server.test.ts','__tests__/i18n/typescript-integration.test.ts'];
+          const boundary=new Set([...runtime,...retiredTests]);
+          const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const cfg=ts.readConfigFile('tsconfig.json',ts.sys.readFile);
+          if(cfg.error)throw new Error('Invalid tsconfig');
+          const parsed=ts.parseJsonConfigFileContent(cfg.config,ts.sys,root);
+          if(parsed.errors.length)throw new Error('Invalid tsconfig');
+          const cache=ts.createModuleResolutionCache(root,p=>p,parsed.options);
+          const incoming=[],ambient=[],mentions=[],dynamic=[];
+          for(const file of files.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml|po)$/.test(f)&&!/(?:pnpm-lock\.yaml|package-lock\.json)$/.test(f))){
+            const text=fs.readFileSync(file,'utf8');
+            if(!boundary.has(file))text.split('\n').forEach((line,i)=>{
+              if(/LinguiClientProvider|useSafeLingui|src\/i18n(?:['"]|\/index|\/server|\/dev-tools|\/message-utils|\/navigation-server)|__LINGUI|tamara-widget/.test(line))mentions.push({file,line:i+1,text:line.trim().slice(0,180)});
+            });
+            if(!/\.[cm]?[jt]sx?$/.test(file))continue;
+            const sf=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);
+            function visit(n){
+              if(ts.isStringLiteralLike(n)){
+                const r=ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys,cache).resolvedModule;
+                const target=r?path.relative(root,r.resolvedFileName):null;
+                if(target&&runtime.includes(target)&&!boundary.has(file))incoming.push({file,target,specifier:n.text,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1});
+              }
+              if(runtime.includes(file)&&ts.isModuleDeclaration(n))ambient.push({file,name:n.name.getText(sf)});
+              if(ts.isCallExpression(n)&&(n.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(n.expression)&&n.expression.text==='require'))&&(!n.arguments[0]||!ts.isStringLiteralLike(n.arguments[0]))&&!boundary.has(file))dynamic.push({file,expression:n.getText(sf).slice(0,180)});
+              ts.forEachChild(n,visit);
+            }
+            visit(sf);
           }
-          const net = require('node:net'); net.connect = fail; net.createConnection = fail;
-          require('node:tls').connect = fail;
-          globalThis.fetch = async () => fail();
+          const result={source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),trackedFiles:files.length,runtime:runtime.map(file=>({file,lines:fs.readFileSync(file,'utf8').split('\n').length})),retiredTests,incomingOutsideBoundary:incoming,ambientInRemoval:ambient,remainingDynamicImports:dynamic,remainingMentions:mentions,scope:'Static audit only; shared type files and test-providers remain outside deletion scope. No application execution, merchant secrets or live requests.'};
+          console.log(JSON.stringify(result,null,2));
+          if(incoming.length||ambient.length)process.exit(1);
           JS
-          cat > .pr34-summary.cjs <<'JS'
-          const fs = require('node:fs');
-          const file = process.argv[2];
-          if (!fs.existsSync(file)) { console.error('RESULT_FILE_MISSING',file); process.exit(1); }
-          const r = JSON.parse(fs.readFileSync(file,'utf8'));
-          console.log(JSON.stringify({report:file,success:r.success,files:r.testResults.length,
-            tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,
-            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1400),
-              assertions:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,errors:a.failureMessages.map(m=>m.slice(0,1400))}))}))},null,2));
-          JS
-      - name: Run existing regression scope plus current request-loader and retirement tests
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr34-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts __tests__/i18n/current-request-config.test.ts __tests__/i18n/legacy-ui-retirement.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr34-results.json >pr34-validation.log 2>&1
-          result=$?
-          node .pr34-summary.cjs pr34-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr34-validation.log; fi
-          exit "$result"
-      - name: Repeat new translation checks with shuffled order
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr34-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/i18n/current-request-config.test.ts __tests__/i18n/legacy-ui-retirement.test.ts --sequence.shuffle --sequence.seed=3401 --reporter=json --outputFile=pr34-shuffled-results.json >pr34-shuffled.log 2>&1
-          result=$?
-          node .pr34-summary.cjs pr34-shuffled-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr34-shuffled.log; fi
-          exit "$result"
-      - name: Recheck twelve actual EN AR login and mobile-menu interactions
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set -eu
-          mkdir -p __tests__/review
-          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr34-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr34-ui-results.json >pr34-ui.log 2>&1
-          result=$?
-          node .pr34-summary.cjs pr34-ui-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr34-ui.log; fi
-          exit "$result"
-      - name: Record scope and outcomes without suppressing failures
+      - name: Record exact audit
         if: always()
         working-directory: source
         run: |
-          {
-            echo '## PR34 legacy translation UI validation'
-            echo 'Source: 0d71a61ba3626faed096911d15bdda90432f49a8; parent: PR33 eec6a5e.'
-            echo 'No merchant secrets, customer changes, real orders, merge or Production promotion.'
-            echo 'Selected isolated actual-source tests, not a complete repository suite or deployed-preview browser, CSS, real OAuth or checkout validation.'
-            echo 'Legacy Lingui-specific test suites and shared declarations are retained for a separate cleanup; they are not included in this selected run.'
-            for report in pr34-results.json pr34-shuffled-results.json pr34-ui-results.json; do
-              echo '```json'
-              if [ -f "$report" ]; then node .pr34-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
-              echo '```'
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f translation-core-audit.json ]; then
+            { echo '## Translation core audit'; echo '```json'; cat translation-core-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
