@@ -1,0 +1,83 @@
+name: PR36 immediate-input hydration trace
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr36-early-hydration-trace.yml]
+permissions:
+  contents: read
+jobs:
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch exact candidate and pinned diagnostic setup
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach a6ec9e5cc380f11f0d367a767529df89a397f74c
+          git show 835630de46b4a6b38fae0449957fa4cd71059542:.github/workflows/pr36-hydration-trace.yml > .trace-definition.yml
+          git show 835630de46b4a6b38fae0449957fa4cd71059542:__tests__/review/pr35-deployed-browser.cjs > .handshake.cjs
+          git show 835630de46b4a6b38fae0449957fa4cd71059542:__tests__/review/pr35-browser-confirmation.cjs > .trace.cjs
+      - name: Install unchanged pinned dependencies and browser
+        working-directory: source
+        run: |
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Prepare unchanged callback delegation and immediate-click timing
+        working-directory: source
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          lines=Path('.trace-definition.yml').read_text().splitlines()
+          start=lines.index('      - name: Prepare observational callback wrapper in browser responses only')
+          assert lines[start+1].strip()=='working-directory: source'
+          assert lines[start+2].strip()=='run: |'
+          body=[]
+          for line in lines[start+3:]:
+              if line.startswith('      - name:'): break
+              assert line.startswith('          ')
+              body.append(line[10:])
+          Path('.prepare-trace.sh').write_text('\n'.join(body)+'\n')
+          PY
+          bash .prepare-trace.sh
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');let s=fs.readFileSync('.trace.cjs','utf8');
+          const replace=(a,b)=>{assert.ok(s.includes(a),'Missing early trace anchor '+a);s=s.replace(a,b);};
+          replace('pr36-trace-envelope.json','pr36-early-trace-envelope.json');
+          replace('Array.from({length:12}','Array.from({length:20}');
+          replace("await page.goto(`${origin}/${locale}`,{waitUntil:'domcontentloaded',timeout:45000});","await page.goto(`${origin}/${locale}`,{waitUntil:'commit',timeout:45000});");
+          replace("if(u.origin===origin&&u.pathname.includes('/_next/')&&u.pathname.endsWith('.js')){","if(u.origin===origin&&u.pathname==='/_next/static/chunks/cffaf6eb8680f25e.js'){");
+          replace("const out=path.resolve('confirmation-evidence');","const out=path.resolve('early-trace-evidence');");
+          fs.writeFileSync('.trace.cjs',s);
+          JS
+          node --check .trace.cjs
+      - name: Generate ephemeral encryption handshake
+        working-directory: source
+        run: node .handshake.cjs handshake
+      - name: Upload public key only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-early-trace-public-key
+          path: source/preview-public-handshake.json
+          retention-days: 1
+          if-no-files-found: error
+      - name: Record forty immediate menu interactions per deployment and recoverable-error stacks
+        working-directory: source
+        run: node .trace.cjs
+      - name: Remove private key regardless of outcome
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pr35-preview-private.pem"
+      - name: Preserve diagnostic results without reclassifying failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-early-hydration-trace-evidence
+          path: source/early-trace-evidence/
+          retention-days: 3
+          if-no-files-found: warn
