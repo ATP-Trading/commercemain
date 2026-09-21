@@ -62,6 +62,7 @@ describe('Membership Components Accessibility Tests', () => {
       );
 
       const progressBar = screen.getByRole('progressbar');
+      expect(progressBar).toBeInTheDocument();
       expect(progressBar).toHaveAttribute('aria-valuenow');
       expect(progressBar).toHaveAttribute('aria-valuemin', '0');
       expect(progressBar).toHaveAttribute('aria-valuemax', '100');
