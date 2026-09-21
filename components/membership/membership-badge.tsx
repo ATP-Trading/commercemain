@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Badge } from "@/components/ui/badge"
 import { Crown, Star, Zap, Shield } from "lucide-react"
-import { useMembershipStatus } from "@/hooks/use-atp-membership"
 import { MEMBERSHIP_CONFIG } from "@/lib/constants/membership"
 import { useMembershipI18n } from "@/lib/utils/membership-i18n"
 import { useRTL } from "@/hooks/use-rtl"
@@ -29,7 +28,8 @@ export function MembershipBadge({
   const locale = useLocale() as 'en' | 'ar';
   const { isRTL, direction } = useRTL();
   const { getMembershipTierName, getIconClasses, formatPercentage } = useMembershipI18n(locale);
-  const { statusInfo, isActive, isExpiringSoon } = useMembershipStatus();
+  const statusInfo = { status: "none" as const };
+  const isExpiringSoon = false;
 
   const tierConfig = {
     essential: {
