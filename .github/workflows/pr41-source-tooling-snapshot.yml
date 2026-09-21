@@ -23,7 +23,7 @@ jobs:
           git checkout --detach FETCH_HEAD
           test "$(git rev-parse HEAD)" = a5933d5da8ee23689746087427250c4760eb544c
           mkdir -p ../evidence
-          git ls-files -z | tar --null -T - --exclude='public/*' --exclude='atp.json' --exclude='*.ttf' --exclude='*.woff*' --exclude='*.otf' -czf ../evidence/source.tgz
+          git ls-files -z | tar --exclude='public/*' --exclude='atp.json' --exclude='*.ttf' --exclude='*.woff*' --exclude='*.otf' -czf ../evidence/source.tgz --null -T -
           git ls-tree -r HEAD > ../evidence/source-tree.txt
       - name: Install unchanged frozen dependency lock without scripts
         working-directory: source
