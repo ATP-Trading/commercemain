@@ -1,4 +1,4 @@
-name: PR30 isolated validation
+name: PR31 test cleanup validation
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch reviewed source and harness in one non-shallow fetch
+      - name: Fetch immutable source and the existing UI test harness
         run: |
           set -eu
           git init source
@@ -24,95 +24,93 @@ jobs:
           git config gc.auto 0
           git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/repair-stale-regression-tests
           git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
-          git checkout --detach 7a7ce61d044fb9909a363c2c8783d45685770a68
-          test -z "$(git diff --name-only 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e 7a7ce61d044fb9909a363c2c8783d45685770a68 -- package.json pnpm-lock.yaml)"
+          git checkout --detach b54d62c44e4f660c57f1636a16259d28132cbdb3
+          test "$(git rev-parse HEAD)" = b54d62c44e4f660c57f1636a16259d28132cbdb3
+          node <<'JS'
+          const {execFileSync} = require('node:child_process');
+          const files = execFileSync('git', ['diff', '--name-only', '7a7ce61d044fb9909a363c2c8783d45685770a68', 'HEAD'], {encoding:'utf8'}).trim().split('\n').sort();
+          const allowed = ['__tests__/cart/membership-cart-purchase.test.ts','__tests__/cart/membership-status-route.test.ts','__tests__/cart/server-stock.test.ts','__tests__/rtl/formatters.test.ts','__tests__/rtl/language-switcher.test.tsx'].sort();
+          require('node:assert/strict').deepEqual(files, allowed);
+          const deleted = execFileSync('git', ['diff','--diff-filter=D','--name-only','7a7ce61d044fb9909a363c2c8783d45685770a68','HEAD'], {encoding:'utf8'}).trim();
+          require('node:assert/strict').equal(deleted, '');
+          console.log('Verified exactly five test-only changes, no file deletions:', files);
+          JS
           node --version
-      - name: Install locked dependencies without lifecycle scripts
+      - name: Install unchanged locked dependencies without lifecycle scripts
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Prepare no-network test process and result summary
+      - name: Prepare no-network test process and honest result reporting
         id: prepare
         working-directory: source
         run: |
-          cat > .pr30-no-network.cjs <<'JS'
-          const fail = () => { throw new Error('PR30_TEST_NETWORK_BLOCKED: mock network requests in isolated tests'); };
-          for (const name of ['node:http', 'node:https']) {
+          cat > .pr31-no-network.cjs <<'JS'
+          const fail = () => { throw new Error('PR31_TEST_NETWORK_BLOCKED: mock external requests'); };
+          for (const name of ['node:http','node:https']) {
             const transport = require(name); transport.request = fail; transport.get = fail;
           }
           const net = require('node:net'); net.connect = fail; net.createConnection = fail;
           require('node:tls').connect = fail;
           globalThis.fetch = async () => fail();
           JS
-          cat > .pr30-summary.cjs <<'JS'
+          cat > .pr31-summary.cjs <<'JS'
           const fs = require('node:fs');
           const filename = process.argv[2];
-          if (!fs.existsSync(filename)) { console.error('RESULT_FILE_MISSING', filename); process.exit(1); }
-          const r = JSON.parse(fs.readFileSync(filename, 'utf8'));
-          console.log(JSON.stringify({report: filename, success:r.success, files:r.testResults.length,
-            tests:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, pending:r.numPendingTests,
-            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({
-              file:f.name.split('/source/').pop(), message:(f.message||'').slice(0,900),
-              assertions:f.assertionResults.filter(t=>t.status==='failed').map(t=>({name:t.fullName, errors:t.failureMessages.map(m=>m.slice(0,600))}))
-            }))},null,2));
+          if (!fs.existsSync(filename)) { console.error('RESULT_FILE_MISSING',filename); process.exit(1); }
+          const r = JSON.parse(fs.readFileSync(filename,'utf8'));
+          console.log(JSON.stringify({report:filename,success:r.success,files:r.testResults.length,
+            tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,
+            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1500),
+              assertions:f.assertionResults.filter(t=>t.status==='failed').map(t=>({name:t.fullName,errors:t.failureMessages.map(m=>m.slice(0,1500))}))}))},null,2));
           JS
-      - name: Run unchanged PR30 regression suites
+      - name: Run all previously selected auth cart analytics RTL and navigation tests
         working-directory: source
         run: |
           set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr30-results.json >pr30-validation.log 2>&1
+          export NODE_OPTIONS="--require=$(pwd)/.pr31-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr31-results.json >pr31-validation.log 2>&1
           result=$?
-          node .pr30-summary.cjs pr30-results.json
+          node .pr31-summary.cjs pr31-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 pr31-validation.log; fi
           exit "$result"
-      - name: Run the same suites on the production baseline
+      - name: Repeat the five repaired files with shuffled test order
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         working-directory: source
         run: |
-          git checkout --detach 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e
           set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=baseline-results.json >baseline-validation.log 2>&1
+          export NODE_OPTIONS="--require=$(pwd)/.pr31-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/cart/membership-cart-purchase.test.ts __tests__/cart/server-stock.test.ts __tests__/cart/membership-status-route.test.ts __tests__/rtl/formatters.test.ts __tests__/rtl/language-switcher.test.tsx --maxWorkers=2 --no-file-parallelism --sequence.shuffle --sequence.seed=3101 --reporter=json --outputFile=pr31-shuffled-results.json >pr31-shuffled.log 2>&1
           result=$?
-          node .pr30-summary.cjs baseline-results.json
+          node .pr31-summary.cjs pr31-shuffled-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 pr31-shuffled.log; fi
           exit "$result"
-      - name: Test actual EN/AR login and mobile-menu components with mocked authentication
+      - name: Recheck the twelve actual EN AR login and mobile-menu interactions
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         working-directory: source
         run: |
           set -eu
-          git checkout --detach 7a7ce61d044fb9909a363c2c8783d45685770a68
           mkdir -p __tests__/review
           git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
           set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=ui-results.json >ui-validation.log 2>&1
+          export NODE_OPTIONS="--require=$(pwd)/.pr31-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr31-ui-results.json >pr31-ui.log 2>&1
           result=$?
-          node .pr30-summary.cjs ui-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 ui-validation.log; fi
+          node .pr31-summary.cjs pr31-ui-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 pr31-ui.log; fi
           exit "$result"
-      - name: Record raw failures and comparison without suppressing them
+      - name: Record scope without converting failures into success
         if: always()
         working-directory: source
         run: |
-          node <<'JS' | tee comparison-summary.txt
-          const fs=require('node:fs');
-          const load=n=>fs.existsSync(n)?JSON.parse(fs.readFileSync(n,'utf8')):null;
-          const head=load('pr30-results.json'), base=load('baseline-results.json'), ui=load('ui-results.json');
-          const failureKeys=r=>r ? r.testResults.flatMap(f=>[
-            ...(f.status==='failed'&&!f.assertionResults.length?[f.name.split('/source/').pop()+'::SUITE_LOAD']:[]),
-            ...f.assertionResults.filter(a=>a.status==='failed').map(a=>f.name.split('/source/').pop()+'::'+a.fullName)
-          ]).sort():[];
-          const h=failureKeys(head), b=failureKeys(base);
-          console.log(JSON.stringify({
-            target:'7a7ce61d044fb9909a363c2c8783d45685770a68',baseline:'4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e',
-            comparisonAvailable:!!head&&!!base, newFailures:head&&base?h.filter(x=>!b.includes(x)):null,
-            unchangedFailures:head&&base?h.filter(x=>b.includes(x)):null,
-            totals:{pr:head&&{passed:head.numPassedTests,failed:head.numFailedTests,files:head.testResults.length},
-              baseline:base&&{passed:base.numPassedTests,failed:base.numFailedTests,files:base.testResults.length},
-              ui:ui&&{passed:ui.numPassedTests,failed:ui.numFailedTests}},
-            scope:'Isolated actual-source tests with mocked network. Not a protected-preview browser or real login/checkout test. No secrets, purchases, production changes or merges.'
-          },null,2));
-          JS
-          { echo '## PR30 verification'; echo '```json'; cat comparison-summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## PR31 test cleanup validation'
+            echo 'Target: b54d62c44e4f660c57f1636a16259d28132cbdb3; base: PR30 7a7ce61.'
+            echo 'No Shopify or Vercel secrets. No purchases, customer updates, merges or Production changes.'
+            echo 'Isolated tests of actual code with mocked services; not a deployed-preview or real OAuth checkout test.'
+            for report in pr31-results.json pr31-shuffled-results.json pr31-ui-results.json; do
+              echo '```json'
+              if [ -f "$report" ]; then node .pr31-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
+              echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
