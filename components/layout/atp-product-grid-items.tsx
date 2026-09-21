@@ -6,7 +6,8 @@ import { MembershipBadge } from "@/components/membership/membership-badge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ProductQuickView } from "@/components/product/product-quick-view"
-import { useAtpMembership, useMembershipDiscount } from "@/hooks/use-atp-membership"
+import { useMembership } from "@/hooks/use-membership"
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing"
 import type { Product } from "@/lib/shopify/types"
 import { getLocalizedProductTitle, getLocalizedProductHandle } from "@/lib/shopify/i18n-queries"
 import { Award, Eye, Leaf, Star } from "lucide-react"
@@ -20,7 +21,7 @@ export default function ATPProductGridItems({
   products: Product[]
   locale?: 'en' | 'ar'
 }) {
-  const { isActive: isMember } = useAtpMembership()
+  const { isMember } = useMembership()
   const { calculateServiceDiscount } = useMembershipDiscount()
   const t = useTranslations("quickView")
 
