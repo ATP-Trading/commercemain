@@ -24,7 +24,7 @@ jobs:
           git show "$GITHUB_SHA:__tests__/review/pr35-browser-confirmation.cjs" > .menu-diagnostic.cjs
           node <<'JS'
           const fs=require('node:fs'),assert=require('node:assert/strict');let s=fs.readFileSync('.menu-diagnostic.cjs','utf8');
-          const replace=(a,b)=>{assert.ok(s.includes(a),'Missing anchor '+a);s=s.replace(a,b);};
+          const replace=(a,b)=>{assert.ok(s.includes(a),'Missing anchor '+a);s=s.replace(a,()=>b);};
           replace('const url=await receive();browser=await chromium.launch({headless:true});','browser=await chromium.launch({headless:true});');
           replace("report.results.push(await inspect(browser,'preview',`https://${previewHost}`,url));",'// No Preview authorization needed for this unchanged Production observation.');
           replace("for(const locale of ['en','ar']){","for(const [iteration,locale] of Array.from({length:20},(_,i)=>['en','ar'].map(l=>[i,l])).flat()){");
@@ -49,6 +49,7 @@ jobs:
           replace('const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);','if(iteration===0){const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);}');
           fs.writeFileSync('.menu-diagnostic.cjs',s);
           JS
+          node --check .menu-diagnostic.cjs
       - name: Install unchanged frozen tools and Chromium
         working-directory: source
         run: |
