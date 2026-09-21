@@ -1,5 +1,6 @@
 "use client";
 
+import type { Product } from '@/lib/shopify/types'
 import { fetchCollectionProducts } from "@/components/cart/actions";
 import { Grid } from "@/components/grid";
 import ProductGridItems from "@/components/layout/product-grid-items";
@@ -12,7 +13,7 @@ import { useTranslations } from "next-intl";
 
 export default function WaterSoilTechnologyPage() {
   const params = useParams();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
   const t = useTranslations('collection');
