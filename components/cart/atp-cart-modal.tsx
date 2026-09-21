@@ -21,10 +21,8 @@ import { FreeShippingProgress } from "./free-shipping-progress";
 import { EmptyCartState } from "./empty-cart-state";
 import { DEFAULT_OPTION } from "@/lib/constants";
 import { createUrl } from "@/lib/utils";
-import {
-  useAtpMembership,
-  useMembershipDiscount,
-} from "@/hooks/use-atp-membership";
+import { useMembership } from "@/hooks/use-membership";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useTranslations, useLocale } from 'next-intl';
 import { getLocalizedProductTitle } from "@/lib/shopify/i18n-queries";
 
@@ -46,7 +44,7 @@ type MerchandiseSearchParams = {
 
 function ATPCartModal() {
   const { cart, updateCartItem } = useCart();
-  const { isActive: isMember } = useAtpMembership();
+  const { isMember } = useMembership();
   const { calculateServiceDiscount, checkFreeDeliveryEligibility } =
     useMembershipDiscount();
   const { isRTL } = useRTL();
@@ -193,7 +191,7 @@ function ATPCartModal() {
                           ? "وفر 15% على المشتريات المؤهلة مع عضوية ATP"
                           : "Save 15% on eligible purchases with ATP Membership"}
                       </p>
-                      <Link href="/atp-membership" onClick={closeCart}>
+                      <Link href="/product/atp-membership" onClick={closeCart}>
                         <Badge className="bg-atp-gold text-atp-black text-xs hover:bg-atp-gold/90">
                           {t('joinNow')}
                         </Badge>
