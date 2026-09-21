@@ -1,258 +1,56 @@
 #!/usr/bin/env tsx
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { execSync } from 'child_process';
-import { performance } from 'perf_hooks';
-import chalk from 'chalk';
+export type Check = { name: string; file: string; args: string[] };
+export type Result = { name: string; exitCode: number; error?: string };
+export type Execute = (check: Check) => { status: number | null; error?: Error };
 
-interface TestSuite {
-  name: string;
-  command: string;
-  timeout: number;
-  critical: boolean;
+export function createChecks(browser = false): Check[] {
+  const checks: Check[] = [
+    { name: 'ESLint (original rule policy)', file: 'node_modules/eslint/bin/eslint.js', args: ['.', '--no-fix'] },
+    { name: 'TypeScript', file: 'node_modules/typescript/bin/tsc', args: ['--noEmit', '--incremental', 'false'] },
+    { name: 'All default Vitest tests (not browser tests)', file: 'node_modules/vitest/vitest.mjs', args: ['run'] },
+  ];
+  if (browser) checks.push({ name: 'Guest SSR browser smoke only', file: 'node_modules/@playwright/test/cli.js', args: ['test'] });
+  return checks;
 }
 
-const testSuites: TestSuite[] = [
-  {
-    name: 'Unit Tests',
-    command: 'vitest run __tests__/**/*.test.ts --reporter=verbose',
-    timeout: 60000,
-    critical: true
-  },
-  {
-    name: 'Component Tests',
-    command: 'vitest run __tests__/components/**/*.test.tsx --reporter=verbose',
-    timeout: 60000,
-    critical: true
-  },
-  {
-    name: 'Accessibility Tests',
-    command: 'vitest run __tests__/accessibility/**/*.test.tsx --reporter=verbose',
-    timeout: 180000,
-    critical: true
-  },
-  {
-    name: 'E2E Tests',
-    command: 'playwright test __tests__/e2e/**/*.test.ts',
-    timeout: 600000,
-    critical: true
-  }
-];
-
-interface TestResult {
-  name: string;
-  success: boolean;
-  duration: number;
-  error?: string;
-}
-
-class TestRunner {
-  private results: TestResult[] = [];
-  private startTime: number = 0;
-
-  async runAllTests(): Promise<void> {
-    console.log(chalk.blue.bold('🧪 Starting Comprehensive Test Suite for ATP Membership System\n'));
-    
-    this.startTime = performance.now();
-    
-    for (const suite of testSuites) {
-      await this.runTestSuite(suite);
-    }
-    
-    this.printSummary();
-    this.exitWithCode();
-  }
-
-  private async runTestSuite(suite: TestSuite): Promise<void> {
-    console.log(chalk.yellow(`\n📋 Running ${suite.name}...`));
-    console.log(chalk.gray(`Command: ${suite.command}`));
-    console.log(chalk.gray(`Timeout: ${suite.timeout / 1000}s`));
-    
-    const startTime = performance.now();
-    
+export function runChecks(checks: Check[], execute: Execute): { results: Result[]; exitCode: number } {
+  if (checks.length === 0) return { results: [], exitCode: 1 };
+  const results = checks.map(check => {
     try {
-      execSync(suite.command, {
-        stdio: 'inherit',
-        timeout: suite.timeout,
-        env: {
-          ...process.env,
-          NODE_ENV: 'test',
-          CI: 'true'
-        }
-      });
-      
-      const duration = performance.now() - startTime;
-      this.results.push({
-        name: suite.name,
-        success: true,
-        duration
-      });
-      
-      console.log(chalk.green(`✅ ${suite.name} completed successfully (${(duration / 1000).toFixed(2)}s)`));
-      
+      const result = execute(check);
+      return { name: check.name, exitCode: result.error ? 1 : (result.status ?? 1), ...(result.error ? { error: result.error.message } : {}) };
     } catch (error) {
-      const duration = performance.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      this.results.push({
-        name: suite.name,
-        success: false,
-        duration,
-        error: errorMessage
-      });
-      
-      if (suite.critical) {
-        console.log(chalk.red(`❌ ${suite.name} failed (CRITICAL) (${(duration / 1000).toFixed(2)}s)`));
-        console.log(chalk.red(`Error: ${errorMessage}`));
-      } else {
-        console.log(chalk.yellow(`⚠️  ${suite.name} failed (NON-CRITICAL) (${(duration / 1000).toFixed(2)}s)`));
-        console.log(chalk.yellow(`Error: ${errorMessage}`));
-      }
+      return { name: check.name, exitCode: 1, error: error instanceof Error ? error.message : String(error) };
     }
-  }
-
-  private printSummary(): void {
-    const totalDuration = performance.now() - this.startTime;
-    const successful = this.results.filter(r => r.success).length;
-    const failed = this.results.filter(r => !r.success).length;
-    const criticalFailed = this.results.filter(r => !r.success && this.isCritical(r.name)).length;
-    
-    console.log(chalk.blue.bold('\n📊 Test Suite Summary'));
-    console.log(chalk.blue('═'.repeat(50)));
-    
-    console.log(`Total Duration: ${chalk.cyan((totalDuration / 1000).toFixed(2))}s`);
-    console.log(`Total Suites: ${chalk.cyan(this.results.length)}`);
-    console.log(`Successful: ${chalk.green(successful)}`);
-    console.log(`Failed: ${chalk.red(failed)}`);
-    console.log(`Critical Failures: ${chalk.red.bold(criticalFailed)}`);
-    
-    console.log(chalk.blue('\n📋 Detailed Results:'));
-    this.results.forEach(result => {
-      const status = result.success ? chalk.green('✅ PASS') : chalk.red('❌ FAIL');
-      const duration = chalk.gray(`(${(result.duration / 1000).toFixed(2)}s)`);
-      const critical = this.isCritical(result.name) ? chalk.red('[CRITICAL]') : '';
-      
-      console.log(`${status} ${result.name} ${duration} ${critical}`);
-      
-      if (!result.success && result.error) {
-        console.log(chalk.red(`   └─ ${result.error.split('\n')[0]}`));
-      }
-    });
-
-    // Performance metrics
-    console.log(chalk.blue('\n⚡ Performance Metrics:'));
-    const performanceResult = this.results.find(r => r.name === 'Performance Tests');
-    if (performanceResult?.success) {
-      console.log(chalk.green('✅ All performance thresholds met'));
-    } else if (performanceResult) {
-      console.log(chalk.yellow('⚠️  Some performance thresholds not met'));
-    }
-
-    // Accessibility metrics
-    const accessibilityResult = this.results.find(r => r.name === 'Accessibility Tests');
-    if (accessibilityResult?.success) {
-      console.log(chalk.green('✅ All accessibility requirements met'));
-    } else if (accessibilityResult) {
-      console.log(chalk.red('❌ Accessibility violations found'));
-    }
-
-    // Load test metrics
-    const loadResult = this.results.find(r => r.name === 'Load Tests');
-    if (loadResult?.success) {
-      console.log(chalk.green('✅ System handles expected load'));
-    } else if (loadResult) {
-      console.log(chalk.yellow('⚠️  Load test thresholds not met'));
-    }
-  }
-
-  private isCritical(suiteName: string): boolean {
-    const suite = testSuites.find(s => s.name === suiteName);
-    return suite?.critical ?? false;
-  }
-
-  private exitWithCode(): void {
-    const criticalFailures = this.results.filter(r => !r.success && this.isCritical(r.name)).length;
-    
-    if (criticalFailures > 0) {
-      console.log(chalk.red.bold(`\n💥 ${criticalFailures} critical test suite(s) failed. Build should not proceed.`));
-      process.exit(1);
-    } else {
-      const nonCriticalFailures = this.results.filter(r => !r.success && !this.isCritical(r.name)).length;
-      if (nonCriticalFailures > 0) {
-        console.log(chalk.yellow.bold(`\n⚠️  ${nonCriticalFailures} non-critical test suite(s) failed. Build can proceed with warnings.`));
-      } else {
-        console.log(chalk.green.bold('\n🎉 All test suites passed successfully!'));
-      }
-      process.exit(0);
-    }
-  }
-}
-
-// Quality gates
-class QualityGates {
-  static checkCoverage(): boolean {
-    try {
-      execSync('vitest run --coverage --reporter=json > coverage-report.json', { stdio: 'pipe' });
-      // Parse coverage report and check thresholds
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  static checkPerformance(): boolean {
-    // Performance thresholds are checked within the performance tests
-    return true;
-  }
-
-  static checkAccessibility(): boolean {
-    // Accessibility checks are performed in the accessibility tests
-    return true;
-  }
-
-  static checkSecurity(): boolean {
-    try {
-      execSync('npm audit --audit-level=high', { stdio: 'pipe' });
-      return true;
-    } catch {
-      console.log(chalk.yellow('⚠️  Security vulnerabilities found in dependencies'));
-      return false;
-    }
-  }
-}
-
-// Main execution
-async function main() {
-  const runner = new TestRunner();
-  
-  // Pre-flight checks
-  console.log(chalk.blue('🔍 Running pre-flight checks...'));
-  
-  const securityCheck = QualityGates.checkSecurity();
-  if (!securityCheck) {
-    console.log(chalk.yellow('⚠️  Security check failed, but continuing with tests...'));
-  }
-  
-  // Run comprehensive tests
-  await runner.runAllTests();
-}
-
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  console.error(chalk.red.bold('💥 Uncaught Exception:'), error);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason) => {
-  console.error(chalk.red.bold('💥 Unhandled Rejection:'), reason);
-  process.exit(1);
-});
-
-// Run if called directly
-if (require.main === module) {
-  main().catch((error) => {
-    console.error(chalk.red.bold('💥 Test runner failed:'), error);
-    process.exit(1);
   });
+  return { results, exitCode: results.some(result => result.exitCode !== 0) ? 1 : 0 };
 }
 
-export { TestRunner, QualityGates };
+export function main(args = process.argv.slice(2)): number {
+  if (args.some(arg => arg !== '--browser')) {
+    console.error('Usage: tsx scripts/run-comprehensive-tests.ts [--browser]');
+    return 1;
+  }
+  const browser = args.includes('--browser');
+  if (browser && !process.env.TEST_BASE_URL) {
+    console.error('Browser smoke NOT RUN: explicitly set TEST_BASE_URL to the authorized test deployment.');
+    return 1;
+  }
+  const report = runChecks(createChecks(browser), check => {
+    console.log(`\nRunning ${check.name}`);
+    return spawnSync(process.execPath, [path.resolve(check.file), ...check.args], {
+      stdio: 'inherit', shell: false, timeout: browser ? 600_000 : 300_000,
+      env: { ...process.env, CI: 'true', NEXT_TELEMETRY_DISABLED: '1' },
+    });
+  });
+  for (const result of report.results) console.log(`${result.exitCode === 0 ? 'PASS' : 'FAIL'}: ${result.name}${result.error ? `: ${result.error}` : ''}`);
+  if (!browser) console.log('Browser smoke NOT RUN. Real OAuth sessions, membership discounts and checkout transactions are not certified by this command.');
+  else console.log('Browser scope is guest server-rendered pages only; no real account, member entitlement, interactive cart or checkout certification.');
+  return report.exitCode;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = main();
