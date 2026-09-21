@@ -51,22 +51,19 @@ jobs:
         run: |
           python - <<'PY'
           import hashlib,json,pathlib,subprocess
-          m=json.loads(pathlib.Path('../evidence/manifest.json').read_text())
-          seen=set()
+          m=json.loads(pathlib.Path('../evidence/manifest.json').read_text());seen=set()
           for item in m['files']:
-            p=pathlib.Path(item['path']); assert not p.is_absolute() and '..' not in p.parts and str(p) not in seen;seen.add(str(p))
+            p=pathlib.Path(item['path']);assert not p.is_absolute() and '..' not in p.parts and str(p) not in seen;seen.add(str(p))
             original=p.read_bytes() if p.exists() else None
             assert (hashlib.sha256(original).hexdigest() if original is not None else None)==item['before'],str(p)
-            lines=(original.decode() if original is not None else '').splitlines(keepends=True)
-            last=len(lines)
+            lines=(original.decode() if original is not None else '').splitlines(keepends=True);last=len(lines)
             for e in reversed(item['edits']):
               assert 0<=e['start']<=e['end']<=last
               lines[e['start']:e['end']]=[e['text']];last=e['start']
             content=''.join(lines).encode();assert hashlib.sha256(content).hexdigest()==item['after'],str(p)
             p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(content)
             if original is None:subprocess.run(['git','add','-N',str(p)],check=True)
-          changed=set(subprocess.check_output(['git','diff','--name-only']).decode().splitlines())
-          assert changed==seen
+          assert set(subprocess.check_output(['git','diff','--name-only']).decode().splitlines())==seen
           assert not subprocess.check_output(['git','diff','--name-only','--diff-filter=D']).strip()
           assert all(p not in seen for p in ['package.json','pnpm-lock.yaml','eslint.config.mjs','tsconfig.json','vitest.config.ts','vitest.setup.ts','playwright.config.ts','messages/en.json','messages/ar.json'])
           subprocess.run(['git','diff','--check'],check=True)
@@ -94,10 +91,10 @@ jobs:
       - name: Type-check candidate under unchanged compiler policy
         working-directory: source
         run: node node_modules/typescript/bin/tsc --noEmit --incremental false > ../evidence/typecheck.log 2>&1
-      - name: Block external requests during isolated tests
+      - name: Prepare external-request isolation outside application discovery
         working-directory: source
         run: |
-          cat > .no-network.cjs <<'JS'
+          cat > ../no-network.cjs <<'JS'
           const fail=()=>{throw new Error('ISOLATED_TEST_EXTERNAL_NETWORK_BLOCKED');};
           for(const name of ['node:http','node:https']){const m=require(name);m.request=fail;m.get=fail;}
           const net=require('node:net'),original=net.Socket.prototype.connect;
@@ -107,7 +104,7 @@ jobs:
       - name: Run unfiltered default test discovery on complete candidate
         working-directory: source
         run: |
-          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
           node node_modules/vitest/vitest.mjs run --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/full.json > ../evidence/full.log 2>&1
           node <<'JS'
           const fs=require('node:fs'),a=require('node:assert/strict'),r=JSON.parse(fs.readFileSync('../evidence/full.json','utf8'));
@@ -117,7 +114,7 @@ jobs:
       - name: Repeat every modified test and new real Hook suite in randomized order
         working-directory: source
         run: |
-          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
           node <<'JS'
           const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict');
           const tests=JSON.parse(fs.readFileSync('../evidence/manifest.json','utf8')).files.map(x=>x.path).filter(x=>x.startsWith('__tests__/'));
@@ -127,7 +124,7 @@ jobs:
       - name: Reproduce Hook-order failure on original source then restore exact candidate
         working-directory: source
         run: |
-          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
           node <<'JS'
           const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict'),crypto=require('node:crypto');
           const p='lib/hooks/use-magnetic-cursor.ts',candidate=fs.readFileSync(p);
@@ -135,7 +132,7 @@ jobs:
             fs.writeFileSync(p,cp.execFileSync('git',['show','HEAD:'+p]));
             const out=fs.openSync('../evidence/hook-original.log','w');const r=cp.spawnSync(process.execPath,['node_modules/vitest/vitest.mjs','run','__tests__/hooks/magnetic-cursor.test.tsx','--reporter=json','--outputFile=../evidence/hook-original.json'],{stdio:['ignore',out,out]});fs.closeSync(out);
             const j=JSON.parse(fs.readFileSync('../evidence/hook-original.json','utf8'));assert.equal(r.status,1);assert.equal(j.numTotalTests,6);assert.equal(j.numFailedTests,2);assert.equal(j.numPassedTests,4);assert.equal(j.numPendingTests,0);
-            const failures=j.testResults.flatMap(f=>f.assertionResults).filter(x=>x.status==='failed');assert.ok(failures.every(x=>x.fullName.includes('toggle scaling')));
+            assert.ok(j.testResults.flatMap(f=>f.assertionResults).filter(x=>x.status==='failed').every(x=>x.fullName.includes('toggle scaling')));
             console.log('EXPECTED CONTROL: 4 pass / 2 Hook-order failures on unchanged original');
           }finally{fs.writeFileSync(p,candidate);}
           const m=JSON.parse(fs.readFileSync('../evidence/manifest.json','utf8'));for(const x of m.files)assert.equal(crypto.createHash('sha256').update(fs.readFileSync(x.path)).digest('hex'),x.after);
