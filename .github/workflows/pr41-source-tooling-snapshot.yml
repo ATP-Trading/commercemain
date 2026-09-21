@@ -1,0 +1,43 @@
+name: PR41 pinned source and isolated tooling snapshot
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr41-source-tooling-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable public candidate without merchant credentials
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --depth=1 origin a5933d5da8ee23689746087427250c4760eb544c
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = a5933d5da8ee23689746087427250c4760eb544c
+          mkdir -p ../evidence
+          git ls-files -z | tar --null -T - --exclude='public/*' --exclude='atp.json' --exclude='*.ttf' --exclude='*.woff*' --exclude='*.otf' -czf ../evidence/source.tgz
+          git ls-tree -r HEAD > ../evidence/source-tree.txt
+      - name: Install unchanged frozen dependency lock without scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Package verification tools only, no settings or credentials
+        working-directory: source
+        run: |
+          tar --exclude='*.ttf' --exclude='*.woff*' --exclude='*.otf' --exclude='*.eot' --exclude='node_modules/.pnpm/@next+swc-*' --exclude='node_modules/.pnpm/@img+sharp-*' -czf ../evidence/locked-tools.tgz node_modules
+          sha256sum ../evidence/*.tgz > ../evidence/SHA256SUMS
+      - name: Export ephemeral verification input
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr41-pinned-verification-input
+          path: evidence/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
