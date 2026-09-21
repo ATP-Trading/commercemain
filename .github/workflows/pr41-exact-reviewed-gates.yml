@@ -1,0 +1,211 @@
+name: PR41 exact reviewed gates and test type safety
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr41-exact-reviewed-gates.yml]
+permissions:
+  contents: read
+env:
+  CI: true
+  NEXT_TELEMETRY_DISABLED: 1
+  CANDIDATE: a34f15dd6717e3c67b68fd652ccb70a3b0a485d5
+  PREVIOUS: 4e0d475acc3a911446e9a99e17641e0f05bf9abc
+  BASE: a5933d5da8ee23689746087427250c4760eb544c
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: source
+    steps:
+      - name: Fetch exact source including original public assets
+        working-directory: .
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-tags origin refs/heads/fix/lint-contracts-and-magnetic-hook
+          git checkout --detach "$CANDIDATE"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+          mkdir ../evidence
+      - name: Install unchanged frozen dependencies without lifecycle scripts
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Assert exact scope and emitted-code boundary
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict'),ts=require('typescript');
+          const git=(...args)=>cp.execFileSync('git',args,{encoding:'utf8',maxBuffer:32*1024*1024});
+          const base=process.env.BASE,previous=process.env.PREVIOUS;
+          const changed=git('diff','--no-renames','--name-only',base,'HEAD').trim().split('\n');
+          const expected=['__tests__/analytics/ga4.test.ts','__tests__/analytics/meta.test.ts','__tests__/analytics/promotion-banner.test.tsx','__tests__/auth/callback-state.test.ts','__tests__/auth/signup-form.test.tsx','__tests__/cart/account-ui.test.tsx','__tests__/cart/membership-account-link.test.tsx','__tests__/cart/membership-cart-purchase.test.ts','__tests__/cart/profile-form.test.tsx','__tests__/hooks/magnetic-cursor.test.tsx','__tests__/rtl/mobile-menu-hydration.test.tsx','__tests__/rtl/mobile-menu-route-stability.test.tsx','app/[locale]/product/[handle]/page.tsx','app/[locale]/search/[collection]/collection-results.tsx','app/[locale]/search/search-results.tsx','app/api/search/route.ts','components/layout/navbar/enhanced-search.tsx','components/layout/navbar/mobile-menu.tsx','components/layout/search/collections-client.tsx','components/layout/search/filter/item.tsx','components/product/product-description-accordion.tsx','components/product/tabby-promo.tsx','components/product/tamara-widget.tsx','components/ui/magnetic-button.tsx','components/ui/textarea.tsx','lib/hooks/use-magnetic-cursor.ts','lib/shopify/i18n-queries.ts','lib/types/browser-analytics.d.ts','lib/types/membership.ts','src/i18n/request.ts'];
+          assert.deepEqual(changed.sort(),expected.sort());
+          assert.equal(git('diff','--no-renames','--diff-filter=D','--name-only',base,'HEAD').trim(),'');
+          assert.deepEqual(git('diff','--name-only',previous,'HEAD').trim().split('\n'),['__tests__/analytics/ga4.test.ts']);
+          for(const f of ['package.json','pnpm-lock.yaml','tsconfig.json','vitest.config.ts','vitest.setup.ts','eslint.config.mjs','playwright.config.ts'])assert.equal(git('show',base+':'+f),fs.readFileSync(f,'utf8'));
+          const emitted=[];
+          for(const file of changed.filter(f=>!f.startsWith('__tests__/')&&!f.endsWith('.d.ts'))){
+            const options={fileName:file,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX,removeComments:true}};
+            const before=ts.transpileModule(git('show',base+':'+file),options).outputText;
+            const after=ts.transpileModule(fs.readFileSync(file,'utf8'),options).outputText;
+            emitted.push({file,identical:before===after});
+          }
+          assert.deepEqual(emitted.filter(x=>!x.identical).map(x=>x.file).sort(),['components/product/product-description-accordion.tsx','lib/hooks/use-magnetic-cursor.ts']);
+          const testFiles=changed.filter(f=>f.includes('.test.'));
+          assert.equal(testFiles.length,12);
+          fs.writeFileSync('../evidence/changed-test-files.json',JSON.stringify(testFiles));
+          fs.writeFileSync('../evidence/boundary.json',JSON.stringify({candidate:process.env.CANDIDATE,base,previous,changed,emitted,noDeletions:true,policyAndDependenciesUnchanged:true,onlySupplementaryChange:'GA4 test optional dataLayer with explicit initialization guard'},null,2));
+          console.log('30-path boundary, unchanged policy, and emitted JavaScript checks passed.');
+          JS
+          git diff --check "$BASE" HEAD
+      - name: Block external requests outside the lint and test discovery tree
+        run: |
+          cat > ../no-network.cjs <<'JS'
+          const blocked=()=>{throw new Error('External network is forbidden in isolated verification')};
+          global.fetch=blocked;
+          for(const name of ['node:http','node:https']){const mod=require(name);mod.request=blocked;mod.get=blocked;}
+          const net=require('node:net'),connect=net.Socket.prototype.connect;
+          net.Socket.prototype.connect=function(...args){
+            const arg=Array.isArray(args[0])?args[0][0]:args[0];
+            const host=arg&&typeof arg==='object'?arg.host:typeof args[1]==='string'?args[1]:undefined;
+            const socketPath=typeof arg==='string'?arg:arg?.path;
+            if(socketPath||host==='127.0.0.1'||host==='::1'||host==='localhost')return connect.apply(this,args);
+            return blocked();
+          };
+          JS
+      - name: Check application and all twelve changed test files without weakening tsconfig
+        run: |
+          set -eu
+          ./node_modules/.bin/tsc --noEmit --incremental false >../evidence/typecheck-app.log 2>&1
+          node <<'JS'
+          const fs=require('node:fs'),ts=require('typescript');
+          const raw=ts.readConfigFile('tsconfig.json',ts.sys.readFile);if(raw.error)throw Error('Cannot parse tsconfig');
+          const parsed=ts.parseJsonConfigFileContent(raw.config,ts.sys,process.cwd());
+          const tests=JSON.parse(fs.readFileSync('../evidence/changed-test-files.json'));
+          fs.writeFileSync('.verification-tests.json',JSON.stringify({extends:'./tsconfig.json',compilerOptions:{types:['vitest/globals','@testing-library/jest-dom/vitest','next']},files:[...new Set([...parsed.fileNames,...tests,'node_modules/next/types/global.d.ts'])],include:[],exclude:[]}));
+          JS
+          trap 'git checkout -- __tests__/analytics/ga4.test.ts; rm -f .verification-tests.json' EXIT
+          ./node_modules/.bin/tsc -p .verification-tests.json --noEmit --incremental false >../evidence/typecheck-changed-tests.log 2>&1
+          git show "$PREVIOUS":__tests__/analytics/ga4.test.ts > __tests__/analytics/ga4.test.ts
+          set +e
+          ./node_modules/.bin/tsc -p .verification-tests.json --noEmit --incremental false >../evidence/typecheck-pr41-before-ga4-fixture.log 2>&1
+          code=$?
+          set -e
+          test "$code" -ne 0
+          python3 - <<'PY'
+          import pathlib,re,json
+          s=pathlib.Path('../evidence/typecheck-pr41-before-ga4-fixture.log').read_text()
+          failures=re.findall(r'^(.+?)\(\d+,\d+\): error (TS\d+):',s,re.M)
+          assert failures==[('__tests__/analytics/ga4.test.ts','TS2352')]*2,failures
+          pathlib.Path('../evidence/supplementary-typecheck.json').write_text(json.dumps({'candidateApplication':'pass','candidateChangedTests':'pass','previousFixtureErrors':len(failures),'scope':'default TypeScript application program plus the twelve changed tests'}))
+          PY
+          git checkout -- __tests__/analytics/ga4.test.ts
+          rm .verification-tests.json
+          trap - EXIT
+          test -z "$(git diff --name-only)"
+      - name: Execute entire default Vitest discovery on the exact candidate
+        run: |
+          export NODE_OPTIONS="--require=$(realpath ../no-network.cjs)"
+          ./node_modules/.bin/vitest run --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/full.json >../evidence/full.log 2>&1
+      - name: Randomized repeat of every changed test suite
+        run: |
+          export NODE_OPTIONS="--require=$(realpath ../no-network.cjs)"
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process');
+          const tests=JSON.parse(fs.readFileSync('../evidence/changed-test-files.json'));
+          const output=fs.openSync('../evidence/shuffled.log','w');
+          const r=cp.spawnSync('./node_modules/.bin/vitest',['run',...tests,'--sequence.shuffle','--sequence.seed=4102','--maxWorkers=2','--no-file-parallelism','--reporter=json','--outputFile=../evidence/shuffled.json'],{stdio:['ignore',output,output],env:process.env});
+          fs.closeSync(output);if(r.error)throw r.error;process.exit(r.status??1);
+          JS
+      - name: Reproduce Hook-order failures on the original Hook and restore exact candidate
+        run: |
+          set -eu
+          export NODE_OPTIONS="--require=$(realpath ../no-network.cjs)"
+          trap 'git checkout -- lib/hooks/use-magnetic-cursor.ts' EXIT
+          git show "$BASE":lib/hooks/use-magnetic-cursor.ts > lib/hooks/use-magnetic-cursor.ts
+          set +e
+          ./node_modules/.bin/vitest run __tests__/hooks/magnetic-cursor.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/hook-original.json >../evidence/hook-original.log 2>&1
+          code=$?
+          set -e
+          test "$code" -ne 0
+          git checkout -- lib/hooks/use-magnetic-cursor.ts
+          trap - EXIT
+          test -z "$(git diff --name-only)"
+          python3 - <<'PY'
+          import json,pathlib
+          r=pathlib.Path('../evidence')
+          f=json.loads((r/'full.json').read_text());s=json.loads((r/'shuffled.json').read_text());b=json.loads((r/'hook-original.json').read_text())
+          assert (f['numTotalTests'],f['numPassedTests'],f['numFailedTests'],f['numPendingTests'])==(538,538,0,0)
+          assert len(f['testResults'])==68
+          assert all(x['status']=='passed' for x in f['testResults'])
+          assert (s['numTotalTests'],s['numPassedTests'],s['numFailedTests'],s['numPendingTests'])==(62,62,0,0)
+          assert len(s['testResults'])==12
+          assert (b['numPassedTests'],b['numFailedTests'])==(4,2)
+          errors=[a for t in b['testResults'] for a in t['assertionResults'] if a['status']=='failed']
+          assert all(any('hook' in msg.lower() for msg in a.get('failureMessages',[])) for a in errors)
+          (r/'summary.json').write_text(json.dumps({'candidate':'a34f15dd6717e3c67b68fd652ccb70a3b0a485d5','full':{'files':68,'passed':538,'failed':0,'pending':0},'randomizedSubset':{'files':12,'passed':62,'failed':0},'originalHookControl':{'passed':4,'expectedFailed':2},'browser':'not run','merchantRequests':'blocked'},indent=2))
+          PY
+      - name: Preserve results regardless of outcome
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr41-exact-reviewed-tests
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Fetch exact baseline and candidate
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-tags origin refs/heads/fix/lint-contracts-and-magnetic-hook
+          git checkout --detach "$BASE"
+          mkdir ../evidence
+      - name: Install unchanged locked tools
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Compare the same lint policy and preserve its real failure status
+        working-directory: source
+        run: |
+          set +e
+          npm run lint -- --format=json --output-file=../evidence/lint-before.json >../evidence/lint-before.log 2>&1
+          before=$?
+          git checkout --detach "$CANDIDATE"
+          checkout=$?
+          if [ "$checkout" -ne 0 ]; then exit "$checkout"; fi
+          npm run lint -- --format=json --output-file=../evidence/lint-after.json >../evidence/lint-after.log 2>&1
+          after=$?
+          printf '%s\n' "$before" >../evidence/lint-before-exit.txt
+          printf '%s\n' "$after" >../evidence/lint-after-exit.txt
+          python3 - <<'PY'
+          import json,pathlib,collections
+          root=pathlib.Path('../evidence')
+          a=json.loads((root/'lint-before.json').read_text());b=json.loads((root/'lint-after.json').read_text())
+          def rows(data):
+            return collections.Counter((f['filePath'].split('/source/',1)[-1],m.get('line'),m.get('column'),m.get('ruleId'),m['message']) for f in data for m in f['messages'] if m['severity']==2)
+          def totals(data):return {'files':len(data),'errors':sum(x['errorCount'] for x in data),'warnings':sum(x['warningCount'] for x in data)}
+          ta,tb=totals(a),totals(b)
+          new=rows(b)-rows(a)
+          assert ta=={'files':497,'errors':132,'warnings':216},ta
+          assert tb=={'files':498,'errors':76,'warnings':215},tb
+          assert not new,list(new)
+          report={'candidate':'a34f15dd6717e3c67b68fd652ccb70a3b0a485d5','before':ta,'after':tb,'fixedErrors':56,'newErrors':0,'remainingErrorFiles':sorted(set(x[0] for x in rows(b))),'gate':'FAIL: remaining source findings; no rule suppression'}
+          (root/'lint-summary.json').write_text(json.dumps(report,indent=2));print(json.dumps(report,indent=2))
+          PY
+          proof=$?
+          if [ "$proof" -ne 0 ]; then exit "$proof"; fi
+          exit "$after"
+      - name: Preserve failing lint gate without declaring green CI
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr41-exact-reviewed-lint
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
