@@ -11,10 +11,14 @@ const { createStorefrontApiClient } = require('@shopify/storefront-api-client');
 require('dotenv').config({ path: '.env.local' });
 
 const config = {
-  domain: process.env.SHOPIFY_STORE_DOMAIN || 'hydrogen-preview.myshopify.com',
-  accessToken: process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || '3b580e70970c4528da70c98e097c2fa0',
+  domain: process.env.SHOPIFY_STORE_DOMAIN,
+  accessToken: process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN,
   apiVersion: process.env.SHOPIFY_API_VERSION || '2026-01',
 };
+
+if (!config.domain || !config.accessToken) {
+  throw new Error('SHOPIFY_STORE_DOMAIN and SHOPIFY_STOREFRONT_ACCESS_TOKEN are required');
+}
 
 async function testShopifyConnection() {
   console.log('🧪 Testing Shopify Connection...\n');
