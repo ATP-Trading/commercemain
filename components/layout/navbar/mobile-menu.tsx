@@ -34,12 +34,20 @@ interface MobileMenuProps {
 export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  // Compare URL content, not object identity: same-URL refreshes must not close the menu.
+  const searchQuery = searchParams.toString()
   const t = useTranslations('navbar')
   const locale = useLocale()
   const isRTL = locale === 'ar'
   const language = locale
   const { customer, logout } = useCustomerOAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Do not accept clicks before the client has attached the menu handlers.
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   const openMobileMenu = () => setIsOpen(true)
   const closeMobileMenu = () => setIsOpen(false)
 
@@ -246,11 +254,12 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
 
   useEffect(() => {
     setIsOpen(false)
-  }, [pathname, searchParams])
+  }, [pathname, searchQuery])
 
   return (
     <div className={isRTL ? "font-arabic" : ""}>
       <button
+        disabled={!isHydrated}
         onClick={openMobileMenu}
         aria-label={t('openMenu')}
         className="flex h-11 w-11 items-center justify-center rounded-md border border-gray-600 bg-transparent text-white hover:bg-gray-800 hover:border-yellow-400 transition-all duration-300 lg:hidden touch-target"
