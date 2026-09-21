@@ -1,4 +1,4 @@
-name: PR32 legacy auth retirement validation
+name: Legacy customer API dependency audit
 
 on:
   push:
@@ -9,14 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  audit:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch immutable application source and review tests
+      - name: Fetch immutable PR32 source without merchant credentials
         run: |
           set -eu
           git init source
@@ -24,93 +24,64 @@ jobs:
           git config gc.auto 0
           git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-password-auth-hook
-          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-password-auth-hook
           git checkout --detach 16a33a143c76e9f74629d115cb0eed2b4f8b9914
           test "$(git rev-parse HEAD)" = 16a33a143c76e9f74629d115cb0eed2b4f8b9914
-          node <<'JS'
-          const {execFileSync} = require('node:child_process');
-          const assert = require('node:assert/strict');
-          const base = 'b54d62c44e4f660c57f1636a16259d28132cbdb3';
-          const list = args => execFileSync('git',args,{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD']),['__tests__/auth/legacy-auth-retirement.test.ts','hooks/use-customer.ts','lib/auth-utils.ts'].sort());
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=D',base,'HEAD']),['hooks/use-customer.ts','lib/auth-utils.ts'].sort());
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD','--','app','components','src','package.json','pnpm-lock.yaml','next.config.ts','tsconfig.json']),[]);
-          console.log('PASS: two obsolete modules removed, one test added, active routes/components/settings unchanged.');
-          JS
-      - name: Install unchanged locked tooling without lifecycle scripts
+      - name: Install unchanged locked audit tooling without lifecycle scripts
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Prepare isolated test process and truthful reports
-        id: prepare
+      - name: Audit complete checkout including import aliases types scripts and ambient declarations
         working-directory: source
         run: |
-          cat > .pr32-no-network.cjs <<'JS'
-          const fail = () => { throw new Error('PR32_TEST_NETWORK_BLOCKED: mock external requests'); };
-          for (const name of ['node:http','node:https']) {
-            const transport = require(name); transport.request = fail; transport.get = fail;
-          }
-          const net = require('node:net'); net.connect = fail; net.createConnection = fail;
-          require('node:tls').connect = fail;
-          globalThis.fetch = async () => fail();
-          JS
-          cat > .pr32-summary.cjs <<'JS'
+          set -o pipefail
+          node <<'JS' | tee legacy-customer-api-audit.json
           const fs = require('node:fs');
-          const file = process.argv[2];
-          if (!fs.existsSync(file)) { console.error('RESULT_FILE_MISSING',file); process.exit(1); }
-          const r = JSON.parse(fs.readFileSync(file,'utf8'));
-          console.log(JSON.stringify({report:file,success:r.success,files:r.testResults.length,
-            tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,
-            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1400),
-              assertions:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,errors:a.failureMessages.map(m=>m.slice(0,1400))}))}))},null,2));
+          const path = require('node:path');
+          const {execFileSync} = require('node:child_process');
+          const ts = require('typescript');
+          const root = process.cwd();
+          const targets = ['lib/shopify/customer-account.ts','lib/shopify/customer-account-server.ts'];
+          const absoluteTargets = new Set(targets.map(f=>path.resolve(f)));
+          const cfg = ts.readConfigFile('tsconfig.json',ts.sys.readFile);
+          if(cfg.error) throw new Error(ts.flattenDiagnosticMessageText(cfg.error.messageText,'\n'));
+          const parsed = ts.parseJsonConfigFileContent(cfg.config,ts.sys,root);
+          if(parsed.errors.length) throw new Error('Invalid project tsconfig');
+          const tracked = execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const files = tracked.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml)$/.test(f)&&!/(?:^|\/)(?:package-lock\.json|pnpm-lock\.yaml)$/.test(f));
+          const symbols = new Set();
+          const declarations = {};
+          for(const file of targets) {
+            const source = ts.createSourceFile(file,fs.readFileSync(file,'utf8'),ts.ScriptTarget.Latest,true);
+            const exported = source.statements.filter(n=>n.modifiers?.some(m=>m.kind===ts.SyntaxKind.ExportKeyword)).flatMap(n=>n.name?[n.name.text]:[]);
+            exported.forEach(name=>symbols.add(name));
+            const ambient=[];
+            function inspect(n) { if(ts.isModuleDeclaration(n)) ambient.push({line:source.getLineAndCharacterOfPosition(n.getStart()).line+1,name:n.name.getText(source)}); ts.forEachChild(n,inspect); }
+            inspect(source);
+            declarations[file] = {lines:source.text.split('\n').length,exports:exported,ambientDeclarations:ambient};
+          }
+          const resolvedReferences=[],textReferences=[],symbolReferences=[],nonLiteralLoaders=[];
+          const cache=ts.createModuleResolutionCache(root,p=>p,parsed.options);
+          for(const file of files) {
+            const text=fs.readFileSync(file,'utf8');
+            if(!targets.includes(file)) text.split('\n').forEach((line,i)=>{
+              if(/\bcustomer-account(?:-server)?(?:\b|\/)/.test(line)&&!/customer-account-oauth|customer-account-api/.test(line)) textReferences.push({file,line:i+1});
+              for(const name of symbols) if(new RegExp('\\b'+name+'\\b').test(line)) symbolReferences.push({file,line:i+1,symbol:name});
+            });
+            if(!/\.[cm]?[jt]sx?$/.test(file)) continue;
+            const source=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);
+            function walk(n) {
+              if(ts.isStringLiteralLike(n)) {
+                const resolved=ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys,cache).resolvedModule;
+                if(resolved&&absoluteTargets.has(path.resolve(resolved.resolvedFileName))) resolvedReferences.push({file,line:source.getLineAndCharacterOfPosition(n.getStart()).line+1,specifier:n.text,target:path.relative(root,resolved.resolvedFileName)});
+              }
+              if(ts.isCallExpression(n)&&(n.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(n.expression)&&n.expression.text==='require'))&&(!n.arguments[0]||!ts.isStringLiteralLike(n.arguments[0]))) nonLiteralLoaders.push({file,line:source.getLineAndCharacterOfPosition(n.getStart()).line+1,expression:n.getText(source).slice(0,180)});
+              ts.forEachChild(n,walk);
+            }
+            walk(source);
+          }
+          console.log(JSON.stringify({source:'16a33a143c76e9f74629d115cb0eed2b4f8b9914',trackedFiles:tracked.length,scannedTextFiles:files.length,declarations,resolvedReferences,textReferences,symbolReferences,nonLiteralLoaders,scope:'Static source audit only; no application, customer, auth, Shopify or payment functions executed.'},null,2));
           JS
-      - name: Run auth cart analytics RTL and navigation regressions including retirement checks
+      - name: Record auditable result
         working-directory: source
         run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr32-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr32-results.json >pr32-validation.log 2>&1
-          result=$?
-          node .pr32-summary.cjs pr32-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr32-validation.log; fi
-          exit "$result"
-      - name: Repeat retirement tests with shuffled execution order
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr32-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth/legacy-auth-retirement.test.ts --sequence.shuffle --sequence.seed=3201 --reporter=json --outputFile=pr32-shuffled-results.json >pr32-shuffled.log 2>&1
-          result=$?
-          node .pr32-summary.cjs pr32-shuffled-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr32-shuffled.log; fi
-          exit "$result"
-      - name: Recheck actual EN AR login and mobile-menu interactions
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set -eu
-          mkdir -p __tests__/review
-          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr32-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr32-ui-results.json >pr32-ui.log 2>&1
-          result=$?
-          node .pr32-summary.cjs pr32-ui-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr32-ui.log; fi
-          exit "$result"
-      - name: Record scope and results without suppressing failed checks
-        if: always()
-        working-directory: source
-        run: |
-          {
-            echo '## PR32 legacy-auth retirement validation'
-            echo 'Exact source: 16a33a143c76e9f74629d115cb0eed2b4f8b9914; parent: PR31 b54d62c.'
-            echo 'No Shopify or Vercel secrets, customer changes, orders, merges or Production deployment.'
-            echo 'These are isolated actual-source tests, not a deployed-preview browser or real OAuth checkout session.'
-            for report in pr32-results.json pr32-shuffled-results.json pr32-ui-results.json; do
-              echo '```json'
-              if [ -f "$report" ]; then node .pr32-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
-              echo '```'
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          { echo '## Legacy customer API dependency audit'; echo '```json'; cat legacy-customer-api-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
