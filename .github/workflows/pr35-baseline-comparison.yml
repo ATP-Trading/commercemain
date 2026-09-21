@@ -1,0 +1,73 @@
+name: PR35 baseline comparison for expanded test findings
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr35-baseline-comparison.yml]
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: production-source
+            sha: 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e
+          - label: pr34-parent
+            sha: 0d71a61ba3626faed096911d15bdda90432f49a8
+          - label: pr35-candidate
+            sha: 060397c03cdac89614b4ddd9f0569beff83c7aeb
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      SOURCE_SHA: ${{ matrix.sha }}
+      SOURCE_LABEL: ${{ matrix.label }}
+    steps:
+      - name: Check out immutable source without merchant credentials
+        run: |
+          set -eu
+          git init source
+          cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-lingui-runtime
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test -z "$(git diff --name-only 060397c03cdac89614b4ddd9f0569beff83c7aeb HEAD -- __tests__/seo/member-cart-operations.test.ts __tests__/seo/release-security.test.ts components/cart/actions.ts app/api/cron/membership)"
+      - name: Install identical locked test tooling without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Execute the same two test files without external network
+        working-directory: source
+        run: |
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('BASELINE_TEST_NETWORK_BLOCKED');};
+          for(const name of ['node:http','node:https']){const t=require(name);t.request=fail;t.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/seo/member-cart-operations.test.ts __tests__/seo/release-security.test.ts --maxWorkers=2 --no-file-parallelism --sequence.shuffle --sequence.seed=3515 --reporter=json --outputFile=comparison-results.json >comparison.log 2>&1
+          result=$?
+          node <<'JS'
+          const fs=require('node:fs');
+          if(!fs.existsSync('comparison-results.json'))process.exit(1);
+          const r=JSON.parse(fs.readFileSync('comparison-results.json','utf8'));
+          const s={source:process.env.SOURCE_SHA,label:process.env.SOURCE_LABEL,success:r.success,files:r.testResults.length,tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),assertions:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,errors:a.failureMessages}))}))};
+          fs.writeFileSync('comparison-summary.json',JSON.stringify(s,null,2));console.log(JSON.stringify(s,null,2));
+          JS
+          exit "$result"
+      - name: Preserve actual pass and fail evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr35-comparison-${{ matrix.label }}
+          path: |
+            source/comparison-summary.json
+            source/comparison-results.json
+            source/comparison.log
+          retention-days: 1
+          if-no-files-found: error
