@@ -1,0 +1,76 @@
+name: PR30 isolated validation
+
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr30-isolated-validation.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch the exact reviewed revision, not a moving branch
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --depth=1 origin 7a7ce61d044fb9909a363c2c8783d45685770a68
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = 7a7ce61d044fb9909a363c2c8783d45685770a68
+          node --version
+          npm --version
+      - name: Install locked dependencies without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
+      - name: Block external network access during tests
+        working-directory: source
+        run: |
+          cat > .pr30-no-network.cjs <<'JS'
+          // The test process has no Shopify/Vercel credentials. Any unmocked
+          // HTTP request fails rather than touching a real customer or order.
+          const fail = () => { throw new Error('PR30_TEST_NETWORK_BLOCKED: mock network requests in isolated tests'); };
+          for (const name of ['node:http', 'node:https']) {
+            const transport = require(name);
+            transport.request = fail;
+            transport.get = fail;
+          }
+          const net = require('node:net');
+          net.connect = fail;
+          net.createConnection = fail;
+          const tls = require('node:tls');
+          tls.connect = fail;
+          globalThis.fetch = async () => fail();
+          JS
+      - name: Run auth, cart, membership, analytics and RTL regression suites
+        working-directory: source
+        run: |
+          set -o pipefail
+          export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
+          ./node_modules/.bin/vitest run \
+            __tests__/auth \
+            __tests__/cart \
+            __tests__/analytics \
+            __tests__/rtl \
+            __tests__/seo/navigation-url.test.ts \
+            --maxWorkers=2 --no-file-parallelism --reporter=verbose \
+            2>&1 | tee pr30-validation.log
+      - name: Record verification scope
+        if: always()
+        run: |
+          {
+            echo '## PR30 isolated validation'
+            echo 'Target commit: 7a7ce61d044fb9909a363c2c8783d45685770a68'
+            echo 'No production deployment, protected-preview access, Shopify credentials or purchases.'
+            echo 'These are repository regression tests with mocked network, not a live-store browser test.'
+            echo '```text'
+            tail -n 80 source/pr30-validation.log 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
