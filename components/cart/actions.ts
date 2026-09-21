@@ -237,15 +237,9 @@ export async function createCartAndSetCookie() {
 export async function addToCartOptimistic(
   merchandiseId: string,
   quantity: number = 1,
-  customerId?: string
+  _customerId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // The membership action owns the mutation as well as benefit calculation.
-    if (customerId) {
-      const { addToCartWithMembership } = await import('./membership-cart-actions')
-      const result = await addToCartWithMembership(merchandiseId, quantity, customerId)
-      return { success: result.success, ...(result.error ? { error: result.error } : {}) }
-    }
     await addToCart([{ merchandiseId, quantity }])
     updateTag(TAGS.cart)
 
@@ -259,14 +253,9 @@ export async function addToCartOptimistic(
 
 export async function removeFromCartOptimistic(
   lineId: string,
-  customerId?: string
+  _customerId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (customerId) {
-      const { removeFromCartWithMembership } = await import('./membership-cart-actions')
-      const result = await removeFromCartWithMembership(lineId, customerId)
-      return { success: result.success, ...(result.error ? { error: result.error } : {}) }
-    }
     await removeFromCart([lineId])
     updateTag(TAGS.cart)
 
@@ -280,7 +269,7 @@ export async function removeFromCartOptimistic(
 export async function updateCartQuantityOptimistic(
   lineId: string,
   quantity: number,
-  customerId?: string,
+  _customerId?: string,
   merchandiseId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -311,12 +300,6 @@ export async function updateCartQuantityOptimistic(
 
     if (!actualLineId || !actualMerchandiseId) {
       return { success: false, error: 'Invalid cart item data' }
-    }
-
-    if (customerId) {
-      const { updateCartQuantityWithMembership } = await import('./membership-cart-actions')
-      const result = await updateCartQuantityWithMembership(actualLineId, actualMerchandiseId, quantity, customerId)
-      return { success: result.success, ...(result.error ? { error: result.error } : {}) }
     }
 
     if (quantity === 0) {
