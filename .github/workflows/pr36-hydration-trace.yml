@@ -1,0 +1,103 @@
+name: PR36 observational hydration mismatch trace
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr36-hydration-trace.yml]
+permissions:
+  contents: read
+jobs:
+  trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable candidate and original guest-browser harness
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach a6ec9e5cc380f11f0d367a767529df89a397f74c
+          git show "$GITHUB_SHA:__tests__/review/pr35-deployed-browser.cjs" > .handshake.cjs
+          git show "$GITHUB_SHA:__tests__/review/pr35-browser-confirmation.cjs" > .trace.cjs
+          git archive --format=zip HEAD app components hooks lib src messages types package.json pnpm-lock.yaml next.config.ts tsconfig.json vitest.config.ts vitest.setup.ts > source-snapshot.zip
+      - name: Install unchanged frozen tooling and Chromium
+        working-directory: source
+        run: |
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Prepare observational callback wrapper in browser responses only
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');let s=fs.readFileSync('.trace.cjs','utf8');
+          const replace=(a,b)=>{assert.ok(s.includes(a),'Missing trace anchor: '+a);s=s.replace(a,b);};
+          replace("previewHost='commercemain-8cm9dnt1d-atp-trading.vercel.app'","previewHost='commercemain-7vf3gmf90-atp-trading.vercel.app'");
+          replace('pr35-preview-envelope.json','pr36-trace-envelope.json');
+          replace('emptyGuestCartInitializations:0,screenshots:[]','emptyGuestCartInitializations:0,screenshots:[],hydrationDetails:[],instrumentedChunks:[]');
+          replace('const page=await context.newPage();const actionIds=new Set(),pending=[];',`await context.addInitScript(()=>{window.__ATP_HYDRATION_DETAILS__=[];window.addEventListener('atp-hydration-detail',e=>window.__ATP_HYDRATION_DETAILS__.push(e.detail));});
+          const page=await context.newPage();const actionIds=new Set(),pending=[];`);
+          const hook=`
+            if(u.origin===origin&&u.pathname.includes('/_next/')&&u.pathname.endsWith('.js')){
+              const response=await route.fetch();let body=await response.text();
+              if(body.includes('hydrateRoot')){
+                const sf=ts.createSourceFile('chunk.js',body,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),edits=[];
+                const unwrap=n=>ts.isParenthesizedExpression(n)?unwrap(n.expression):ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.CommaToken?unwrap(n.right):n;
+                function visit(n){
+                  if(ts.isCallExpression(n)){
+                    const expr=unwrap(n.expression);
+                    if(ts.isPropertyAccessExpression(expr)&&expr.name.text==='hydrateRoot'&&n.arguments.length>=3){
+                      const opt=n.arguments[2];
+                      edits.push({start:opt.getStart(sf),end:opt.end,text:'((o)=>({...o,onRecoverableError:(e,i)=>{try{window.dispatchEvent(new CustomEvent("atp-hydration-detail",{detail:{message:String(e&&e.message),componentStack:i&&i.componentStack,path:location.pathname}}))}catch{}if(o&&o.onRecoverableError)return o.onRecoverableError(e,i);if(globalThis.reportError)globalThis.reportError(e);else console.error(e)}}))('+opt.getText(sf)+')'});
+                    }
+                  }
+                  ts.forEachChild(n,visit);
+                }visit(sf);
+                if(edits.length){for(const e of edits.sort((a,b)=>b.start-a.start))body=body.slice(0,e.start)+e.text+body.slice(e.end);result.instrumentedChunks.push({url:clean(req.url()),wrappers:edits.length});}
+              }
+              const headers={...response.headers()};delete headers['content-encoding'];delete headers['content-length'];
+              return route.fulfill({response,headers,body});
+            }
+            return route.continue();
+           });`;
+          replace('  return route.continue();\n });',hook);
+          replace("const check=async(name,fn)=>{try{result.checks.push({name,status:'passed',details:await fn()});}catch(e){result.checks.push({name,status:'failed',error:redact(e.message)});}};",`const check=async(name,fn)=>{try{result.checks.push({name,status:'passed',details:await fn()});}catch(e){result.checks.push({name,status:'failed',error:redact(e.message)});}finally{const items=await page.evaluate(()=>{const a=window.__ATP_HYDRATION_DETAILS__||[];window.__ATP_HYDRATION_DETAILS__=[];return a;}).catch(()=>[]);for(const d of items)result.hydrationDetails.push({check:name,path:d.path,message:redact(d.message),componentStack:redact(d.componentStack)});}};`);
+          replace("for(const locale of ['en','ar']){","for(const [iteration,locale] of Array.from({length:12},(_,i)=>['en','ar'].map(l=>[i,l])).flat()){");
+          replace('`${locale} mobile menu opens, shows guest login and closes`','`${locale} trace cycle ${iteration+1}`');
+          replace("for(const suffix of ['/atp-membership','/product/atp-membership'])","for(const suffix of (iteration===0?['/atp-membership','/product/atp-membership']:[]))");
+          replace("await close.waitFor({state:'visible',timeout:10000});","await close.waitFor({state:'visible',timeout:10000});await page.waitForTimeout(900);assert.ok(await close.isVisible(),'Menu vanished');");
+          replace('const file=`${label}-${locale}-menu.png`;await page.screenshot({path:path.join(out,file)});result.screenshots.push(file);','if(iteration===0){const file=`${label}-${locale}-menu.png`;await page.screenshot({path:path.join(out,file)});result.screenshots.push(file);}');
+          replace('const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);','if(iteration===0){const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);}');
+          replace("scope:'Guest browser confirmation.","scope:'OBSERVATIONAL DIAGNOSTIC, not a release pass: delivered hydrateRoot options are wrapped only to record recoverable-error component stacks; original handlers are delegated unchanged. No repository or deployed application is modified. Guest browser confirmation.");
+          fs.writeFileSync('.trace.cjs',s);
+          JS
+          node --check .trace.cjs
+      - name: Generate ephemeral public handshake
+        working-directory: source
+        run: node .handshake.cjs handshake
+      - name: Upload public key and selected public source snapshot only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-trace-public-input
+          path: |
+            source/preview-public-handshake.json
+            source/source-snapshot.zip
+          retention-days: 1
+          if-no-files-found: error
+      - name: Observe original error callbacks on Preview and unchanged Production
+        working-directory: source
+        run: node .trace.cjs
+      - name: Remove ephemeral private key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pr35-preview-private.pem"
+      - name: Preserve observed results even when errors reproduce
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-hydration-trace-evidence
+          path: source/confirmation-evidence/
+          retention-days: 3
+          if-no-files-found: warn
