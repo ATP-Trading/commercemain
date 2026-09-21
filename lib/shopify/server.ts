@@ -6,7 +6,7 @@ import { getLocale } from 'next-intl/server'
 import { isEmsPromotion } from '@/lib/publication-policy'
 
 import { TAGS } from "@/lib/constants"
-import { isShopifyError } from "@/lib/type-guards"
+import { isObject, isShopifyError } from "@/lib/type-guards"
 import { ensureStartsWith } from "@/lib/utils"
 import { validateEnvironmentVariables } from "@/lib/config"
 import { mockCart, mockCollections, mockProducts, createMockResponse } from "./mock-data"
@@ -166,12 +166,14 @@ export async function shopifyFetch<T>({
       status: result.status,
       body,
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const details = isObject(e) ? e : undefined
+    const message = typeof details?.message === 'string' ? details.message : undefined
     // Enhanced error logging with helpful context
     console.error('[Shopify] Request failed:', {
       endpoint: endpoint.substring(0, 50) + '...',
-      error: e.message,
-      cause: e.cause?.toString(),
+      error: message,
+      cause: details?.cause?.toString(),
       queryType: query.includes('query') ? 'query' : 'mutation',
     })
 
@@ -185,7 +187,7 @@ export async function shopifyFetch<T>({
     }
 
     // Handle network-specific errors with helpful messages
-    if (e.name === 'TypeError' && (e.message.includes('fetch') || e.message.includes('ENOTFOUND'))) {
+    if (details?.name === 'TypeError' && (message?.includes('fetch') || message?.includes('ENOTFOUND'))) {
       console.error('🔧 Network Issue: Unable to connect to Shopify store')
       console.error('💡 Solutions:')
       console.error('   1. Check your internet connection')
@@ -207,7 +209,12 @@ export async function shopifyFetch<T>({
   }
 }
 
-
+/** Mutations of an existing cart must never send a missing session identity. */
+async function requireCartId(): Promise<string> {
+  const cartId = (await cookies()).get('cartId')?.value
+  if (!cartId) throw new Error('No cart found')
+  return cartId
+}
 
 async function preparePurchaseLines(lines: PurchaseLine[]) {
   return prepareMembershipLines(lines, async id => {
@@ -244,7 +251,7 @@ export async function createCart(lines: PurchaseLine[] = []): Promise<Cart> {
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
     variables: { input: { lines: prepared }, language: (await getLocale()) === "ar" ? "AR" : "EN" }
-  } as any)
+  })
   const result = res.body.data.cartCreate
   if (result.userErrors?.length || !result.cart) throw new Error('Unable to create cart')
   const cart = reshapeCart(result.cart)
@@ -272,7 +279,7 @@ export async function addToCart(lines: PurchaseLine[]): Promise<Cart> {
 }
 
 export async function removeFromCart(lineIds: string[]): Promise<Cart> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
   const res = await shopifyFetch<ShopifyRemoveFromCartOperation>({
     query: removeFromCartMutation,
     variables: {
@@ -288,7 +295,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
 export async function updateCart(
   lines: { id: string; merchandiseId: string; quantity: number }[]
 ): Promise<Cart> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
   await validateStock(lines.filter(line => line.quantity !== 0), await getCart(), true)
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
     query: editCartItemsMutation,
@@ -368,8 +375,8 @@ export async function getCart(): Promise<Cart | undefined> {
     id: rawCart.id?.substring(0, 30) + '...',
     totalQuantity: rawCart.totalQuantity,
     lineCount: rawLines.length,
-    linesWithProduct: rawLines.filter((e: any) => e.node?.merchandise?.product?.handle).length,
-    linesWithoutProduct: rawLines.filter((e: any) => !e.node?.merchandise?.product?.handle).length,
+    linesWithProduct: rawLines.filter((e) => e.node?.merchandise?.product?.handle).length,
+    linesWithoutProduct: rawLines.filter((e) => !e.node?.merchandise?.product?.handle).length,
   });
 
   return reshapeCart(res.body.data.cart);
@@ -407,7 +414,7 @@ export type CartOperationResult = {
 export async function addToCartWithWarnings(
   lines: { merchandiseId: string; quantity: number }[]
 ): Promise<CartOperationResult> {
-  let cartId = (await cookies()).get('cartId')?.value;
+  const cartId = (await cookies()).get('cartId')?.value;
 
   // If no cart exists, create one with the items
   if (!cartId) {
@@ -416,6 +423,7 @@ export async function addToCartWithWarnings(
   }
 
   const res = await shopifyFetch<{
+    variables: { cartId: string; lines: { merchandiseId: string; quantity: number }[] };
     data: {
       cartLinesAdd: {
         cart: ShopifyCart;
@@ -426,7 +434,7 @@ export async function addToCartWithWarnings(
   }>({
     query: addToCartWithWarningsMutation,
     variables: { cartId, lines }
-  } as any);
+  });
 
   const { cart, userErrors = [], warnings = [] } = res.body.data.cartLinesAdd;
 
@@ -445,6 +453,7 @@ export async function createCartWithWarnings(
 ): Promise<CartOperationResult> {
   try {
     const res = await shopifyFetch<{
+      variables: { lineItems: { merchandiseId: string; quantity: number }[] };
       data: {
         cartCreate: {
           cart: ShopifyCart;
@@ -455,7 +464,7 @@ export async function createCartWithWarnings(
     }>({
       query: createCartWithWarningsMutation,
       variables: lines?.length ? { lineItems: lines } : undefined
-    } as any);
+    });
 
     const { cart, userErrors = [], warnings = [] } = res.body.data.cartCreate;
 
@@ -486,9 +495,10 @@ export async function createCartWithWarnings(
 export async function updateCartWithWarnings(
   lines: { id: string; merchandiseId: string; quantity: number }[]
 ): Promise<CartOperationResult> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
 
   const res = await shopifyFetch<{
+    variables: { cartId: string; lines: { id: string; merchandiseId: string; quantity: number }[] };
     data: {
       cartLinesUpdate: {
         cart: ShopifyCart;
@@ -499,7 +509,7 @@ export async function updateCartWithWarnings(
   }>({
     query: editCartWithWarningsMutation,
     variables: { cartId, lines }
-  } as any);
+  });
 
   const { cart, userErrors = [], warnings = [] } = res.body.data.cartLinesUpdate;
 
@@ -516,9 +526,10 @@ export async function updateCartWithWarnings(
 export async function removeFromCartWithWarnings(
   lineIds: string[]
 ): Promise<CartOperationResult> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
 
   const res = await shopifyFetch<{
+    variables: { cartId: string; lineIds: string[] };
     data: {
       cartLinesRemove: {
         cart: ShopifyCart;
@@ -529,7 +540,7 @@ export async function removeFromCartWithWarnings(
   }>({
     query: removeFromCartWithWarningsMutation,
     variables: { cartId, lineIds }
-  } as any);
+  });
 
   const { cart, userErrors = [], warnings = [] } = res.body.data.cartLinesRemove;
 
@@ -546,9 +557,10 @@ export async function removeFromCartWithWarnings(
 export async function updateCartDiscountCodes(
   discountCodes: string[]
 ): Promise<CartOperationResult> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
 
   const res = await shopifyFetch<{
+    variables: { cartId: string; discountCodes: string[] };
     data: {
       cartDiscountCodesUpdate: {
         cart: ShopifyCart;
@@ -559,7 +571,7 @@ export async function updateCartDiscountCodes(
   }>({
     query: updateCartDiscountCodesMutation,
     variables: { cartId, discountCodes }
-  } as any);
+  });
 
   const { cart, userErrors = [], warnings = [] } = res.body.data.cartDiscountCodesUpdate;
 
@@ -576,9 +588,10 @@ export async function updateCartDiscountCodes(
 export async function updateCartNote(
   note: string
 ): Promise<CartOperationResult> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
 
   const res = await shopifyFetch<{
+    variables: { cartId: string; note: string };
     data: {
       cartNoteUpdate: {
         cart: ShopifyCart;
@@ -589,7 +602,7 @@ export async function updateCartNote(
   }>({
     query: updateCartNoteMutation,
     variables: { cartId, note }
-  } as any);
+  });
 
   const { cart, userErrors = [], warnings = [] } = res.body.data.cartNoteUpdate;
 
@@ -606,9 +619,10 @@ export async function updateCartNote(
 export async function updateCartAttributes(
   attributes: { key: string; value: string }[]
 ): Promise<CartOperationResult> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = await requireCartId();
 
   const res = await shopifyFetch<{
+    variables: { cartId: string; attributes: { key: string; value: string }[] };
     data: {
       cartAttributesUpdate: {
         cart: ShopifyCart;
@@ -619,7 +633,7 @@ export async function updateCartAttributes(
   }>({
     query: updateCartAttributesMutation,
     variables: { cartId, attributes }
-  } as any);
+  });
 
   const { cart, userErrors = [], warnings = [] } = res.body.data.cartAttributesUpdate;
 
@@ -945,7 +959,7 @@ export async function getProduct(
       const products = removeEdgesAndNodes(searchRes.body.data.products);
       
       // Find product with matching handle (Shopify returns translated handles with @inContext)
-      const matchedProduct = products.find((p: any) => p.handle === decodedHandle);
+      const matchedProduct = products.find((p) => p.handle === decodedHandle);
       
       if (matchedProduct) {
         console.log(`[Shopify] Found product via fallback search: "${matchedProduct.title}"`);
@@ -1113,7 +1127,7 @@ export async function getShopPaymentSettings(
     variables: {
       ...(locale?.language && { language: locale.language.toUpperCase() }),
       ...(locale?.country && { country: locale.country.toUpperCase() })
-    } as any
+    }
   });
 
   return res.body.data.shop.paymentSettings;

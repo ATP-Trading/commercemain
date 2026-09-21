@@ -283,6 +283,10 @@ export type ShopifyCartOperation = {
 };
 
 export type ShopifyCreateCartOperation = {
+  variables: {
+    input: { lines: { merchandiseId: string; quantity: number; sellingPlanId?: string }[] };
+    language?: string;
+  };
   data: { cartCreate: { cart: ShopifyCart; userErrors?: { message: string }[] } };
 };
 
@@ -572,6 +576,7 @@ export type PaymentSettings = {
 };
 
 export type ShopifyShopPaymentSettingsOperation = {
+  variables: { language?: string; country?: string };
   data: {
     shop: {
       paymentSettings: PaymentSettings;

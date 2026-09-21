@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { predictiveSearchQuery } from '@/lib/shopify/advanced-queries'
 import { shopifyFetch } from '@/lib/shopify/server'
+import type { Image, Money } from '@/lib/shopify/types'
 
 interface PredictiveSearchOperation {
   data: {
     predictiveSearch: {
-      products: any[];
-      queries: any[];
-      collections: any[];
+      products: {
+        id: string;
+        handle: string;
+        title: string;
+        vendor: string;
+        featuredImage: Pick<Image, 'url' | 'altText'> | null;
+        priceRange: { minVariantPrice: Money };
+      }[];
+      queries: { text: string; styledText: string }[];
+      collections: {
+        id: string;
+        handle: string;
+        title: string;
+        image: Pick<Image, 'url' | 'altText'> | null;
+      }[];
+      pages: { id: string; handle: string; title: string }[];
     };
   };
   variables: {
