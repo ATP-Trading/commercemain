@@ -6,7 +6,7 @@ import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import type { ListItem } from "."
 
-function FilterPathItem({ item }: { item: any }) {
+function FilterPathItem({ item }: { item: Extract<ListItem, { path: string }> }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const active = pathname === item.path
@@ -29,7 +29,7 @@ function FilterPathItem({ item }: { item: any }) {
   )
 }
 
-function FilterSortItem({ item }: { item: any }) {
+function FilterSortItem({ item }: { item: Exclude<ListItem, { path: string }> }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const active = searchParams.get("sort") === item.slug

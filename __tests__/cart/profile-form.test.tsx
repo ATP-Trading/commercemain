@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 vi.mock('next-intl', () => ({ useLocale: () => 'ar' }));
 vi.mock('@/hooks/use-customer-oauth', () => ({ useCustomerOAuth: () => ({ customer: { id: '1', firstName: null, lastName: null, email: 'test@example.com' }, isLoading: false, isLoggedIn: true, error: null }) }));
-vi.mock('@/src/i18n/navigation', () => ({ Link: ({ children, href }: any) => <a href={href}>{children}</a> }));
+vi.mock('@/src/i18n/navigation', () => ({ Link: ({ children, href }: React.ComponentProps<"a">) => <a href={href}>{children}</a> }));
 import { ProfileForm } from '@/components/account/profile-form';
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 describe('Profile form', () => {

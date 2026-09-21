@@ -2,15 +2,15 @@ import React from 'react'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 vi.mock('next-intl', () => ({ useLocale: () => 'ar' }))
-vi.mock('@/src/i18n/navigation', () => ({ Link: ({ children, ...props }: any) => <a {...props}>{children}</a> }))
+vi.mock('@/src/i18n/navigation', () => ({ Link: ({ children, ...props }: React.ComponentProps<"a">) => <a {...props}>{children}</a> }))
 import { OrdersList } from '@/components/account/orders-list'
 import { AddressesManager } from '@/components/account/addresses-manager'
 const order = (id: string) => ({ id, name: '#'+id, processedAt: '2026-09-01', financialStatus: 'PAID', fulfillmentStatus: 'UNFULFILLED', statusPageUrl: 'https://example.com/order/'+id, totalPrice: { amount: '100', currencyCode: 'AED' }, lineItems: { nodes: [{ title: 'Coffee', quantity: 1 }], pageInfo: { hasNextPage: false } } })
-const respond = (body: any, ok=true) => ({ ok, status: ok ? 200 : 502, json: async () => body })
+const respond = (body: unknown, ok=true) => new Response(JSON.stringify(body), { status: ok ? 200 : 502 })
 beforeEach(() => vi.stubGlobal('fetch', vi.fn()))
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 it('loads older orders without losing existing orders and uses actual status links', async () => {
- vi.mocked(fetch).mockResolvedValueOnce(respond({ nodes: [order('2')], pageInfo: { hasNextPage: true, endCursor: 'older' } }) as any).mockResolvedValueOnce(respond({ nodes: [order('1')], pageInfo: { hasNextPage: false } }) as any)
+ vi.mocked(fetch).mockResolvedValueOnce(respond({ nodes: [order('2')], pageInfo: { hasNextPage: true, endCursor: 'older' } })).mockResolvedValueOnce(respond({ nodes: [order('1')], pageInfo: { hasNextPage: false } }))
  render(<OrdersList />)
  await screen.findByText('#2')
  fireEvent.click(screen.getByText('عرض طلبات أقدم'))
@@ -20,7 +20,7 @@ it('loads older orders without losing existing orders and uses actual status lin
  expect(screen.getAllByRole('link', { name: 'تفاصيل الطلب ومتابعته' })[0]).toHaveAttribute('href', 'https://example.com/order/2')
 })
 it('keeps address edits when a save fails, without claiming success', async () => {
- vi.mocked(fetch).mockResolvedValueOnce(respond({ nodes: [], pageInfo: { hasNextPage: false } }) as any).mockResolvedValueOnce(respond({}, false) as any)
+ vi.mocked(fetch).mockResolvedValueOnce(respond({ nodes: [], pageInfo: { hasNextPage: false } })).mockResolvedValueOnce(respond({}, false))
  render(<AddressesManager />)
  await screen.findByText('ما عندك عناوين محفوظة حتى الآن.')
  fireEvent.click(screen.getByText('إضافة عنوان'))

@@ -12,7 +12,15 @@ interface TabbyPromoProps {
 
 declare global {
   interface Window {
-    TabbyPromo?: any;
+    TabbyPromo?: new (config: {
+      selector: string;
+      currency: "AED" | "KWD" | "SAR";
+      price: number;
+      lang: TabbyPromoProps["locale"];
+      installmentsCount: number;
+      publicKey: string;
+      merchantCode: TabbyPromoProps["merchantCode"];
+    }) => object;
   }
 }
 
@@ -39,7 +47,7 @@ export function TabbyPromo({
         AED: "AED",
         KWD: "KWD",
         SAR: "SAR",
-      };
+      } as const;
 
       // Currency digits count
       const CURRENCY_DIGITS_COUNT = {

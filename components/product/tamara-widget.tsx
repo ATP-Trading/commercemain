@@ -15,7 +15,13 @@ interface TamaraWidgetProps {
 
 declare global {
   interface Window {
-    tamaraWidgetConfig?: any;
+    tamaraWidgetConfig?: {
+      lang: TamaraWidgetProps["locale"];
+      country: TamaraWidgetProps["countryCode"];
+      publicKey: string;
+      css: string;
+      style: { fontSize: string; badgeRatio: number };
+    };
   }
 }
 

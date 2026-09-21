@@ -16,12 +16,12 @@ import {
   getLocalizedProductTitle,
   getLocalizedProductDescription,
 } from "@/lib/shopify/i18n-queries";
-import type { Image } from "@/lib/shopify/types";
+import type { Image, Product } from "@/lib/shopify/types";
 import Link from "next/link";
 import { Suspense } from "react";
 
 // Helper function to generate rich meta descriptions
-const generateMetaDescription = (product: any, locale: "en" | "ar") => {
+const generateMetaDescription = (product: Product, locale: "en" | "ar") => {
   const price = `${product.priceRange.minVariantPrice.currencyCode} ${product.priceRange.minVariantPrice.amount}`;
   const availability = product.availableForSale
     ? (locale === "ar" ? "متوفر" : "In Stock")

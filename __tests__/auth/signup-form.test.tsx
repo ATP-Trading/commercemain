@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }), usePathname: () => '/en/signup',
   useSearchParams: () => new URLSearchParams(mocks.query), redirect: vi.fn(), permanentRedirect: vi.fn()
 }))
-vi.mock('next/link', () => ({ default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a> }))
+vi.mock('next/link', () => ({ default: ({ children, href, ...props }: React.ComponentProps<"a">) => <a href={href} {...props}>{children}</a> }))
 function setup(locale: 'en' | 'ar') {
   const messages = locale === 'ar' ? ar : en
   render(<NextIntlClientProvider locale={locale} messages={messages} timeZone="Asia/Dubai"><DirectionProvider dir={locale === 'ar' ? 'rtl' : 'ltr'}><SignupFormOAuth /></DirectionProvider></NextIntlClientProvider>)

@@ -18,8 +18,8 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/hooks/use-customer-oauth', () => ({
   useCustomerOAuth: () => ({ customer: null, logout: vi.fn() }),
 }));
-vi.mock('next/link', () => ({ default: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a> }));
-vi.mock('next/image', () => ({ default: ({ priority, ...props }: any) => <img {...props} /> }));
+vi.mock('next/link', () => ({ default: ({ children, href, ...props }: React.ComponentProps<"a">) => <a href={href} {...props}>{children}</a> }));
+vi.mock('next/image', () => ({ default: ({ priority, ...props }: React.ComponentProps<"img"> & { priority?: boolean }) => <img {...props} /> }));
 vi.mock('@/components/language-switcher', () => ({ LanguageSwitcher: () => null }));
 vi.mock('@/components/layout/navbar/search', () => ({ default: () => null, SearchSkeleton: () => null }));
 

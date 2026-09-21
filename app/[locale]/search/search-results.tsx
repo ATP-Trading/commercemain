@@ -1,5 +1,7 @@
 "use client";
 
+import type { Product } from "@/lib/shopify/types";
+
 import Grid from "@/components/grid";
 import ProductGridItems from "@/components/layout/product-grid-items";
 import { sorting } from "@/lib/constants";
@@ -8,7 +10,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface SearchResultsProps {
-  products: any[];
+  products: Product[];
   searchQuery: string;
   sortValue: string;
   locale: "en" | "ar";

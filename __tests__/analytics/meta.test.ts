@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 beforeEach(() => {
  vi.resetModules(); localStorage.clear(); document.head.innerHTML='';
  Object.defineProperty(window,'location',{configurable:true,value:new URL('https://www.atpgroupservices.ae/en')});
- (window as any).fbq=undefined; (window as any)._fbq=undefined;
+ window.fbq=undefined; window._fbq=undefined;
 })
 it('does not treat old analytics consent as marketing consent', async () => {
  localStorage.setItem('atp-analytics-consent','granted');
@@ -18,8 +18,8 @@ it('uses one dataset and one page view per navigation without purchase events', 
  const meta = await import('@/lib/analytics/meta'); meta.setMarketingConsent(true);
  meta.trackMetaPage(); meta.trackMetaPage();
  Object.defineProperty(window,'location',{configurable:true,value:new URL('https://www.atpgroupservices.ae/ar')}); meta.trackMetaPage();
- expect(window.fbq.queue.filter((x:any[])=>x[0]==='init')).toEqual([['init',meta.META_PIXEL_ID]]);
- expect(window.fbq.queue.filter((x:any[])=>x[0]==='trackSingle')).toEqual([['trackSingle',meta.META_PIXEL_ID,'PageView'],['trackSingle',meta.META_PIXEL_ID,'PageView']]);
+ expect(window.fbq.queue.filter((x: unknown[])=>x[0]==='init')).toEqual([['init',meta.META_PIXEL_ID]]);
+ expect(window.fbq.queue.filter((x: unknown[])=>x[0]==='trackSingle')).toEqual([['trackSingle',meta.META_PIXEL_ID,'PageView'],['trackSingle',meta.META_PIXEL_ID,'PageView']]);
  expect(document.querySelectorAll('#atp-meta-pixel')).toHaveLength(1);
 })
 it('stops events after revocation and resumes only with renewed consent', async () => {

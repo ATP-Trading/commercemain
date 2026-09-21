@@ -2,10 +2,10 @@
 
 import { Suspense } from "react"
 import { m } from "framer-motion"
-import { FilterList } from "./filter/index"
+import { FilterList, type PathFilterItem } from "./filter/index"
 
 interface CollectionsClientProps {
-  collections: any[]
+  collections: PathFilterItem[]
 }
 
 export default function CollectionsClient({ collections }: CollectionsClientProps) {

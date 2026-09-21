@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+type AnalyticsTestWindow = Window & { dataLayer?: IArguments[] };
+
 beforeEach(() => {
   vi.resetModules();
   localStorage.clear();
   document.head.innerHTML = '';
   Object.defineProperty(window, 'location', { configurable: true, value: new URL('https://www.atpgroupservices.ae/ar') });
-  (window as any).dataLayer = [];
+  (window as AnalyticsTestWindow).dataLayer = [];
 });
-const events = () => ((window as any).dataLayer as IArguments[]).map(x => Array.from(x));
+const events = () => {
+  const queue = (window as AnalyticsTestWindow).dataLayer;
+  if (!queue) throw new Error('GA4 test dataLayer is not initialized');
+  return queue.map(x => Array.from(x));
+};
 
 describe('GA4 storefront measurement', () => {
   it('does not load or queue analytics before consent or after rejection', async () => {
@@ -46,7 +52,7 @@ describe('GA4 storefront measurement', () => {
     ga.setAnalyticsConsent(false);
     ga.trackProduct('add_to_cart', {item_id:'1',item_name:'Product',price:99,quantity:1}, 'AED');
     expect(events()).toHaveLength(count);
-    expect((window as any)['ga-disable-G-N47GG1EVK5']).toBe(true);
+    expect((window as unknown as Record<string, unknown>)['ga-disable-G-N47GG1EVK5']).toBe(true);
   });
   it('deduplicates product views but preserves separate successful cart additions', async () => {
     const ga = await import('@/lib/analytics/ga4');

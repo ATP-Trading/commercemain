@@ -1,3 +1,8 @@
+import type { Product } from "./types";
+
+type ProductContentField = "title" | "description" | "descriptionHtml";
+type LocalizedProductContent = Partial<Pick<Product, ProductContentField | "translations" | "titleAr" | "descriptionAr" | "descriptionHtmlAr">>;
+
 // Fragment for multilingual product data
 export const MULTILINGUAL_PRODUCT_FRAGMENT = /* GraphQL */ `
   fragment MultilingualProduct on Product {
@@ -253,7 +258,7 @@ export function getLocalizedContent<T extends MultilingualProduct | Multilingual
 
 // Helper function to get localized content from Shopify translations or metafields
 export function getLocalizedProductContent(
-  product: any,
+  product: LocalizedProductContent,
   locale: 'en' | 'ar',
   field: 'title' | 'description' | 'descriptionHtml'
 ): string {
@@ -263,21 +268,21 @@ export function getLocalizedProductContent(
     if (product.translations && Array.isArray(product.translations)) {
       // Try to find translation for Arabic locale
       const translation = product.translations.find(
-        (t: any) => t.key === field && t.locale === 'ar'
+        (t) => t.key === field && t.locale === 'ar'
       )
       if (translation?.value) {
         return translation.value
       }
       
       // Fallback: try without locale check (for older format)
-      const fallbackTranslation = product.translations.find((t: any) => t.key === field)
+      const fallbackTranslation = product.translations.find((t) => t.key === field)
       if (fallbackTranslation?.value) {
         return fallbackTranslation.value
       }
     }
 
     // Fallback to metafields (for manual translations)
-    const metafieldKey = `${field}Ar`
+    const metafieldKey = `${field}Ar` as `${ProductContentField}Ar`
     const metafield = product[metafieldKey]
     if (metafield?.value) {
       return metafield.value
@@ -289,7 +294,7 @@ export function getLocalizedProductContent(
 }
 
 // Helper function to get localized product title
-export function getLocalizedProductTitle(product: any, locale: 'en' | 'ar'): string {
+export function getLocalizedProductTitle(product: LocalizedProductContent | null | undefined, locale: 'en' | 'ar'): string {
   // Defensive null check - return empty string if product is missing
   if (!product) {
     console.warn('[i18n] getLocalizedProductTitle called with null/undefined product');
@@ -299,12 +304,12 @@ export function getLocalizedProductTitle(product: any, locale: 'en' | 'ar'): str
 }
 
 // Helper function to get localized product description
-export function getLocalizedProductDescription(product: any, locale: 'en' | 'ar'): string {
+export function getLocalizedProductDescription(product: LocalizedProductContent, locale: 'en' | 'ar'): string {
   return getLocalizedProductContent(product, locale, 'description')
 }
 
 // Helper function to get localized product description HTML
-export function getLocalizedProductDescriptionHtml(product: any, locale: 'en' | 'ar'): string {
+export function getLocalizedProductDescriptionHtml(product: LocalizedProductContent, locale: 'en' | 'ar'): string {
   return getLocalizedProductContent(product, locale, 'descriptionHtml')
 }
 
@@ -353,7 +358,7 @@ export function getLocalizedList(product: MultilingualProduct, locale: 'en' | 'a
 // - URL: /ar/product/advanced-damage-hair-shampoo (same handle for all locales)
 // - Content: Title, description, etc. are translated via @inContext(language: AR)
 // - This ensures product links work correctly regardless of locale
-export function getLocalizedProductHandle(product: any, locale: 'en' | 'ar'): string {
+export function getLocalizedProductHandle(product: Pick<Product, "handle">, locale: 'en' | 'ar'): string {
   // Always return the original handle - URLs should be consistent across locales
   // The @inContext directive handles content translation, not URL translation
   return product.handle;

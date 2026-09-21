@@ -329,7 +329,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                   <div className="p-6">
                     {resolvedMenu.length ? (
                       <ul className={`space-y-2 ${isRTL ? "text-right" : ""}`}>
-                        {resolvedMenu.map((item: any) => {
+                        {resolvedMenu.map((item: MobileMenuItem) => {
                           const IconComponent = item.icon;
                           return (
                             <li key={item.path}>

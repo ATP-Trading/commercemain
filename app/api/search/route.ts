@@ -1,3 +1,4 @@
+import type { Product } from "@/lib/shopify/types";
 import { NextRequest, NextResponse } from 'next/server';
 import { getProducts } from '@/lib/shopify/server';
 import { defaultSort, sorting } from '@/lib/constants';
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-function generateSearchSuggestions(query: string, products: any[]): string[] {
+function generateSearchSuggestions(query: string, products: Pick<Product, "title" | "description">[]): string[] {
     if (!query || query.length < 2) return [];
 
     const suggestions = new Set<string>();
