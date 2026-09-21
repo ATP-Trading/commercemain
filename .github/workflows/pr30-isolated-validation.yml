@@ -16,22 +16,24 @@ jobs:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch immutable PR, baseline and test-harness revisions
+      - name: Fetch reviewed source and harness in one non-shallow fetch
         run: |
           set -eu
           git init source
           cd source
+          git config gc.auto 0
+          git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --depth=1 origin 7a7ce61d044fb9909a363c2c8783d45685770a68
-          git fetch --depth=1 origin 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e
-          git fetch --depth=1 origin "$GITHUB_SHA"
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation
+          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
           git checkout --detach 7a7ce61d044fb9909a363c2c8783d45685770a68
           test -z "$(git diff --name-only 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e 7a7ce61d044fb9909a363c2c8783d45685770a68 -- package.json pnpm-lock.yaml)"
           node --version
       - name: Install locked dependencies without lifecycle scripts
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Prepare no-network test process and truthful result summary
+      - name: Prepare no-network test process and result summary
+        id: prepare
         working-directory: source
         run: |
           cat > .pr30-no-network.cjs <<'JS'
@@ -65,7 +67,7 @@ jobs:
           node .pr30-summary.cjs pr30-results.json
           exit "$result"
       - name: Run the same suites on the production baseline
-        if: always()
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         working-directory: source
         run: |
           git checkout --detach 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e
@@ -76,7 +78,7 @@ jobs:
           node .pr30-summary.cjs baseline-results.json
           exit "$result"
       - name: Test actual EN/AR login and mobile-menu components with mocked authentication
-        if: always()
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         working-directory: source
         run: |
           set -eu
