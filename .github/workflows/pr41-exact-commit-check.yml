@@ -1,0 +1,86 @@
+name: PR41 exact committed-source verification
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr41-exact-commit-check.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch exact PR41 and prove content identity with the verified manifest
+        run: |
+          set -eu
+          git init source; cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --depth=2 origin 4e0d475acc3a911446e9a99e17641e0f05bf9abc
+          git checkout --detach FETCH_HEAD
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          mkdir -p ../evidence
+          python - <<'PY'
+          import base64,gzip,hashlib,json,os,pathlib,subprocess
+          expected='4e0d475acc3a911446e9a99e17641e0f05bf9abc'
+          assert subprocess.check_output(['git','rev-parse','HEAD']).decode().strip()==expected
+          parts=[subprocess.check_output(['git','show',os.environ['GITHUB_SHA']+f':__tests__/review/pr41-manifest/part-{i:02d}']).strip() for i in range(1,10)]
+          raw=gzip.decompress(base64.b64decode(b''.join(parts),validate=True));assert hashlib.sha256(raw).hexdigest()=='69add373f280d8239b7f11a906ecc4523695c7ce6cb8ac5f75c6475c25c7e793'
+          m=json.loads(raw)
+          for f in m['files']:assert hashlib.sha256(pathlib.Path(f['path']).read_bytes()).hexdigest()==f['after'],f['path']
+          actual=set(subprocess.check_output(['git','diff','--name-only',m['base'],'HEAD']).decode().splitlines());assert actual=={f['path'] for f in m['files']}
+          assert not subprocess.check_output(['git','diff','--diff-filter=D','--name-only',m['base'],'HEAD']).strip()
+          assert not subprocess.check_output(['git','status','--porcelain']).strip()
+          pathlib.Path('../evidence/identity.json').write_text(json.dumps({'commit':expected,'base':m['base'],'paths':sorted(actual),'count':len(actual),'deletions':0,'all30HashesMatch':True,'cleanCheckout':True},indent=2))
+          print('PASS exact committed source, clean complete checkout and all 30 hashes')
+          PY
+      - name: Install unchanged locked tooling without scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Prepare network isolation outside repository discovery
+        run: |
+          cat > no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('ISOLATED_TEST_EXTERNAL_NETWORK_BLOCKED');};
+          for(const name of ['node:http','node:https']){const m=require(name);m.request=fail;m.get=fail;}
+          const net=require('node:net'),original=net.Socket.prototype.connect;
+          net.Socket.prototype.connect=function(...args){const t=args[0];if(typeof t==='string'&&t.startsWith('/'))return original.apply(this,args);if(t&&typeof t==='object'&&typeof t.path==='string')return original.apply(this,args);return fail();};
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Type-check unchanged exact commit
+        working-directory: source
+        run: node node_modules/typescript/bin/tsc --noEmit --incremental false > ../evidence/typecheck.log 2>&1
+      - name: Run full default test discovery with no folder allowlist or retries
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          node node_modules/vitest/vitest.mjs run --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/full.json > ../evidence/full.log 2>&1
+          node <<'JS'
+          const fs=require('node:fs'),a=require('node:assert/strict'),r=JSON.parse(fs.readFileSync('../evidence/full.json','utf8'));
+          const s={files:r.testResults.length,total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests};console.log(JSON.stringify(s));fs.writeFileSync('../evidence/test-summary.json',JSON.stringify(s,null,2));a.equal(s.files,68);a.equal(s.total,538);a.equal(s.passed,538);a.equal(s.failed,0);a.equal(s.pending,0);
+          JS
+      - name: Record actual lint status without relaxing the policy
+        working-directory: source
+        run: |
+          set +e
+          node node_modules/eslint/bin/eslint.js . --no-fix --format json --output-file ../evidence/lint.json > ../evidence/lint.log 2>&1
+          code=$?
+          echo "$code" > ../evidence/lint-exit.txt
+          node <<'JS'
+          const fs=require('node:fs'),a=require('node:assert/strict'),r=JSON.parse(fs.readFileSync('../evidence/lint.json','utf8'));
+          const s={files:r.length,errors:r.reduce((n,x)=>n+x.errorCount,0),warnings:r.reduce((n,x)=>n+x.warningCount,0),exitCode:Number(fs.readFileSync('../evidence/lint-exit.txt','utf8')),pass:false};
+          fs.writeFileSync('../evidence/lint-summary.json',JSON.stringify(s,null,2));console.log(JSON.stringify(s));a.equal(s.errors,76);a.equal(s.exitCode,1);
+          JS
+      - name: Upload exact-commit pass and residual failure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr41-exact-commit-evidence
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
+      - name: Fail the overall gate on the actual remaining lint result
+        run: |
+          echo 'Full tests and TypeScript pass; lint still fails. No release approval.'
+          exit "$(cat evidence/lint-exit.txt)"
