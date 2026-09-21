@@ -1,0 +1,37 @@
+name: PR41 immutable repair manifest readback
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr41-repair-manifest-readback.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read immutable proposed patch as data only
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-tags --depth=1 origin ccda7460a9ca635250b73fd3ce00d9e5154b8af8
+          mkdir ../evidence
+          git show FETCH_HEAD:__tests__/review/pr41-repair-manifest.b64 > ../evidence/manifest.b64
+          test "$(git hash-object ../evidence/manifest.b64)" = 563306cb8e773052036846f32308398f5607b7bc
+          python3 - <<'PY'
+          import base64,gzip,json,pathlib
+          root=pathlib.Path('../evidence')
+          data=gzip.decompress(base64.b64decode((root/'manifest.b64').read_text()))
+          obj=json.loads(data)
+          (root/'manifest.json').write_bytes(data)
+          print('Decoded manifest root:',type(obj).__name__)
+          print('Manifest keys:',list(obj)[:10] if isinstance(obj,dict) else len(obj))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr41-immutable-repair-manifest
+          path: evidence/manifest.json
+          retention-days: 1
+          if-no-files-found: error
