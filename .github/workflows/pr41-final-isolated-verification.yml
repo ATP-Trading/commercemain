@@ -1,0 +1,148 @@
+name: PR41 final exact tests, fixture isolation and lint
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr41-final-isolated-verification.yml]
+permissions:
+  contents: read
+env:
+  CI: true
+  NEXT_TELEMETRY_DISABLED: 1
+  CANDIDATE: 1c41df2d4bdaab81756211ddc4313e1b1e4f918e
+  PREVIOUS: 4e0d475acc3a911446e9a99e17641e0f05bf9abc
+  BASE: a5933d5da8ee23689746087427250c4760eb544c
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: source
+    steps:
+      - name: Fetch immutable final source including real assets
+        working-directory: .
+        run: |
+          set -eu
+          git init source; cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-tags origin refs/heads/fix/lint-contracts-and-magnetic-hook
+          git checkout --detach "$CANDIDATE"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+          mkdir ../evidence
+      - name: Install unchanged frozen tools without lifecycle scripts
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Check the exact supplemental boundary and original presets
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict');
+          const git=(...a)=>cp.execFileSync('git',a,{encoding:'utf8',maxBuffer:32*1024*1024});
+          const delta=git('diff','--name-only',process.env.PREVIOUS,'HEAD').trim().split('\n');
+          assert.deepEqual(delta,['__tests__/analytics/ga4.test.ts','__tests__/cart/membership-account-link.test.tsx']);
+          const all=git('diff','--no-renames','--name-only',process.env.BASE,'HEAD').trim().split('\n');
+          assert.equal(all.length,30);assert.equal(git('diff','--diff-filter=D','--name-only',process.env.BASE,'HEAD').trim(),'');
+          for(const f of ['package.json','pnpm-lock.yaml','tsconfig.json','vitest.config.ts','vitest.setup.ts','eslint.config.mjs','playwright.config.ts'])assert.equal(git('show',process.env.BASE+':'+f),fs.readFileSync(f,'utf8'));
+          const tests=all.filter(f=>f.includes('.test.'));assert.equal(tests.length,12);
+          fs.writeFileSync('../evidence/changed-tests.json',JSON.stringify(tests));
+          fs.writeFileSync('../evidence/boundary.json',JSON.stringify({candidate:process.env.CANDIDATE,base:process.env.BASE,previous:process.env.PREVIOUS,delta,all,noDeletedFiles:true,applicationUnchangedFromPrevious:true,allPoliciesUnchanged:true},null,2));
+          JS
+          git diff --check "$BASE" HEAD
+          git diff "$BASE" HEAD >../evidence/changes.patch
+      - name: Prepare network guard outside source discovery
+        run: |
+          cat >../no-network.cjs <<'JS'
+          const blocked=()=>{throw Error('External network forbidden in isolated verification')};
+          global.fetch=blocked;
+          for(const n of ['node:http','node:https']){const m=require(n);m.request=blocked;m.get=blocked;}
+          const net=require('node:net'),connect=net.Socket.prototype.connect;
+          net.Socket.prototype.connect=function(...a){const x=Array.isArray(a[0])?a[0][0]:a[0];const h=x&&typeof x==='object'?x.host:typeof a[1]==='string'?a[1]:undefined;const p=typeof x==='string'?x:x?.path;if(p||['127.0.0.1','::1','localhost'].includes(h))return connect.apply(this,a);return blocked();};
+          JS
+      - name: Type-check application plus all modified test files
+        run: |
+          set -eu
+          ./node_modules/.bin/tsc --noEmit --incremental false >../evidence/typecheck-app.log 2>&1
+          node <<'JS'
+          const fs=require('node:fs'),ts=require('typescript');
+          const config=ts.readConfigFile('tsconfig.json',ts.sys.readFile);if(config.error)throw Error('tsconfig parse failed');
+          const parsed=ts.parseJsonConfigFileContent(config.config,ts.sys,process.cwd());
+          const tests=JSON.parse(fs.readFileSync('../evidence/changed-tests.json'));
+          fs.writeFileSync('.verification-tests.json',JSON.stringify({extends:'./tsconfig.json',compilerOptions:{types:['vitest/globals','@testing-library/jest-dom/vitest','next']},files:[...new Set([...parsed.fileNames,...tests,'node_modules/next/types/global.d.ts'])],include:[],exclude:[]}));
+          JS
+          trap 'rm -f .verification-tests.json' EXIT
+          ./node_modules/.bin/tsc -p .verification-tests.json --noEmit --incremental false >../evidence/typecheck-changed-tests.log 2>&1
+          rm .verification-tests.json
+          trap - EXIT
+      - name: Run full default discovery and two independently shuffled repeats
+        run: |
+          export NODE_OPTIONS="--require=$(realpath ../no-network.cjs)"
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process');
+          const tests=JSON.parse(fs.readFileSync('../evidence/changed-tests.json'));
+          for(const [name,args] of [['full',[]],['shuffled-4101',[...tests,'--sequence.shuffle','--sequence.seed=4101']],['shuffled-4102',[...tests,'--sequence.shuffle','--sequence.seed=4102']]]){
+            const log=fs.openSync('../evidence/'+name+'.log','w');
+            const r=cp.spawnSync('./node_modules/.bin/vitest',['run',...args,'--maxWorkers=2','--no-file-parallelism','--reporter=json','--outputFile=../evidence/'+name+'.json'],{env:process.env,stdio:['ignore',log,log],timeout:240000});
+            fs.closeSync(log);if(r.error)throw r.error;if(r.status!==0)process.exit(r.status??1);
+          }
+          JS
+      - name: Reproduce both original defects and restore final source
+        run: |
+          set -eu
+          export NODE_OPTIONS="--require=$(realpath ../no-network.cjs)"
+          trap 'git checkout -- lib/hooks/use-magnetic-cursor.ts __tests__/cart/membership-account-link.test.tsx' EXIT
+          git show "$BASE":lib/hooks/use-magnetic-cursor.ts >lib/hooks/use-magnetic-cursor.ts
+          set +e
+          ./node_modules/.bin/vitest run __tests__/hooks/magnetic-cursor.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/hook-original.json >../evidence/hook-original.log 2>&1
+          hook=$?
+          set -e
+          test "$hook" -ne 0
+          git checkout -- lib/hooks/use-magnetic-cursor.ts
+          git show "$BASE":__tests__/cart/membership-account-link.test.tsx >__tests__/cart/membership-account-link.test.tsx
+          set +e
+          ./node_modules/.bin/vitest run __tests__/cart/membership-account-link.test.tsx --sequence.shuffle --sequence.seed=4102 --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/fixture-original.json >../evidence/fixture-original.log 2>&1
+          fixture=$?
+          set -e
+          test "$fixture" -ne 0
+          git checkout -- __tests__/cart/membership-account-link.test.tsx
+          trap - EXIT
+          test -z "$(git diff --name-only)"
+          python3 - <<'PY'
+          import json,pathlib,os
+          root=pathlib.Path('../evidence')
+          reports={n:json.loads((root/(n+'.json')).read_text()) for n in ['full','shuffled-4101','shuffled-4102','hook-original','fixture-original']}
+          summary={}
+          for name,cases,files in [('full',538,68),('shuffled-4101',62,12),('shuffled-4102',62,12)]:
+           r=reports[name]
+           assert (r['numTotalTests'],r['numPassedTests'],r['numFailedTests'],r['numPendingTests'])==(cases,cases,0,0)
+           assert len(r['testResults'])==files and all(t['status']=='passed' for t in r['testResults'])
+           summary[name]={'files':files,'passed':cases,'failed':0,'pending':0}
+          assert (reports['hook-original']['numPassedTests'],reports['hook-original']['numFailedTests'])==(4,2)
+          assert (reports['fixture-original']['numPassedTests'],reports['fixture-original']['numFailedTests'])==(2,1)
+          summary.update(candidate=os.environ['CANDIDATE'],typecheckApplication='PASS',typecheckChangedTests='PASS',originalHook={'passed':4,'expectedFailed':2},originalFixture={'passed':2,'expectedFailed':1},browser='NOT RUN',merchantNetwork='BLOCKED')
+          (root/'test-summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary,indent=2))
+          PY
+      - name: Run unchanged lint policy and retain real nonzero status
+        run: |
+          set +e
+          npm run lint -- --format=json --output-file=../evidence/lint.json >../evidence/lint.log 2>&1
+          code=$?
+          echo "$code" >../evidence/lint-exit.txt
+          python3 - <<'PY'
+          import json,pathlib,os,collections
+          root=pathlib.Path('../evidence');data=json.loads((root/'lint.json').read_text())
+          errors=sum(x['errorCount'] for x in data);warnings=sum(x['warningCount'] for x in data)
+          assert (len(data),errors,warnings)==(498,76,215),(len(data),errors,warnings)
+          changed=json.loads((root/'boundary.json').read_text())['all']
+          assert all(not x['errorCount'] for x in data if x['filePath'].split('/source/',1)[-1] in changed)
+          summary={'candidate':os.environ['CANDIDATE'],'files':len(data),'errors':errors,'warnings':warnings,'changedFilesHaveZeroLintErrors':True,'remainingFiles':sorted(x['filePath'].split('/source/',1)[-1] for x in data if x['errorCount']),'gate':'FAIL - no suppressions'}
+          (root/'lint-summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary,indent=2))
+          PY
+          check=$?
+          if [ "$check" -ne 0 ]; then exit "$check"; fi
+          exit "$code"
+      - name: Preserve every pass and failure without changing discovery
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr41-final-exact-evidence
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
