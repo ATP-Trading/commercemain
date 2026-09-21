@@ -1,0 +1,75 @@
+name: PR38 legacy membership reachability audit
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr38-membership-reachability-audit.yml]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable public source without merchant credentials
+        run: |
+          set -eu
+          git init source
+          cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-lingui-artifacts-and-test-fixture
+          git checkout --detach d5b6ac616704c0eb4a77d015309cdd22bfff120c
+          test "$(git rev-parse HEAD)" = d5b6ac616704c0eb4a77d015309cdd22bfff120c
+      - name: Install locked parser and test tools without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Audit source imports, dynamic loaders, shared declarations and script entry points
+        working-directory: source
+        run: |
+          mkdir -p ../evidence
+          node <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),ts=require('typescript');
+          const all=cp.execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const code=all.filter(p=>/\.(?:[cm]?[jt]sx?)$/.test(p)), codeSet=new Set(code);
+          const cfg=ts.readConfigFile('tsconfig.json',ts.sys.readFile);
+          const opts=ts.parseJsonConfigFileContent(cfg.config,ts.sys,process.cwd()).options;
+          const rel=p=>path.relative(process.cwd(),p).split(path.sep).join('/');
+          const incoming=Object.fromEntries(code.map(p=>[p,[]])),edges=Object.fromEntries(code.map(p=>[p,[]])),dynamic=[],declarations=[],unresolved=[];
+          for(const p of code){
+            const source=fs.readFileSync(p,'utf8'),ast=ts.createSourceFile(p,source,ts.ScriptTarget.Latest,true);
+            function visit(n){
+              let spec;
+              if((ts.isImportDeclaration(n)||ts.isExportDeclaration(n))&&n.moduleSpecifier) spec=n.moduleSpecifier;
+              if(ts.isImportEqualsDeclaration(n)&&ts.isExternalModuleReference(n.moduleReference)) spec=n.moduleReference.expression;
+              if(ts.isCallExpression(n)&&(n.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(n.expression)&&n.expression.text==='require'))) spec=n.arguments[0];
+              if(ts.isImportTypeNode(n)&&ts.isLiteralTypeNode(n.argument)) spec=n.argument.literal;
+              if(spec){
+                if(ts.isStringLiteralLike(spec)){
+                  const s=spec.text, resolved=ts.resolveModuleName(s,path.resolve(p),opts,ts.sys).resolvedModule;
+                  if(resolved){const dest=rel(resolved.resolvedFileName);if(codeSet.has(dest)){edges[p].push(dest);incoming[dest].push({file:p,specifier:s,line:ast.getLineAndCharacterOfPosition(n.getStart()).line+1});}}
+                  else if(s.startsWith('.')||s.startsWith('@/')) unresolved.push({file:p,specifier:s});
+                }else dynamic.push({file:p,expression:spec.getText(ast),line:ast.getLineAndCharacterOfPosition(n.getStart()).line+1});
+              }
+              if(ts.isModuleDeclaration(n)||(n.modifiers||[]).some(m=>m.kind===ts.SyntaxKind.DeclareKeyword)) declarations.push({file:p,kind:ts.SyntaxKind[n.kind],name:n.name?.getText(ast),line:ast.getLineAndCharacterOfPosition(n.getStart()).line+1});
+              ts.forEachChild(n,visit);
+            } visit(ast);
+          }
+          const roots=code.filter(p=>p.startsWith('app/')||p.startsWith('pages/')||/^(?:middleware|proxy|instrumentation|next\.config)\./.test(p));
+          const reach=new Set(),todo=[...roots];while(todo.length){const p=todo.pop();if(reach.has(p))continue;reach.add(p);todo.push(...(edges[p]||[]));}
+          const candidates=code.filter(p=>!p.startsWith('__tests__/')&&!p.startsWith('scripts/')&&/membership/.test(p));
+          const text={};for(const p of all){if(/(?:\.(?:[cm]?[jt]sx?|json|ya?ml|md)|\.gitignore)$/.test(p)&&!/(?:^|\/)\.env/.test(p))text[p]=fs.readFileSync(p,'utf8');}
+          const report={source:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),tracked:all.length,roots,reachable:[...reach].sort(),dynamic,unresolved,declarations,packageScripts:JSON.parse(text['package.json']).scripts,candidates:candidates.map(p=>({path:p,reachable:reach.has(p),lines:text[p].split('\n').length,incoming:incoming[p],dependencies:edges[p],ambient:declarations.filter(d=>d.file===p)})),incoming,edges};
+          fs.writeFileSync('../evidence/audit.json',JSON.stringify(report,null,2));
+          fs.writeFileSync('../evidence/source-snapshot.json',JSON.stringify({source:report.source,files:text}));
+          console.log(JSON.stringify({source:report.source,tracked:all.length,code:code.length,roots:roots.length,dynamic,candidates:report.candidates.map(c=>({path:c.path,reachable:c.reachable,incoming:c.incoming.map(i=>i.file),ambient:c.ambient.length}))},null,2));
+          JS
+      - name: Preserve static audit only; no application scripts executed
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr38-membership-reachability-audit
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
