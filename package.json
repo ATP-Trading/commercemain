@@ -26,19 +26,7 @@
     "setup:shopify:webhooks": "node scripts/setup-shopify-webhooks.js",
     "test:membership": "vitest run __tests__/**/*membership*.test.ts",
     "test:e2e:membership": "playwright test __tests__/e2e/membership-*.test.ts",
-    "test:webhooks": "vitest run __tests__/**/*webhook*.test.ts",
-    "validate:membership-data": "node scripts/validate-membership-data.js",
-    "cleanup:expired-sessions": "node scripts/cleanup-expired-sessions.js",
-    "archive:old-memberships": "node scripts/archive-old-memberships.js",
-    "update:membership-stats": "node scripts/update-membership-stats.js",
-    "analyze:performance": "node scripts/analyze-performance.js",
-    "optimize:cache": "node scripts/optimize-cache.js",
-    "review:rate-limits": "node scripts/review-rate-limits.js",
-    "export:membership-data": "node scripts/export-membership-data.js",
-    "import:membership-data": "node scripts/import-membership-data.js",
-    "verify:membership-data": "node scripts/verify-membership-data.js",
-    "sync:shopify-data": "node scripts/sync-shopify-data.js",
-    "health:check": "curl -f http://localhost:3000/api/monitoring/membership/health || exit 1"
+    "test:webhooks": "vitest run __tests__/**/*webhook*.test.ts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
