@@ -1,0 +1,171 @@
+name: PR42 cart identity guards and typed operations
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr42-cart-contracts.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      BASE: 1c41df2d4bdaab81756211ddc4313e1b1e4f918e
+      TARGET: fix/cart-session-guards-and-operation-contracts
+    steps:
+      - name: Read pinned source and apply exactly the reviewed patch
+        run: |
+          set -eu
+          git init source
+          cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin "$BASE" "$GITHUB_SHA"
+          git checkout --detach "$BASE"
+          mkdir -p ../evidence
+          git show "$GITHUB_SHA:.github/patches/pr42-cart-contracts.patch.gz.b64" > ../transport.b64
+          python3 - <<'PY'
+          import base64,gzip,hashlib,pathlib
+          patch=gzip.decompress(base64.b64decode(pathlib.Path('../transport.b64').read_text()))
+          assert hashlib.sha256(patch).hexdigest()=='81c54fe20d10ccb1c930e0b2478c3fde5949ea811b70e05c43780142b5c1eb4a'
+          pathlib.Path('../evidence/changes.patch').write_bytes(patch)
+          PY
+          git apply --check ../evidence/changes.patch
+          git apply --index ../evidence/changes.patch
+          python3 - <<'PY'
+          import subprocess,json,pathlib
+          expected=sorted(['lib/shopify/server.ts','lib/shopify/types.ts','lib/type-guards.ts','app/api/search/predictive/route.ts','__tests__/cart/session-cart-provider.test.tsx','recovered_page.tsx','__tests__/cart/server-session-contracts.test.ts','__tests__/cart/predictive-route-contract.test.ts'])
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert sorted(paths)==expected
+          assert not subprocess.check_output(['git','diff','--cached','--diff-filter=D','--name-only'],text=True).strip()
+          pathlib.Path('../evidence/changed-paths.json').write_text(json.dumps(expected))
+          PY
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -c commit.gpgsign=false commit -m 'Guard missing cart session identities and type current Shopify operations' -m 'Bounded review-only repair on PR41. Preserve valid cart payloads, discounts, inventory and selling plans. Add isolated session, error and predictive-search tests. No production deployment.'
+          git rev-parse HEAD > ../evidence/candidate-sha.txt
+      - name: Install unchanged frozen tools without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Establish isolated test network and validate unchanged runtime contracts
+        working-directory: source
+        run: |
+          cat > ../no-network.cjs <<'JS'
+          const net=require('node:net');
+          const originalConnect=net.Socket.prototype.connect;
+          net.Socket.prototype.connect=function(...args){
+            const a=args[0];
+            if(typeof a==='string'||(a&&typeof a==='object'&&typeof a.path==='string'))return originalConnect.apply(this,args);
+            throw new Error('External network is disabled during isolated tests');
+          };
+          for(const name of ['node:http','node:https']){const mod=require(name);mod.request=mod.get=()=>{throw new Error('Unmocked HTTP is disabled');};}
+          globalThis.fetch=async()=>{throw new Error('Unmocked fetch is disabled');};
+          JS
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict'),ts=require('typescript');
+          const base=process.env.BASE;
+          const sameEmission=[];
+          const print=text=>ts.transpileModule(text,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX,removeComments:true}}).outputText.split('\n').filter(x=>x.trim()).join('\n');
+          for(const f of ['lib/shopify/types.ts','lib/type-guards.ts','app/api/search/predictive/route.ts','recovered_page.tsx']){
+            const old=cp.execFileSync('git',['show',base+':'+f],{encoding:'utf8'});
+            assert.equal(print(old),print(fs.readFileSync(f,'utf8')),f);sameEmission.push(f);
+          }
+          for(const f of ['pnpm-lock.yaml','package.json','tsconfig.json','eslint.config.mjs','vitest.config.ts','vitest.setup.ts']){
+            assert.equal(cp.execFileSync('git',['show',base+':'+f],{encoding:'utf8',maxBuffer:32*1024*1024}),fs.readFileSync(f,'utf8'),f);
+          }
+          fs.writeFileSync('../evidence/boundary.json',JSON.stringify({base,candidate:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sameEmission,policyAndDependenciesUnchanged:true},null,2));
+          JS
+      - name: Type-check application and application plus all changed tests
+        working-directory: source
+        run: |
+          ./node_modules/.bin/tsc --noEmit --incremental false > ../evidence/typecheck-app.log 2>&1
+          node <<'JS' > ../evidence/typecheck-tests.log 2>&1
+          const ts=require('typescript'),fs=require('node:fs');
+          const cfg=ts.readConfigFile('tsconfig.json',ts.sys.readFile);
+          if(cfg.error)throw new Error(ts.flattenDiagnosticMessageText(cfg.error.messageText,'\n'));
+          const parsed=ts.parseJsonConfigFileContent(cfg.config,ts.sys,process.cwd());
+          const tests=JSON.parse(fs.readFileSync('../evidence/changed-paths.json')).filter(f=>f.includes('.test.'));
+          const options={...parsed.options,noEmit:true,incremental:false,types:[...new Set([...(parsed.options.types||[]),'vitest/globals','@testing-library/jest-dom'])]};
+          const program=ts.createProgram([...new Set([...parsed.fileNames,...tests])],options);
+          const diagnostics=[...parsed.errors,...ts.getPreEmitDiagnostics(program)];
+          if(diagnostics.length){console.log(ts.formatDiagnosticsWithColorAndContext(diagnostics,{getCurrentDirectory:()=>process.cwd(),getCanonicalFileName:f=>f,getNewLine:()=> '\n'}));process.exit(1);}
+          JS
+      - name: Full default Vitest discovery without source copies or folder selection
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          ./node_modules/.bin/vitest run --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/full.json > ../evidence/full.log 2>&1
+      - name: Repeat changed suites in two shuffled orders
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          for seed in 4201 4202; do
+            ./node_modules/.bin/vitest run __tests__/cart/server-session-contracts.test.ts __tests__/cart/predictive-route-contract.test.ts __tests__/cart/session-cart-provider.test.tsx --sequence.shuffle --sequence.seed=$seed --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/shuffled-$seed.json > ../evidence/shuffled-$seed.log 2>&1
+          done
+      - name: Reproduce original missing-cart and non-Error rejection defects
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          git show "$BASE:lib/shopify/server.ts" > lib/shopify/server.ts
+          set +e
+          ./node_modules/.bin/vitest run __tests__/cart/server-session-contracts.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/original-control.json > ../evidence/original-control.log 2>&1
+          result=$?
+          set -e
+          git restore lib/shopify/server.ts
+          test "$result" -ne 0
+          node <<'JS'
+          const r=require('../evidence/original-control.json');
+          if(r.numFailedTests!==16||r.numPendingTests!==0)throw new Error('Unexpected original control failures: '+r.numFailedTests);
+          JS
+      - name: Run unchanged lint policy and preserve residual findings
+        working-directory: source
+        run: |
+          set +e
+          npm run lint -- --format json --output-file ../evidence/lint.json > ../evidence/lint.log 2>&1
+          code=$?
+          set -e
+          echo "$code" > ../evidence/lint-exit.txt
+          node <<'JS'
+          const fs=require('node:fs'),path=require('node:path');
+          const changed=JSON.parse(fs.readFileSync('../evidence/changed-paths.json'));
+          const lint=JSON.parse(fs.readFileSync('../evidence/lint.json'));
+          const summary={files:lint.length,errors:lint.reduce((n,r)=>n+r.errorCount,0),warnings:lint.reduce((n,r)=>n+r.warningCount,0),changedErrors:lint.filter(r=>changed.includes(path.relative(process.cwd(),r.filePath))&&r.errorCount).map(r=>({path:path.relative(process.cwd(),r.filePath),errors:r.errorCount}))};
+          fs.writeFileSync('../evidence/lint-summary.json',JSON.stringify(summary,null,2));
+          if(summary.changedErrors.length)throw new Error('Changed files have lint errors');
+          if(summary.errors!==48)throw new Error('Unexpected residual lint count '+summary.errors);
+          const summaries={};
+          for(const file of ['full','shuffled-4201','shuffled-4202','original-control']){
+            const r=JSON.parse(fs.readFileSync('../evidence/'+file+'.json'));summaries[file]={files:r.testResults.length,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests};
+            if(file!=='original-control'&&(r.numFailedTests||r.numPendingTests||!r.success))throw new Error('Candidate checks failed');
+          }
+          fs.writeFileSync('../evidence/test-summary.json',JSON.stringify(summaries,null,2));
+          JS
+      - name: Publish only the validated review branch with no force or production writes
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          test "$TARGET" = 'fix/cart-session-guards-and-operation-contracts'
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          test -z "$(git diff HEAD --name-only)"
+          remote=$(git ls-remote origin "refs/heads/$TARGET" | cut -f1)
+          test "$remote" = "$BASE"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin "HEAD:refs/heads/$TARGET"
+          git rev-parse HEAD > ../evidence/published-sha.txt
+          git ls-remote origin refs/heads/master | cut -f1 > ../evidence/master-sha.txt
+      - name: Preserve every pass and failure result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr42-cart-contracts-verification
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
+      - name: Keep the full quality gate failing while lint errors remain
+        run: test "$(cat evidence/lint-exit.txt)" = 0
