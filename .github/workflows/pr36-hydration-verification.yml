@@ -1,0 +1,95 @@
+name: PR36 isolated hydration readiness verification
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr36-hydration-verification.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch pinned candidate and hydration test without live credentials
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach e47def917ac067f2ede3d05b22b0d2b302ff411a
+          git show "$GITHUB_SHA:__tests__/review/mobile-menu-hydration.test.tsx" > __tests__/rtl/mobile-menu-hydration.test.tsx
+          mkdir -p __tests__/review
+          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
+      - name: Install unchanged lockfile without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Block unmocked external network
+        working-directory: source
+        run: |
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('HYDRATION_TEST_NETWORK_BLOCKED');};
+          for(const n of ['node:http','node:https']){const t=require(n);t.request=fail;t.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Confirm both server-rendered buttons accept input too early before guard
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/rtl/mobile-menu-hydration.test.tsx --reporter=json --outputFile=hydration-before.json >hydration-before.log 2>&1
+          code=$?
+          set -e
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');const r=JSON.parse(fs.readFileSync('hydration-before.json','utf8'));
+          console.log(JSON.stringify({total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests}));
+          assert.equal(r.numTotalTests,2);assert.equal(r.numFailedTests,2);assert.equal(r.numPendingTests,0);
+          assert.ok(r.testResults.flatMap(f=>f.assertionResults).every(a=>a.failureMessages.some(m=>m.includes('disabled'))));
+          JS
+          test "$code" -ne 0
+      - name: Apply a minimal readiness guard only in the ephemeral checkout
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');const p='components/layout/navbar/mobile-menu.tsx';let s=fs.readFileSync(p,'utf8');
+          const anchor='  const [isOpen, setIsOpen] = useState(false)';assert.equal(s.split(anchor).length,2);
+          s=s.replace(anchor,()=>anchor+'\n  const [isHydrated, setIsHydrated] = useState(false)\n\n  // Do not accept clicks before the client has attached the menu handlers.\n  useEffect(() => {\n    setIsHydrated(true)\n  }, [])');
+          assert.equal(s.split('        onClick={openMobileMenu}').length,2);
+          s=s.replace('        onClick={openMobileMenu}','        disabled={!isHydrated}\n        onClick={openMobileMenu}');
+          fs.writeFileSync(p,s);
+          JS
+          git diff --check
+      - name: Run complete expanded scope with real SSR and hydration assertions
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=hydration-after.json >hydration-after.log 2>&1
+          code=$?
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');const r=JSON.parse(fs.readFileSync('hydration-after.json','utf8'));
+          console.log(JSON.stringify({success:r.success,files:r.testResults.length,total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,failures:r.testResults.filter(f=>f.status==='failed')}));
+          assert.equal(r.testResults.length,62);assert.equal(r.numTotalTests,450);assert.equal(r.numPendingTests,0);
+          JS
+          if [ "$code" -ne 0 ]; then tail -n 100 hydration-after.log; fi
+          exit "$code"
+      - name: Preserve exact source and all before and after evidence after tests
+        if: always()
+        working-directory: source
+        run: |
+          mkdir -p evidence/source
+          cp --parents components/layout/navbar/mobile-menu.tsx __tests__/rtl/mobile-menu-hydration.test.tsx evidence/source/
+          cp hydration-*.json hydration-*.log evidence/
+          git diff > evidence/hydration.patch
+      - name: Upload results without affecting test discovery
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-hydration-verification
+          path: source/evidence/
+          retention-days: 3
+          if-no-files-found: error
