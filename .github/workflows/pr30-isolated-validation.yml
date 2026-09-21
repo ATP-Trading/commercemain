@@ -1,4 +1,4 @@
-name: PR35 translation runtime validation
+name: PR35 deployed browser and expanded regression checks
 on:
   push:
     branches: [test/pr30-isolated-validation]
@@ -6,14 +6,14 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
+  browser:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 18
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch immutable PR35 source and existing UI harness
+      - name: Fetch pinned application and immutable verification script
         run: |
           set -eu
           git init source
@@ -21,92 +21,92 @@ jobs:
           git config gc.auto 0
           git remote add origin https://github.com/ATP-Trading/commercemain.git
           git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-lingui-runtime
-          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
           git checkout --detach 060397c03cdac89614b4ddd9f0569beff83c7aeb
           test "$(git rev-parse HEAD)" = 060397c03cdac89614b4ddd9f0569beff83c7aeb
-          node <<'JS'
-          const {execFileSync}=require('node:child_process');
-          const assert=require('node:assert/strict');
-          const base='0d71a61ba3626faed096911d15bdda90432f49a8';
-          const removed=['src/i18n/LinguiClientProvider.tsx','src/i18n/dev-tools.ts','src/i18n/index.ts','src/i18n/message-utils.ts','src/i18n/server.ts','src/i18n/useSafeLingui.ts','src/i18n/navigation-server.ts','__tests__/i18n/LinguiClientProvider.test.tsx','__tests__/i18n/server.test.ts','__tests__/i18n/typescript-integration.test.ts'].sort();
-          const added=['__tests__/i18n/current-provider.test.tsx','__tests__/i18n/legacy-core-retirement.test.ts'].sort();
-          const modified=['src/i18n/README.md'];
-          const list=args=>execFileSync('git',args,{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD']),[...removed,...added,...modified].sort());
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=D',base,'HEAD']),removed);
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=A',base,'HEAD']),added);
-          assert.deepEqual(list(['diff','--name-only','--diff-filter=M',base,'HEAD']),modified);
-          assert.deepEqual(list(['diff','--name-only',base,'HEAD','--','global.d.ts','types/tamara-widget.d.ts','__tests__/__mocks__/test-providers.tsx','__tests__/accessibility/membership-components.test.tsx','src/i18n/routing.ts','src/i18n/request.ts','src/i18n/navigation.ts','messages','app','components','hooks','lib','package.json','pnpm-lock.yaml','tsconfig.json']),[]);
-          console.log('PASS: exact intended removal; current storefront, Tamara/shared declarations, mixed accessibility tests, catalogs, lockfile and build settings unchanged.');
-          JS
-      - name: Install unchanged frozen lockfile without lifecycle scripts
-        working-directory: source
-        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
-      - name: Prepare no-network runner and exact result reporting
-        id: prepare
+          git show "$GITHUB_SHA:__tests__/review/pr35-deployed-browser.cjs" > .pr35-browser.cjs
+      - name: Install pinned tooling and Chromium only
         working-directory: source
         run: |
-          cat > .pr35-no-network.cjs <<'JS'
-          const fail=()=>{throw new Error('PR35_TEST_NETWORK_BLOCKED: mock external services');};
-          for(const name of ['node:http','node:https']){const t=require(name);t.request=fail;t.get=fail;}
-          const net=require('node:net');net.connect=fail;net.createConnection=fail;
-          require('node:tls').connect=fail;
-          globalThis.fetch=async()=>fail();
-          JS
-          cat > .pr35-summary.cjs <<'JS'
-          const fs=require('node:fs');const file=process.argv[2];
-          if(!fs.existsSync(file)){console.error('RESULT_FILE_MISSING',file);process.exit(1);}
-          const r=JSON.parse(fs.readFileSync(file,'utf8'));
-          console.log(JSON.stringify({report:file,success:r.success,files:r.testResults.length,tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1800),assertions:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,errors:a.failureMessages.map(m=>m.slice(0,1600))}))}))},null,2));
-          JS
-      - name: Run previous regression scope plus all current i18n and payment-promo tests
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Generate ephemeral public authorization handshake
         working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr35-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo/navigation-url.test.ts __tests__/seo/payment-promo.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr35-results.json >pr35.log 2>&1
-          result=$?
-          node .pr35-summary.cjs pr35-results.json
-          if [ "$result" -ne 0 ]; then tail -n 120 pr35.log; fi
-          exit "$result"
-      - name: Repeat complete current i18n directory in shuffled order
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        run: node .pr35-browser.cjs handshake
+      - name: Publish PUBLIC key only for encrypted delivery
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr35-preview-public-handshake
+          path: source/preview-public-handshake.json
+          retention-days: 1
+          if-no-files-found: error
+      - name: Follow authorized Preview cookies in real Chromium and test guest pages
         working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr35-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/i18n --maxWorkers=2 --no-file-parallelism --sequence.shuffle --sequence.seed=3501 --reporter=json --outputFile=pr35-shuffled-results.json >pr35-shuffled.log 2>&1
-          result=$?
-          node .pr35-summary.cjs pr35-shuffled-results.json
-          if [ "$result" -ne 0 ]; then tail -n 120 pr35-shuffled.log; fi
-          exit "$result"
-      - name: Recheck twelve EN AR login and mobile-menu interactions
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
+        run: node .pr35-browser.cjs run
+      - name: Remove ephemeral private key even on cancellation
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pr35-preview-private.pem"
+      - name: Publish sanitized browser report and storefront screenshots only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr35-deployed-browser-evidence
+          path: source/browser-evidence/
+          retention-days: 1
+          if-no-files-found: warn
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch exact PR35 source and existing UI tests
         run: |
           set -eu
+          git init source
+          cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-lingui-runtime
+          git checkout --detach 060397c03cdac89614b4ddd9f0569beff83c7aeb
+          test "$(git rev-parse HEAD)" = 060397c03cdac89614b4ddd9f0569beff83c7aeb
           mkdir -p __tests__/review
           git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr35-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr35-ui-results.json >pr35-ui.log 2>&1
-          result=$?
-          node .pr35-summary.cjs pr35-ui-results.json
-          if [ "$result" -ne 0 ]; then tail -n 120 pr35-ui.log; fi
-          exit "$result"
-      - name: Record scope without hiding failures
-        if: always()
+      - name: Install unchanged frozen tooling without scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Block external access in isolated tests
         working-directory: source
         run: |
-          {
-            echo '## PR35 validation'
-            echo 'Exact source: 060397c03cdac89614b4ddd9f0569beff83c7aeb; parent PR34 0d71a61.'
-            echo 'Seven audited orphan runtime modules and their three dedicated obsolete tests retired; mixed membership accessibility tests and shared declarations retained.'
-            echo 'No merchant secrets, live-service requests, purchases, customer edits, PR merge or Production promotion.'
-            echo 'Selected isolated tests, not a full-repository, protected-preview browser, real OAuth or checkout test.'
-            for report in pr35-results.json pr35-shuffled-results.json pr35-ui-results.json; do
-              echo '```json'
-              if [ -f "$report" ]; then node .pr35-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
-              echo '```'
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('ISOLATED_TEST_NETWORK_BLOCKED');};
+          for(const name of ['node:http','node:https']){const transport=require(name);transport.request=fail;transport.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Run previous scope plus ALL SEO tests and existing EN AR UI checks
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=expanded-results.json >expanded.log 2>&1
+          result=$?
+          node <<'JS'
+          const fs=require('node:fs');
+          if(!fs.existsSync('expanded-results.json'))process.exit(1);
+          const r=JSON.parse(fs.readFileSync('expanded-results.json','utf8'));
+          const report={source:'060397c03cdac89614b4ddd9f0569beff83c7aeb',success:r.success,files:r.testResults.length,tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:f.message,assertions:f.assertionResults.filter(a=>a.status==='failed')}))};
+          fs.writeFileSync('expanded-summary.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          JS
+          exit "$result"
+      - name: Preserve exact test output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr35-expanded-regression-evidence
+          path: |
+            source/expanded-summary.json
+            source/expanded-results.json
+            source/expanded.log
+          retention-days: 1
+          if-no-files-found: warn
