@@ -1,5 +1,5 @@
 import React from 'react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 type ViewState = { isMember: boolean; isLoading: boolean; error: string | null; membership: { source?: 'appstle' | 'merchant'; startedAt?: string; nextBillingDate?: string } };
 const state = vi.hoisted(() => ({ locale: 'ar', value: { isMember: false, isLoading: false, error: 'unavailable', membership: {} } as ViewState }))
@@ -8,6 +8,10 @@ vi.mock('@/hooks/use-membership', () => ({ useMembership: () => state.value }))
 vi.mock('@/components/account/account-shell', () => ({ AccountShell: ({ children }: React.PropsWithChildren) => <div>{children}</div> }))
 vi.mock('@/src/i18n/navigation', () => ({ Link: ({ children, ...props }: React.ComponentProps<"a">) => <a {...props}>{children}</a> }))
 import MembershipAccountPage from '@/app/[locale]/account/membership/page'
+beforeEach(() => {
+ state.locale = 'ar'
+ state.value = { isMember: false, isLoading: false, error: 'unavailable', membership: {} }
+})
 afterEach(cleanup)
 it('keeps membership benefits and purchase accessible when status lookup fails', () => {
  render(<MembershipAccountPage />)
