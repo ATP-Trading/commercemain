@@ -16,61 +16,101 @@ jobs:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch the exact reviewed revision, not a moving branch
+      - name: Fetch immutable PR, baseline and test-harness revisions
         run: |
           set -eu
           git init source
           cd source
           git remote add origin https://github.com/ATP-Trading/commercemain.git
           git fetch --depth=1 origin 7a7ce61d044fb9909a363c2c8783d45685770a68
-          git checkout --detach FETCH_HEAD
-          test "$(git rev-parse HEAD)" = 7a7ce61d044fb9909a363c2c8783d45685770a68
+          git fetch --depth=1 origin 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach 7a7ce61d044fb9909a363c2c8783d45685770a68
+          test -z "$(git diff --name-only 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e 7a7ce61d044fb9909a363c2c8783d45685770a68 -- package.json pnpm-lock.yaml)"
           node --version
-          npm --version
       - name: Install locked dependencies without lifecycle scripts
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Block external network access during tests
+      - name: Prepare no-network test process and truthful result summary
         working-directory: source
         run: |
           cat > .pr30-no-network.cjs <<'JS'
-          // The test process has no Shopify/Vercel credentials. Any unmocked
-          // HTTP request fails rather than touching a real customer or order.
           const fail = () => { throw new Error('PR30_TEST_NETWORK_BLOCKED: mock network requests in isolated tests'); };
           for (const name of ['node:http', 'node:https']) {
-            const transport = require(name);
-            transport.request = fail;
-            transport.get = fail;
+            const transport = require(name); transport.request = fail; transport.get = fail;
           }
-          const net = require('node:net');
-          net.connect = fail;
-          net.createConnection = fail;
-          const tls = require('node:tls');
-          tls.connect = fail;
+          const net = require('node:net'); net.connect = fail; net.createConnection = fail;
+          require('node:tls').connect = fail;
           globalThis.fetch = async () => fail();
           JS
-      - name: Run auth, cart, membership, analytics and RTL regression suites
+          cat > .pr30-summary.cjs <<'JS'
+          const fs = require('node:fs');
+          const filename = process.argv[2];
+          if (!fs.existsSync(filename)) { console.error('RESULT_FILE_MISSING', filename); process.exit(1); }
+          const r = JSON.parse(fs.readFileSync(filename, 'utf8'));
+          console.log(JSON.stringify({report: filename, success:r.success, files:r.testResults.length,
+            tests:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, pending:r.numPendingTests,
+            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({
+              file:f.name.split('/source/').pop(), message:(f.message||'').slice(0,900),
+              assertions:f.assertionResults.filter(t=>t.status==='failed').map(t=>({name:t.fullName, errors:t.failureMessages.map(m=>m.slice(0,600))}))
+            }))},null,2));
+          JS
+      - name: Run unchanged PR30 regression suites
         working-directory: source
         run: |
-          set -o pipefail
+          set +e
           export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
-          ./node_modules/.bin/vitest run \
-            __tests__/auth \
-            __tests__/cart \
-            __tests__/analytics \
-            __tests__/rtl \
-            __tests__/seo/navigation-url.test.ts \
-            --maxWorkers=2 --no-file-parallelism --reporter=verbose \
-            2>&1 | tee pr30-validation.log
-      - name: Record verification scope
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr30-results.json >pr30-validation.log 2>&1
+          result=$?
+          node .pr30-summary.cjs pr30-results.json
+          exit "$result"
+      - name: Run the same suites on the production baseline
         if: always()
+        working-directory: source
         run: |
-          {
-            echo '## PR30 isolated validation'
-            echo 'Target commit: 7a7ce61d044fb9909a363c2c8783d45685770a68'
-            echo 'No production deployment, protected-preview access, Shopify credentials or purchases.'
-            echo 'These are repository regression tests with mocked network, not a live-store browser test.'
-            echo '```text'
-            tail -n 80 source/pr30-validation.log 2>/dev/null || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          git checkout --detach 4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=baseline-results.json >baseline-validation.log 2>&1
+          result=$?
+          node .pr30-summary.cjs baseline-results.json
+          exit "$result"
+      - name: Test actual EN/AR login and mobile-menu components with mocked authentication
+        if: always()
+        working-directory: source
+        run: |
+          set -eu
+          git checkout --detach 7a7ce61d044fb9909a363c2c8783d45685770a68
+          mkdir -p __tests__/review
+          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.pr30-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=ui-results.json >ui-validation.log 2>&1
+          result=$?
+          node .pr30-summary.cjs ui-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 ui-validation.log; fi
+          exit "$result"
+      - name: Record raw failures and comparison without suppressing them
+        if: always()
+        working-directory: source
+        run: |
+          node <<'JS' | tee comparison-summary.txt
+          const fs=require('node:fs');
+          const load=n=>fs.existsSync(n)?JSON.parse(fs.readFileSync(n,'utf8')):null;
+          const head=load('pr30-results.json'), base=load('baseline-results.json'), ui=load('ui-results.json');
+          const failureKeys=r=>r ? r.testResults.flatMap(f=>[
+            ...(f.status==='failed'&&!f.assertionResults.length?[f.name.split('/source/').pop()+'::SUITE_LOAD']:[]),
+            ...f.assertionResults.filter(a=>a.status==='failed').map(a=>f.name.split('/source/').pop()+'::'+a.fullName)
+          ]).sort():[];
+          const h=failureKeys(head), b=failureKeys(base);
+          console.log(JSON.stringify({
+            target:'7a7ce61d044fb9909a363c2c8783d45685770a68',baseline:'4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e',
+            comparisonAvailable:!!head&&!!base, newFailures:head&&base?h.filter(x=>!b.includes(x)):null,
+            unchangedFailures:head&&base?h.filter(x=>b.includes(x)):null,
+            totals:{pr:head&&{passed:head.numPassedTests,failed:head.numFailedTests,files:head.testResults.length},
+              baseline:base&&{passed:base.numPassedTests,failed:base.numFailedTests,files:base.testResults.length},
+              ui:ui&&{passed:ui.numPassedTests,failed:ui.numFailedTests}},
+            scope:'Isolated actual-source tests with mocked network. Not a protected-preview browser or real login/checkout test. No secrets, purchases, production changes or merges.'
+          },null,2));
+          JS
+          { echo '## PR30 verification'; echo '```json'; cat comparison-summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
