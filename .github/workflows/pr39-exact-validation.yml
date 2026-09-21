@@ -1,0 +1,166 @@
+name: PR39 exact custom membership retirement verification
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr39-exact-validation.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable candidate and original source without merchant credentials
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-custom-membership-engine refs/heads/test/pr30-isolated-validation
+          git checkout --detach 3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c
+          test "$(git rev-parse HEAD)" = 3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c
+          git worktree add --detach ../original e81d61f66b286cc7b210cf6027097fb1ba5a2ac1
+          mkdir -p ../evidence
+      - name: Install the unchanged frozen lockfile without lifecycle scripts
+        working-directory: source
+        run: |
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+          ln -s ../source/node_modules ../original/node_modules
+      - name: Audit original real directories and exact deletion and retained-file boundary
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),assert=require('node:assert/strict'),ts=require('typescript');
+          const base='e81d61f66b286cc7b210cf6027097fb1ba5a2ac1',root=process.cwd(),oldRoot=path.resolve('../original');
+          const git=(...args)=>cp.execFileSync('git',args,{encoding:'utf8',maxBuffer:32*1024*1024});
+          const manifest=JSON.parse(fs.readFileSync('__tests__/__mocks__/retired-membership-files.json','utf8'));
+          assert.equal(manifest.code.length,41);assert.equal(manifest.tests.length,13);
+          const removed=[...manifest.code,...manifest.tests].sort();
+          const changedHashes={
+            '__tests__/__mocks__/retired-membership-files.json':'e86e7440cc547fe04261af318bfc90b90ddc3a3d',
+            '__tests__/cart/session-cart-provider.test.tsx':'f376dbcd97e26825bc487358b6732bdd02c2fe7d',
+            '__tests__/seo/add-to-cart-feedback.test.tsx':'bb6cabb796401cfa6334653b453cbc590aadcd8a',
+            '__tests__/seo/legacy-membership-engine-retirement.test.ts':'0259259f050d1932410da9d1708d9b7ca947bd35',
+            '__tests__/seo/release-security.test.ts':'562224114d77b77399d9e70124415f04681a2db1',
+            'docs/MEMBERSHIP_ARCHITECTURE.md':'e4045f5740487c975a2e84ea5062f93b4f9e7c80',
+            'lib/errors/README.md':'898124b2e405c71269cc36b9d273f5c11cd2e379',
+            'package.json':'ef8e502f32828175f39d3397da7f42eb2ced9704',
+            'scripts/run-comprehensive-tests.ts':'71dffc1112a5c7cc8cb065ba2f6df3703c127fba'
+          };
+          const expected=[...removed,...Object.keys(changedHashes)].sort();assert.equal(expected.length,63);
+          assert.deepEqual(git('diff','--no-renames','--name-only',base,'HEAD').trim().split('\n').sort(),expected);
+          assert.deepEqual(git('diff','--no-renames','--diff-filter=D','--name-only',base,'HEAD').trim().split('\n').sort(),removed);
+          for(const [p,sha] of Object.entries(changedHashes))assert.equal(git('rev-parse','HEAD:'+p).trim(),sha,p);
+          for(const p of removed){assert.ok(fs.existsSync(path.join(oldRoot,p)),p);assert.ok(!fs.existsSync(p),p);}
+          for(const p of ['pnpm-lock.yaml','tsconfig.json','vitest.config.ts','vitest.setup.ts','next.config.ts','global.d.ts','types/tamara-widget.d.ts','lib/types/membership.ts','lib/constants/membership.ts','messages/en.json','messages/ar.json'])assert.equal(git('show',base+':'+p),fs.readFileSync(p,'utf8'),p);
+          const oldPackage=JSON.parse(git('show',base+':package.json'));
+          for(const key of ['test:performance','test:load']){assert.ok(key in oldPackage.scripts);delete oldPackage.scripts[key];}
+          assert.deepEqual(JSON.parse(fs.readFileSync('package.json','utf8')),oldPackage);
+          let runner=git('show',base+':scripts/run-comprehensive-tests.ts');
+          for(const name of ['Performance Tests','Load Tests']){
+            const pattern=new RegExp("  \\{\\n    name: '"+name+"',\\n.*?\\n  \\},\\n",'s');assert.ok(pattern.test(runner));runner=runner.replace(pattern,'');
+          }
+          assert.equal(fs.readFileSync('scripts/run-comprehensive-tests.ts','utf8'),runner);
+          const tracked=git('ls-tree','-r','--name-only',base).trim().split('\n');
+          const files=tracked.filter(p=>/\.[cm]?[jt]sx?$/.test(p));
+          const configRead=ts.readConfigFile(path.join(oldRoot,'tsconfig.json'),ts.sys.readFile);assert.ok(!configRead.error);
+          const config=ts.parseJsonConfigFileContent(configRead.config,ts.sys,oldRoot);
+          const removedSet=new Set(removed),adjusted=new Set(['__tests__/seo/add-to-cart-feedback.test.tsx','__tests__/cart/session-cart-provider.test.tsx','__tests__/seo/release-security.test.ts']);
+          const edges={},incoming=[],mocks=[],ambient=[],dynamic=[],unresolved=[];
+          for(const file of files){const text=fs.readFileSync(path.join(oldRoot,file),'utf8'),ast=ts.createSourceFile(file,text,ts.ScriptTarget.Latest,true);edges[file]=[];
+            function visit(n){let spec,kind='import';
+              if((ts.isImportDeclaration(n)||ts.isExportDeclaration(n))&&n.moduleSpecifier)spec=n.moduleSpecifier;
+              if(ts.isImportEqualsDeclaration(n)&&ts.isExternalModuleReference(n.moduleReference))spec=n.moduleReference.expression;
+              if(ts.isImportTypeNode(n)&&ts.isLiteralTypeNode(n.argument))spec=n.argument.literal;
+              if(ts.isCallExpression(n)){
+                if(n.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(n.expression)&&n.expression.text==='require'))spec=n.arguments[0];
+                if(ts.isPropertyAccessExpression(n.expression)&&['vi','jest'].includes(n.expression.expression.getText(ast))&&['mock','doMock','unmock','doUnmock','importActual','importMock'].includes(n.expression.name.text)){spec=n.arguments[0];kind='mock';}
+              }
+              if(spec){if(ts.isStringLiteralLike(spec)){
+                const mod=ts.resolveModuleName(spec.text,path.join(oldRoot,file),config.options,ts.sys).resolvedModule;
+                if(mod){const dest=path.relative(oldRoot,mod.resolvedFileName).replaceAll('\\','/');if(kind==='import')edges[file].push(dest);
+                  if(removedSet.has(dest)&&!removedSet.has(file)){const entry={file,dest,kind,specifier:spec.text};if(adjusted.has(file)&&kind==='mock')mocks.push(entry);else incoming.push(entry);}
+                }else if(spec.text.startsWith('.')||spec.text.startsWith('@/'))unresolved.push({file,specifier:spec.text});
+              }else dynamic.push({file,expression:spec.getText(ast),kind});}
+              if(manifest.code.includes(file)&&(ts.isModuleDeclaration(n)||(n.modifiers||[]).some(m=>m.kind===ts.SyntaxKind.DeclareKeyword)))ambient.push(file);
+              ts.forEachChild(n,visit);
+            }visit(ast);
+          }
+          const roots=files.filter(p=>p.startsWith('app/')||p.startsWith('pages/')||/^(middleware|proxy|instrumentation|next\.config)\./.test(p)||p==='src/i18n/request.ts');
+          const reached=new Set(),queue=[...roots];while(queue.length){const f=queue.pop();if(reached.has(f))continue;reached.add(f);queue.push(...(edges[f]||[]));}
+          const reachableRemoved=manifest.code.filter(p=>reached.has(p));
+          const report={base,candidate:git('rev-parse','HEAD').trim(),tracked:tracked.length,sourceFiles:files.length,roots:roots.length,removedCode:manifest.code,retiredTests:manifest.tests,codeLines:manifest.code.reduce((n,p)=>n+fs.readFileSync(path.join(oldRoot,p),'utf8').split('\n').filter((s,i,a)=>i<a.length-1||s).length,0),outsideImports:incoming,cleanedMocks:mocks,ambient,dynamic,unresolved,reachableRemoved,changed:expected,allOtherFilesUnchanged:true};
+          fs.writeFileSync('../evidence/original-source-audit.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          assert.deepEqual(incoming,[]);assert.deepEqual(ambient,[]);assert.deepEqual(reachableRemoved,[]);assert.equal(mocks.length,3);
+          assert.deepEqual(dynamic,[{file:'src/i18n/request.ts',expression:'`../../messages/${locale}.json`',kind:'import'}]);
+          assert.deepEqual(unresolved,[{file:'app/layout.tsx',specifier:'./globals.css'}]);
+          assert.equal(report.codeLines,12248);
+          JS
+          git diff --check
+      - name: Type-check the exact candidate without changing compiler options
+        working-directory: source
+        run: ./node_modules/.bin/tsc --noEmit --incremental false > ../evidence/typecheck.log 2>&1
+      - name: Prepare existing auth harness and block unmocked external requests
+        working-directory: source
+        run: |
+          set -eu
+          mkdir -p __tests__/review ../original/__tests__/review
+          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
+          cp __tests__/review/pr30-auth-ui.test.tsx ../original/__tests__/review/pr30-auth-ui.test.tsx
+          cat > ../no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('PR39_UNMOCKED_NETWORK_BLOCKED');};
+          for(const name of ['node:http','node:https']){const m=require(name);m.request=fail;m.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Run the previous selected scope on unchanged PR38 before comparing retirement
+        working-directory: original
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo __tests__/accessibility/membership-components.test.tsx __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/baseline.json >../evidence/baseline.log 2>&1
+      - name: Run the exact candidate selected scope with no evidence-folder test copies
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo __tests__/accessibility/membership-components.test.tsx __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/candidate.json >../evidence/candidate.log 2>&1
+      - name: Repeat retained behavior and structural guards in randomized order
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/../no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/seo/legacy-membership-engine-retirement.test.ts __tests__/seo/release-security.test.ts __tests__/seo/add-to-cart-feedback.test.tsx __tests__/cart/session-cart-provider.test.tsx __tests__/cart/membership-status-route.test.ts __tests__/cart/membership-entitlement.test.ts __tests__/accessibility/membership-components.test.tsx --sequence.shuffle --sequence.seed=3901 --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=../evidence/shuffled.json >../evidence/shuffled.log 2>&1
+      - name: Compare every retained case and report exact counts transparently
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const load=n=>JSON.parse(fs.readFileSync('../evidence/'+n+'.json','utf8'));
+          const b=load('baseline'),c=load('candidate'),s=load('shuffled');
+          const summary=r=>({success:r.success,files:r.testResults.length,tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests});
+          for(const r of [b,c,s]){assert.equal(r.success,true);assert.equal(r.numFailedTests,0);assert.equal(r.numPendingTests,0);assert.ok(r.testResults.every(f=>f.status==='passed'));}
+          assert.equal(b.numTotalTests,507);assert.equal(b.testResults.length,65);
+          assert.equal(c.numTotalTests,503);assert.equal(c.testResults.length,65);
+          const relative=n=>n.slice(n.indexOf('/__tests__/')+1);
+          const cases=(r,exclude)=>r.testResults.filter(f=>!exclude.includes(relative(f.name))).flatMap(f=>f.assertionResults.map(t=>relative(f.name)+' :: '+t.fullName)).sort();
+          assert.deepEqual(cases(b,['__tests__/cart/membership-cart-middleware.test.ts']),cases(c,['__tests__/seo/legacy-membership-engine-retirement.test.ts']));
+          const out={candidate:'3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c',baseline:summary(b),candidateResults:summary(c),randomized:summary(s),retainedCasesIdentical:498,retiredPreviouslyPassingMiddlewareCases:9,newStructuralGuards:5,noRetries:true,noSkippedTests:true};
+          fs.writeFileSync('../evidence/summary.json',JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));
+          JS
+      - name: Preserve results and exact diff without changing test discovery
+        if: always()
+        working-directory: source
+        run: |
+          git diff --no-renames e81d61f66b286cc7b210cf6027097fb1ba5a2ac1 HEAD --stat > ../evidence/diff-stat.txt
+          git diff --no-renames e81d61f66b286cc7b210cf6027097fb1ba5a2ac1 HEAD --name-status > ../evidence/changed-paths.txt
+          cp __tests__/__mocks__/retired-membership-files.json ../evidence/
+          for log in ../evidence/*.log; do if [ -s "$log" ]; then tail -n 6 "$log"; fi; done
+      - name: Upload actual results regardless of outcome
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr39-exact-validation
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
