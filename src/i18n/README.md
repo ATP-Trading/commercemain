@@ -24,10 +24,12 @@ Retirement checks guard against reintroducing imports of deleted runtime helpers
 
 These are isolated automated checks, not a full storefront browser, real OAuth session or checkout test.
 
-## Remaining legacy cleanup
+## Retired compatibility artifacts
 
-The shared membership accessibility test fixture still imports Lingui directly and needs a separate migration. Its mixed accessibility tests have **not** been removed in this change.
+The unused Lingui configuration, declaration stubs, legacy type module and `src/locales` catalogs have been removed. Current translation content remains in the root `messages` directory. Do not reinstall an obsolete translation engine merely to satisfy a stale test.
 
-`src/i18n/types.ts`, `src/i18n/lingui-types.d.ts`, `types/lingui.d.ts`, `global.d.ts`, `lingui.config.ts` and the old `src/locales` catalogs remain outside this removal boundary. Audit their remaining test, configuration and ambient consumers before deleting them.
+The shared `TestProviders` fixture now supplies real `NextIntlClientProvider` and direction contexts without mounting any membership service or creating a network session. The membership accessibility suite exercises the retained `MembershipBadge` and `MemberPricing` with their current props, mocking only resolved membership state and framework routing. It includes axe scans in EN/AR and actual display-price calculations, not a real member authorization or checkout test.
 
-In particular, `global.d.ts` also contains a Tamara custom-element declaration. It must not be deleted simply because its heading mentions Lingui. The independent `types/tamara-widget.d.ts` declaration and current payment widgets likewise require explicit preservation/review.
+The orphaned `AtpMembershipDashboard` and its dedicated scenarios were retired after checking all imports and deployment/test lists. This does not remove the current `app/[locale]/account/membership` page. Other historical membership services/hooks still require their own dependency audit; this is not their removal.
+
+`global.d.ts` retains the existing Tamara custom-element declaration. `types/tamara-widget.d.ts`, active payment widgets, all current storefront text and routing remain unchanged. Retirement guards prevent importing removed modules or silently reintroducing fake Lingui module declarations.

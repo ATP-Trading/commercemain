@@ -1,201 +1,134 @@
-import { render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { AtpMembershipDashboard } from '../../components/membership/atp-membership-dashboard';
-import { MembershipBadge } from '../../components/membership/membership-badge';
-import { MemberPricing } from '../../components/membership/member-pricing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MembershipBadge } from '@/components/membership/membership-badge';
+import { MemberPricing } from '@/components/membership/member-pricing';
 import { TestProviders } from '../__mocks__/test-providers';
-import { mockMembership, mockExpiredMembership } from '../__mocks__/membership-data';
+import en from '@/messages/en.json';
+import ar from '@/messages/ar.json';
 
 expect.extend(toHaveNoViolations);
 
-describe('Membership Components Accessibility Tests', () => {
-  beforeEach(() => {
-    // Reset any global state
-    localStorage.clear();
-  });
+// Mock only the resolved membership/network and Next router boundaries.
+// Pricing calculations, components, currency icons, next-intl and axe are real.
+const state = vi.hoisted(() => ({ isMember: false, isLoading: false, discountRate: 0.15, pathname: '/en' }));
+vi.mock('@/hooks/use-membership', () => ({ useMembership: () => ({
+  membership: { tier: state.isMember ? 'atp' : null, isActive: state.isMember, discountRate: state.discountRate },
+  isMember: state.isMember, isLoading: state.isLoading, error: null,
+}) }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => state.pathname,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+}));
 
-  describe('AtpMembershipDashboard Accessibility', () => {
-    it('should have no accessibility violations for active membership', async () => {
-      const { container } = render(
-        <TestProviders membership={mockMembership}>
-          <AtpMembershipDashboard />
-        </TestProviders>
-      );
+let oldDir: string | null;
+let oldLang: string | null;
+let oldBodyClass: string;
+beforeEach(() => {
+  state.isMember = false; state.isLoading = false; state.discountRate = 0.15;
+  oldDir = document.documentElement.getAttribute('dir');
+  oldLang = document.documentElement.getAttribute('lang');
+  oldBodyClass = document.body.className;
+});
+afterEach(() => {
+  cleanup();
+  for (const [key, value] of [['dir', oldDir], ['lang', oldLang]] as const) {
+    if (value === null) document.documentElement.removeAttribute(key);
+    else document.documentElement.setAttribute(key, value);
+  }
+  document.body.className = oldBodyClass;
+  document.cookie = 'atp-locale=; Max-Age=0; path=/';
+  vi.restoreAllMocks();
+});
 
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
-
-    it('should have no accessibility violations for expired membership', async () => {
-      const { container } = render(
-        <TestProviders membership={mockExpiredMembership}>
-          <AtpMembershipDashboard />
-        </TestProviders>
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
-
-    it('should have proper status announcements', () => {
-      render(
-        <TestProviders membership={mockMembership}>
-          <AtpMembershipDashboard />
-        </TestProviders>
-      );
-
-      // Check for status region
-      const statusRegion = screen.getByRole('status');
-      expect(statusRegion).toBeInTheDocument();
-      expect(statusRegion).toHaveAttribute('aria-live', 'polite');
-
-      // Check for membership status announcement
-      expect(screen.getByText(/membership is active/i)).toBeInTheDocument();
-    });
-
-    it('should have accessible progress indicators', () => {
-      render(
-        <TestProviders membership={mockMembership}>
-          <AtpMembershipDashboard />
-        </TestProviders>
-      );
-
-      const progressBar = screen.getByRole('progressbar');
-      expect(progressBar).toBeInTheDocument();
-      expect(progressBar).toHaveAttribute('aria-valuenow');
-      expect(progressBar).toHaveAttribute('aria-valuemin', '0');
-      expect(progressBar).toHaveAttribute('aria-valuemax', '100');
-      expect(progressBar).toHaveAttribute('aria-label', expect.stringContaining('membership progress'));
-    });
-  });
-
-  describe('MembershipBadge Accessibility', () => {
-    it('should have no accessibility violations', async () => {
-      const { container } = render(
-        <TestProviders membership={mockMembership}>
-          <MembershipBadge />
-        </TestProviders>
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
-
-    it('should have proper badge semantics', () => {
-      render(
-        <TestProviders membership={mockMembership}>
-          <MembershipBadge />
-        </TestProviders>
-      );
-
-      const badge = screen.getByRole('img', { name: /atp member/i });
-      expect(badge).toBeInTheDocument();
-      expect(badge).toHaveAttribute('aria-label', 'ATP Member - Active');
-    });
-
-    it('should indicate status changes', () => {
-      const { rerender } = render(
-        <TestProviders membership={mockMembership}>
-          <MembershipBadge />
-        </TestProviders>
-      );
-
-      expect(screen.getByRole('img', { name: /active/i })).toBeInTheDocument();
-
-      rerender(
-        <TestProviders membership={mockExpiredMembership}>
-          <MembershipBadge />
-        </TestProviders>
-      );
-
-      expect(screen.getByRole('img', { name: /expired/i })).toBeInTheDocument();
-    });
-  });
-
-  describe('MemberPricing Accessibility', () => {
-    const mockProduct = {
-      id: 'product_1',
-      title: 'Home Massage Service',
-      price: 200,
-      type: 'service' as const
+for (const locale of ['en', 'ar'] as const) {
+  describe(`${locale} current membership badge and pricing`, () => {
+    const messages = locale === 'ar' ? ar : en;
+    const name = locale === 'ar' ? 'عضوية ATP' : 'ATP Membership';
+    const amount = (value: number) => new Intl.NumberFormat(`${locale}-AE`, {
+      minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(value);
+    const view = (child: ReactNode) => {
+      state.pathname = `/${locale}`;
+      return <TestProviders locale={locale}>{child}</TestProviders>;
     };
 
-    it('should have no accessibility violations', async () => {
-      const { container } = render(
-        <TestProviders membership={mockMembership}>
-          <MemberPricing product={mockProduct} />
-        </TestProviders>
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
+    it('renders a non-empty translated badge with no detected axe violations', async () => {
+      const { container } = render(view(<MembershipBadge tier="atp" discount={15} />));
+      expect(screen.getByText(new RegExp(name))).toBeVisible();
+      expect(container.querySelector('.membership-badge')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+      expect(container.textContent).toContain(locale === 'ar' ? 'خصم 15٪' : '15% OFF');
+      expect(await axe(container)).toHaveNoViolations();
     });
 
-    it('should have accessible price information', () => {
-      render(
-        <TestProviders membership={mockMembership}>
-          <MemberPricing product={mockProduct} />
-        </TestProviders>
-      );
-
-      // Check for price semantics
-      const originalPrice = screen.getByText(/200 AED/i);
-      expect(originalPrice).toHaveAttribute('aria-label', 'Original price 200 AED');
-
-      const memberPrice = screen.getByText(/170 AED/i);
-      expect(memberPrice).toHaveAttribute('aria-label', 'Member price 170 AED');
-
-      const savings = screen.getByText(/save 30/i);
-      expect(savings).toHaveAttribute('aria-label', 'You save 30 د.إ with membership');
+    it('does not invent a membership badge without an explicit tier', () => {
+      const { container, rerender } = render(view(<MembershipBadge tier="atp" />));
+      expect(screen.getByText(name)).toBeVisible();
+      rerender(view(<MembershipBadge tier={null} />));
+      expect(container.querySelector('.membership-badge')).toBeNull();
+      expect(screen.queryByText(name)).not.toBeInTheDocument();
     });
 
-    it('should announce price changes', () => {
-      const { rerender } = render(
-        <TestProviders membership={null}>
-          <MemberPricing product={mockProduct} />
-        </TestProviders>
-      );
+    it('shows only the regular price to a non-member, without free delivery', async () => {
+      const { container } = render(view(<MemberPricing originalPrice="200" showFreeDelivery />));
+      expect(screen.getByText(amount(200))).toBeVisible();
+      expect(screen.queryByText(amount(170))).not.toBeInTheDocument();
+      expect(screen.queryByText(messages.membership.youSave)).not.toBeInTheDocument();
+      expect(screen.queryByText(messages.membership.freeDeliveryBenefit)).not.toBeInTheDocument();
+      expect(container.querySelector('svg[aria-label="UAE Dirham Symbol"]')).not.toBeNull();
+      expect(await axe(container)).toHaveNoViolations();
+    });
 
-      expect(screen.getByText(/200 AED/i)).toBeInTheDocument();
-      expect(screen.queryByText(/170 AED/i)).not.toBeInTheDocument();
+    it('renders the actual member calculation and localized savings without axe violations', async () => {
+      state.isMember = true;
+      const { container } = render(view(<MemberPricing originalPrice="200" showFreeDelivery />));
+      expect(screen.getByText(amount(200))).toBeVisible();
+      expect(screen.getByText(amount(170))).toBeVisible();
+      expect(screen.getByText(amount(30))).toBeVisible();
+      expect(screen.getByText(messages.membership.youSave)).toBeVisible();
+      expect(screen.getByText(messages.membership.freeDeliveryBenefit)).toBeVisible();
+      expect(screen.getByText(amount(200)).closest('.line-through')).not.toBeNull();
+      expect(container.querySelector('[dir]')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+      expect(await axe(container)).toHaveNoViolations();
+    });
 
-      rerender(
-        <TestProviders membership={mockMembership}>
-          <MemberPricing product={mockProduct} />
-        </TestProviders>
-      );
+    it('removes the member price and benefits when resolved membership is revoked', () => {
+      state.isMember = true;
+      const { rerender } = render(view(<MemberPricing originalPrice="200" showFreeDelivery />));
+      expect(screen.getByText(amount(170))).toBeVisible();
+      state.isMember = false;
+      rerender(view(<MemberPricing originalPrice="200" showFreeDelivery />));
+      expect(screen.getByText(amount(200))).toBeVisible();
+      expect(screen.queryByText(amount(170))).not.toBeInTheDocument();
+      expect(screen.queryByText(messages.membership.youSave)).not.toBeInTheDocument();
+      expect(screen.queryByText(messages.membership.freeDeliveryBenefit)).not.toBeInTheDocument();
+    });
 
-      // Should announce the discount
-      const announcement = screen.getByRole('status');
-      expect(announcement).toHaveTextContent(/member discount applied/i);
+    it('does not apply the offer while the status boundary resolves a non-member', () => {
+      state.isLoading = true;
+      render(view(<MemberPricing originalPrice="200" showFreeDelivery />));
+      expect(screen.getByText(amount(200))).toBeVisible();
+      expect(screen.queryByText(amount(170))).not.toBeInTheDocument();
+      expect(screen.queryByText(messages.membership.freeDeliveryBenefit)).not.toBeInTheDocument();
+    });
+
+    it('uses a product discount override in the real pricing hook without changing the default', () => {
+      state.isMember = true;
+      const { rerender } = render(view(<MemberPricing originalPrice="200" discountRate={0.1} />));
+      expect(screen.getByText(amount(180))).toBeVisible();
+      expect(screen.getByText(amount(20))).toBeVisible();
+      expect(screen.queryByText(amount(170))).not.toBeInTheDocument();
+      rerender(view(<MemberPricing originalPrice="200" />));
+      expect(screen.getByText(amount(170))).toBeVisible();
+      expect(state.discountRate).toBe(0.15);
+    });
+
+    it('does not display a free-delivery claim unless explicitly requested', () => {
+      state.isMember = true;
+      render(view(<MemberPricing originalPrice="200" />));
+      expect(screen.getByText(amount(170))).toBeVisible();
+      expect(screen.queryByText(messages.membership.freeDeliveryBenefit)).not.toBeInTheDocument();
     });
   });
-
-  describe('RTL Support', () => {
-    it('should maintain accessibility in RTL mode', async () => {
-      const { container } = render(
-        <TestProviders locale="ar">
-          <AtpMembershipDashboard />
-        </TestProviders>
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
-  });
-
-  describe('Screen Reader Support', () => {
-    it('should provide meaningful content for screen readers', () => {
-      render(
-        <TestProviders membership={mockMembership}>
-          <AtpMembershipDashboard />
-        </TestProviders>
-      );
-
-      // Check for screen reader only content
-      const srOnlyElements = screen.getAllByText(/screen reader/i, { selector: '.sr-only' });
-      expect(srOnlyElements.length).toBeGreaterThan(0);
-    });
-  });
-});
+}
