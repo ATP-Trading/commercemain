@@ -1,0 +1,163 @@
+name: PR36 final exact-source and deployed input validation
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr36-final-validation.yml]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable candidate and verify the exact five-file boundary
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach a6ec9e5cc380f11f0d367a767529df89a397f74c
+          test "$(git rev-parse HEAD)" = a6ec9e5cc380f11f0d367a767529df89a397f74c
+          node <<'JS'
+          const cp=require('node:child_process'),assert=require('node:assert/strict');
+          const files={
+            'components/layout/navbar/mobile-menu.tsx':'c104861afa29944c0ce93b6b54e1f5cdda340926',
+            '__tests__/rtl/mobile-menu-route-stability.test.tsx':'8a613c4443bafac3ae6cef11572306fe07ebc32f',
+            '__tests__/rtl/mobile-menu-hydration.test.tsx':'3ad567929f5c3e99f76a354e9940c171bbece944',
+            '__tests__/seo/release-security.test.ts':'f8f766aef1c40100fd92284f4053395df1136808',
+            '__tests__/seo/member-cart-operations.test.ts':'6363179ef73ea925e3c1a5b96aa079bdb4289dbb',
+          };
+          const run=args=>cp.execFileSync('git',args,{encoding:'utf8'}).trim();
+          assert.deepEqual(run(['diff','--name-only','060397c03cdac89614b4ddd9f0569beff83c7aeb','HEAD']).split('\n').sort(),Object.keys(files).sort());
+          for(const [p,sha] of Object.entries(files))assert.equal(run(['rev-parse','HEAD:'+p]),sha,p);
+          console.log('PASS exact final source; only one application file changed, no other storefront or environment changes.');
+          JS
+          mkdir -p __tests__/review
+          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
+      - name: Install unchanged frozen lockfile without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Block unmocked external network
+        working-directory: source
+        run: |
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('FINAL_TEST_NETWORK_BLOCKED');};
+          for(const n of ['node:http','node:https']){const t=require(n);t.request=fail;t.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Execute entire expanded scope including real SSR and hydration tests
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=final-results.json >final.log 2>&1
+          code=$?
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');const r=JSON.parse(fs.readFileSync('final-results.json','utf8'));
+          const summary={source:'a6ec9e5cc380f11f0d367a767529df89a397f74c',success:r.success,files:r.testResults.length,total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests};
+          console.log(JSON.stringify(summary,null,2));fs.writeFileSync('final-summary.json',JSON.stringify(summary,null,2));
+          assert.equal(r.testResults.length,62);assert.equal(r.numTotalTests,450);assert.equal(r.numPendingTests,0);
+          assert.ok(r.testResults.every(f=>f.name.includes('/source/__tests__/')));
+          JS
+          if [ "$code" -ne 0 ]; then tail -n 100 final.log; fi
+          exit "$code"
+      - name: Repeat all four changed/new suites with randomized order
+        if: ${{ !cancelled() }}
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/rtl/mobile-menu-route-stability.test.tsx __tests__/rtl/mobile-menu-hydration.test.tsx __tests__/seo/release-security.test.ts __tests__/seo/member-cart-operations.test.ts --maxWorkers=2 --sequence.shuffle --sequence.seed=3603 --reporter=json --outputFile=final-shuffled.json >final-shuffled.log 2>&1
+      - name: Preserve exact results without duplicate test-source copies
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-final-regression
+          path: |
+            source/final*.json
+            source/final*.log
+          retention-days: 3
+          if-no-files-found: error
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Prepare pinned final Preview check using the preserved safe guest harness
+        run: |
+          set -eu
+          git init source; cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/fix/mobile-menu-stability-and-regression-tests
+          git checkout --detach a6ec9e5cc380f11f0d367a767529df89a397f74c
+          git show "$GITHUB_SHA:__tests__/review/pr35-deployed-browser.cjs" > .pr35-browser.cjs
+          git show "$GITHUB_SHA:__tests__/review/pr35-browser-confirmation.cjs" > .final-browser.cjs
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');let s=fs.readFileSync('.final-browser.cjs','utf8');
+          const replace=(a,b)=>{assert.ok(s.includes(a),'Missing anchor '+a);s=s.replace(a,()=>b);};
+          replace("previewHost='commercemain-8cm9dnt1d-atp-trading.vercel.app'","previewHost='commercemain-7vf3gmf90-atp-trading.vercel.app'");
+          replace('pr35-preview-envelope.json','pr36-final-preview-envelope.json');
+          replace("report.results.push(await inspect(browser,'production','https://www.atpgroupservices.ae','https://www.atpgroupservices.ae/en/auth/login'));",'// Existing Production is unchanged and was already diagnosed separately.');
+          replace("for(const locale of ['en','ar']){","for(const [iteration,locale] of Array.from({length:13},(_,i)=>['en','ar'].map(l=>[i,l])).flat()){");
+          replace('`${locale} mobile menu opens, shows guest login and closes`','`${locale} ${iteration<10?"normal":"slow-JS"} cycle ${iteration<10?iteration+1:iteration-9}: opens, stays open and closes`');
+          replace("await page.goto(`${origin}/${locale}`,{waitUntil:'domcontentloaded',timeout:45000});","slowMode=iteration>=10;\n    await page.goto(`${origin}/${locale}`,{waitUntil:slowMode?'commit':'domcontentloaded',timeout:45000});");
+          replace("await close.waitFor({state:'visible',timeout:10000});","await close.waitFor({state:'visible',timeout:10000});\n    await page.waitForTimeout(900);\n    assert.ok(await close.isVisible(),'Menu closed without user action');");
+          replace("for(const suffix of ['/atp-membership','/product/atp-membership'])","for(const suffix of (iteration===0?['/atp-membership','/product/atp-membership']:[]))");
+          replace("const req=route.request(),u=new URL(req.url());","const req=route.request(),u=new URL(req.url());\n  if(slowMode&&u.origin===origin&&u.pathname.includes('/_next/')&&u.pathname.endsWith('.js'))await sleep(1200);");
+          replace("const page=await context.newPage();",`let slowMode=false;
+          await context.addInitScript(() => {
+            window.__menuInputAudit=[];
+            document.addEventListener('click', event => {
+              const button=event.target instanceof Element?event.target.closest('button'):null;
+              if(!button)return;
+              const label=button.getAttribute('aria-label')||'';
+              if(!/menu|القائمة/i.test(label))return;
+              const key=Object.keys(button).find(k=>k.startsWith('__reactProps$'));
+              window.__menuInputAudit.push({label,disabled:button.disabled,handlerAttached:!!(key&&typeof button[key]?.onClick==='function'),at:Math.round(performance.now()),path:location.pathname});
+            },true);
+          });
+          const page=await context.newPage();`);
+          replace("status:'failed',error:redact(e.message)","status:'failed',error:redact(e.message),inputAudit:await page.evaluate(()=>window.__menuInputAudit||[]).catch(()=>[])");
+          replace('const file=`${label}-${locale}-menu.png`;await page.screenshot({path:path.join(out,file)});result.screenshots.push(file);','if(iteration===0||iteration===10){const file=`${label}-${locale}-${slowMode?"slow":"normal"}-menu.png`;await page.screenshot({path:path.join(out,file)});result.screenshots.push(file);}');
+          replace('const file2=`${label}-${locale}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);','if(iteration===0||iteration===10){const file2=`${label}-${locale}-${slowMode?"slow":"normal"}-home.png`;await page.screenshot({path:path.join(out,file2)});result.screenshots.push(file2);}');
+          replace("return {viewport:'390x844',open:true,guestLogin:true,closed:true};","const inputs=await page.evaluate(()=>window.__menuInputAudit||[]);\n    assert.ok(inputs.length>=2&&inputs.every(x=>x.handlerAttached),'Received menu input before its handler attached');\n    return {viewport:'390x844',mode:slowMode?'1200ms JavaScript delivery delay':'normal',open:true,guestLogin:true,stableAfter900ms:true,closed:true,inputAudit:inputs};");
+          replace("scope:'Guest browser confirmation.","source:'a6ec9e5cc380f11f0d367a767529df89a397f74c',scope:'Final Preview: ten normal and three controlled slow-JavaScript menu cycles per language, plus four membership-route checks. Guest browser confirmation.");
+          fs.writeFileSync('.final-browser.cjs',s);
+          JS
+          node --check .final-browser.cjs
+      - name: Install unchanged frozen browser tooling and Chromium
+        working-directory: source
+        run: |
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Generate ephemeral public handshake
+        working-directory: source
+        run: node .pr35-browser.cjs handshake
+      - name: Publish public key only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-final-public-handshake
+          path: source/preview-public-handshake.json
+          retention-days: 1
+          if-no-files-found: error
+      - name: Execute real normal and slow-hydration guest interactions on final Preview
+        working-directory: source
+        run: node .final-browser.cjs
+      - name: Remove ephemeral private key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pr35-preview-private.pem"
+      - name: Preserve all browser outcomes and public screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-final-browser-evidence
+          path: source/confirmation-evidence/
+          retention-days: 3
+          if-no-files-found: warn
