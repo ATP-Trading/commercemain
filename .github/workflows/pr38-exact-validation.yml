@@ -32,7 +32,7 @@ jobs:
           node <<'JS'
           const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),assert=require('node:assert/strict'),ts=require('typescript');
           const base='d5b6ac616704c0eb4a77d015309cdd22bfff120c';
-          const git=(...args)=>cp.execFileSync('git',args,{encoding:'utf8'});
+          const git=(...args)=>cp.execFileSync('git',args,{encoding:'utf8',maxBuffer:32*1024*1024});
           const tracked=git('ls-tree','-r','--name-only',base).trim().split('\n');
           const removed=tracked.filter(p=>p.startsWith('components/admin/')&&p.endsWith('.tsx')).concat('lib/services/admin-membership-service.ts').sort();
           assert.equal(removed.length,10);
@@ -46,7 +46,8 @@ jobs:
           for(const alias of retiredAliases){assert.ok(alias in oldPackage.scripts);if(alias!=='health:check'){const target=oldPackage.scripts[alias].match(/scripts\/[^\s]+/)[0];assert.ok(!tracked.includes(target));}delete oldPackage.scripts[alias];}
           assert.deepEqual(newPackage,oldPackage);
           for(const p of ['pnpm-lock.yaml','tsconfig.json','vitest.config.ts','vitest.setup.ts','global.d.ts']) assert.equal(git('show',base+':'+p),fs.readFileSync(p,'utf8'));
-          const original=new Map(tracked.filter(p=>/\.(?:[cm]?[jt]sx?|json)$/.test(p)).map(p=>[path.resolve(p),git('show',base+':'+p)]));
+          // Parse all JS/TS source and compiler config, not unrelated JSON log exports.
+          const original=new Map(tracked.filter(p=>/\.[cm]?[jt]sx?$/.test(p)||p==='tsconfig.json').map(p=>[path.resolve(p),git('show',base+':'+p)]));
           const host={...ts.sys,fileExists:p=>original.has(path.resolve(p))||ts.sys.fileExists(p),readFile:p=>original.get(path.resolve(p))??ts.sys.readFile(p)};
           const config=ts.parseJsonConfigFileContent(JSON.parse(original.get(path.resolve('tsconfig.json'))),host,process.cwd());
           const removedSet=new Set(removed.map(p=>path.resolve(p))),outside=[],ambient=[],dynamic=[],edges=new Map();
@@ -79,6 +80,7 @@ jobs:
         working-directory: source
         run: ./node_modules/.bin/tsc --noEmit --incremental false > ../evidence/typecheck.log 2>&1
       - name: Prepare existing auth harness and forbid unmocked external requests
+        id: isolation
         working-directory: source
         run: |
           mkdir -p __tests__/review
@@ -105,7 +107,7 @@ jobs:
           if [ "$code" -ne 0 ]; then tail -n 120 ../evidence/expanded.log; fi
           exit "$code"
       - name: Repeat new suite and current membership security/status tests in randomized order
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.isolation.outcome == 'success' }}
         working-directory: source
         run: |
           export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
