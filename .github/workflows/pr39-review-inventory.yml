@@ -1,0 +1,73 @@
+name: PR39 read-only final inventory review
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr39-review-inventory.yml]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch exact public candidate without credentials or executing merchant scripts
+        run: |
+          set -eu
+          git init source
+          cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/retire-custom-membership-engine
+          git checkout --detach 3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c
+          test "$(git rev-parse HEAD)" = 3b71e4f5cf9b1d51ca8c591c18aa84be5b4eb95c
+          mkdir -p ../evidence
+      - name: Export source for bounded review and compare retained runtime
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process'),assert=require('node:assert/strict');
+          const git=(...args)=>cp.execFileSync('git',args,{encoding:'utf8',maxBuffer:32*1024*1024});
+          const files=git('ls-files').trim().split('\n');
+          const selected=files.filter(p=>/\.[cm]?[jt]sx?$/.test(p)||['package.json','tsconfig.json','.eslintrc.json','messages/en.json','messages/ar.json'].includes(p));
+          const snapshot=Object.fromEntries(selected.map(p=>[p,fs.readFileSync(p,'utf8')]));
+          fs.writeFileSync('../evidence/source-snapshot.json',JSON.stringify(snapshot));
+          fs.writeFileSync('../evidence/tracked-files.json',JSON.stringify(files,null,2));
+          const base='e81d61f66b286cc7b210cf6027097fb1ba5a2ac1';
+          const changed=git('diff','--no-renames','--name-status',base,'HEAD').trim().split('\n').map(x=>{const [status,path]=x.split('\t');return {status,path};});
+          const retainedRuntimeChanges=changed.filter(x=>x.status!=='D'&&/^(app|components|hooks|lib|src)\//.test(x.path)&&/\.[cm]?[jt]sx?$/.test(x.path));
+          assert.deepEqual(retainedRuntimeChanges,[]);
+          const tests=files.filter(p=>/\.(test|spec)\.[cm]?[jt]sx?$/.test(p));
+          const sensitiveTestCalls=tests.flatMap(p=>snapshot[p].split('\n').map((s,i)=>({file:p,line:i+1,text:s})).filter(x=>/execSync|execFile|spawn\(|child_process|fetch\(|https?:\/\/|request\.(post|put|delete)|page\.goto/.test(x.text)));
+          const report={source:git('rev-parse','HEAD').trim(),base,tracked:files.length,sourceFiles:selected.length,tests,changed,retainedRuntimeChanges,sensitiveTestCalls};
+          fs.writeFileSync('../evidence/inventory.json',JSON.stringify(report,null,2));
+          git('diff','--check',base,'HEAD');
+          fs.writeFileSync('../evidence/cleanup-diff-stat.txt',git('diff','--stat','4eb1293c42d6fbff85a2dc3c5773b46c63b2f95e','HEAD'));
+          console.log(JSON.stringify({source:report.source,tracked:files.length,tests:tests.length,retainedRuntimeChanges},null,2));
+          JS
+      - name: Install frozen dependency lock with lifecycle scripts disabled
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Inspect pinned versions and run non-mutating compiler and lint command
+        working-directory: source
+        run: |
+          node <<'JS'
+          const fs=require('node:fs'),cp=require('node:child_process');
+          const versions={};for(const n of ['next','react','react-dom','vitest','eslint','eslint-config-next','@playwright/test'])versions[n]=require(n+'/package.json').version;
+          fs.writeFileSync('../evidence/versions.json',JSON.stringify(versions,null,2));
+          const tasks=[['typecheck','./node_modules/.bin/tsc',['--noEmit','--incremental','false']],['declared-lint','./node_modules/.bin/next',['lint']]];
+          const result=[];
+          for(const [name,cmd,args] of tasks){const r=cp.spawnSync(cmd,args,{encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});fs.writeFileSync('../evidence/'+name+'.log',(r.stdout||'')+(r.stderr||''));result.push({name,status:r.status,signal:r.signal,error:r.error?.code||null});}
+          fs.writeFileSync('../evidence/tooling-results.json',JSON.stringify(result,null,2));
+          console.log(JSON.stringify({versions,result},null,2));
+          JS
+      - name: Preserve audit results; success of this job is not a storefront test pass
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr39-read-only-review-inventory
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
