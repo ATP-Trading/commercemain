@@ -1,4 +1,4 @@
-name: PR31 test cleanup validation
+name: Legacy auth dependency audit
 
 on:
   push:
@@ -9,14 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 8
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch immutable source and the existing UI test harness
+      - name: Fetch the exact tested source
         run: |
           set -eu
           git init source
@@ -24,93 +24,52 @@ jobs:
           git config gc.auto 0
           git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/repair-stale-regression-tests
-          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
+          git fetch --no-auto-maintenance origin refs/heads/cleanup/repair-stale-regression-tests
           git checkout --detach b54d62c44e4f660c57f1636a16259d28132cbdb3
           test "$(git rev-parse HEAD)" = b54d62c44e4f660c57f1636a16259d28132cbdb3
-          node <<'JS'
-          const {execFileSync} = require('node:child_process');
-          const files = execFileSync('git', ['diff', '--name-only', '7a7ce61d044fb9909a363c2c8783d45685770a68', 'HEAD'], {encoding:'utf8'}).trim().split('\n').sort();
-          const allowed = ['__tests__/cart/membership-cart-purchase.test.ts','__tests__/cart/membership-status-route.test.ts','__tests__/cart/server-stock.test.ts','__tests__/rtl/formatters.test.ts','__tests__/rtl/language-switcher.test.tsx'].sort();
-          require('node:assert/strict').deepEqual(files, allowed);
-          const deleted = execFileSync('git', ['diff','--diff-filter=D','--name-only','7a7ce61d044fb9909a363c2c8783d45685770a68','HEAD'], {encoding:'utf8'}).trim();
-          require('node:assert/strict').equal(deleted, '');
-          console.log('Verified exactly five test-only changes, no file deletions:', files);
-          JS
-          node --version
-      - name: Install unchanged locked dependencies without lifecycle scripts
+      - name: Install locked tooling without lifecycle scripts or merchant secrets
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Prepare no-network test process and honest result reporting
-        id: prepare
+      - name: Inspect all tracked sources without executing application code
         working-directory: source
         run: |
-          cat > .pr31-no-network.cjs <<'JS'
-          const fail = () => { throw new Error('PR31_TEST_NETWORK_BLOCKED: mock external requests'); };
-          for (const name of ['node:http','node:https']) {
-            const transport = require(name); transport.request = fail; transport.get = fail;
-          }
-          const net = require('node:net'); net.connect = fail; net.createConnection = fail;
-          require('node:tls').connect = fail;
-          globalThis.fetch = async () => fail();
-          JS
-          cat > .pr31-summary.cjs <<'JS'
+          node <<'JS' | tee legacy-auth-audit.json
           const fs = require('node:fs');
-          const filename = process.argv[2];
-          if (!fs.existsSync(filename)) { console.error('RESULT_FILE_MISSING',filename); process.exit(1); }
-          const r = JSON.parse(fs.readFileSync(filename,'utf8'));
-          console.log(JSON.stringify({report:filename,success:r.success,files:r.testResults.length,
-            tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,
-            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1500),
-              assertions:f.assertionResults.filter(t=>t.status==='failed').map(t=>({name:t.fullName,errors:t.failureMessages.map(m=>m.slice(0,1500))}))}))},null,2));
+          const path = require('node:path');
+          const {execFileSync} = require('node:child_process');
+          const ts = require('typescript');
+          const root = process.cwd();
+          const target = path.resolve('hooks/use-customer.ts');
+          const cfg = ts.readConfigFile('tsconfig.json', ts.sys.readFile);
+          if (cfg.error) throw new Error(ts.flattenDiagnosticMessageText(cfg.error.messageText,'\n'));
+          const parsed = ts.parseJsonConfigFileContent(cfg.config, ts.sys, root);
+          const files = execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
+          const refs = [], imports = [], ambient = [], dynamic = [];
+          const needles = [ ['legacyHook',/\buseCustomer\b|use-customer(?!-oauth)/], ['authHelpers',/auth-utils|\blogAuthStatus\b|\bhandleAuthError\b/], ['legacyEndpoints',/\/api\/customer\/(?:login|logout|register|password-reset)(?:\b|\/)/] ];
+          const sourceFiles = files.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml)$/.test(f)&&!/(?:^|\/)(?:package-lock\.json|pnpm-lock\.yaml)$/.test(f));
+          for (const file of sourceFiles) {
+            const content = fs.readFileSync(file,'utf8');
+            content.split('\n').forEach((line,i)=>{
+              for(const [kind,needle] of needles) if(needle.test(line)) refs.push({kind,file,line:i+1});
+            });
+            if(!/\.[cm]?[jt]sx?$/.test(file)) continue;
+            const sf = ts.createSourceFile(file,content,ts.ScriptTarget.Latest,true);
+            function walk(n) {
+              if(ts.isStringLiteralLike(n)) {
+                const resolved = ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys).resolvedModule;
+                if(resolved && path.resolve(resolved.resolvedFileName) === target) imports.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,specifier:n.text});
+              }
+              if(file==='hooks/use-customer.ts'&&ts.isModuleDeclaration(n)) ambient.push(n.getText(sf));
+              if(ts.isCallExpression(n) && n.expression.kind===ts.SyntaxKind.ImportKeyword && (!n.arguments[0] || !ts.isStringLiteralLike(n.arguments[0]))) dynamic.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,expression:n.getText(sf).slice(0,160)});
+              ts.forEachChild(n,walk);
+            }
+            walk(sf);
+          }
+          const result={source:'b54d62c44e4f660c57f1636a16259d28132cbdb3',trackedFiles:files.length,scannedTextFiles:sourceFiles.length,legacyHookIncludedByTsconfig:parsed.fileNames.includes(target),legacyHookLines:fs.readFileSync(target,'utf8').split('\n').length,importsResolvingToLegacyHook:imports,ambientDeclarationsInLegacyHook:ambient,allLegacyReferences:refs,nonLiteralDynamicImports:dynamic,scope:'Static audit of complete pinned checkout including tests and scripts; no application execution, secrets or API requests.'};
+          console.log(JSON.stringify(result,null,2));
           JS
-      - name: Run all previously selected auth cart analytics RTL and navigation tests
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr31-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr31-results.json >pr31-validation.log 2>&1
-          result=$?
-          node .pr31-summary.cjs pr31-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr31-validation.log; fi
-          exit "$result"
-      - name: Repeat the five repaired files with shuffled test order
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr31-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/cart/membership-cart-purchase.test.ts __tests__/cart/server-stock.test.ts __tests__/cart/membership-status-route.test.ts __tests__/rtl/formatters.test.ts __tests__/rtl/language-switcher.test.tsx --maxWorkers=2 --no-file-parallelism --sequence.shuffle --sequence.seed=3101 --reporter=json --outputFile=pr31-shuffled-results.json >pr31-shuffled.log 2>&1
-          result=$?
-          node .pr31-summary.cjs pr31-shuffled-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr31-shuffled.log; fi
-          exit "$result"
-      - name: Recheck the twelve actual EN AR login and mobile-menu interactions
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
-        working-directory: source
-        run: |
-          set -eu
-          mkdir -p __tests__/review
-          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
-          set +e
-          export NODE_OPTIONS="--require=$(pwd)/.pr31-no-network.cjs"
-          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr31-ui-results.json >pr31-ui.log 2>&1
-          result=$?
-          node .pr31-summary.cjs pr31-ui-results.json
-          if [ "$result" -ne 0 ]; then tail -n 100 pr31-ui.log; fi
-          exit "$result"
-      - name: Record scope without converting failures into success
+      - name: Record audit scope
         if: always()
         working-directory: source
         run: |
-          {
-            echo '## PR31 test cleanup validation'
-            echo 'Target: b54d62c44e4f660c57f1636a16259d28132cbdb3; base: PR30 7a7ce61.'
-            echo 'No Shopify or Vercel secrets. No purchases, customer updates, merges or Production changes.'
-            echo 'Isolated tests of actual code with mocked services; not a deployed-preview or real OAuth checkout test.'
-            for report in pr31-results.json pr31-shuffled-results.json pr31-ui-results.json; do
-              echo '```json'
-              if [ -f "$report" ]; then node .pr31-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
-              echo '```'
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          { echo '## Legacy auth dependency audit'; echo '```json'; cat legacy-auth-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
