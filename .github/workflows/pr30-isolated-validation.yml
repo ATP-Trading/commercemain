@@ -1,4 +1,4 @@
-name: Legacy auth dependency audit
+name: PR32 legacy auth retirement validation
 
 on:
   push:
@@ -9,14 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  audit:
+  verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 10
     env:
       CI: 'true'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Fetch the exact tested source
+      - name: Fetch immutable application source and review tests
         run: |
           set -eu
           git init source
@@ -24,52 +24,93 @@ jobs:
           git config gc.auto 0
           git config maintenance.auto false
           git remote add origin https://github.com/ATP-Trading/commercemain.git
-          git fetch --no-auto-maintenance origin refs/heads/cleanup/repair-stale-regression-tests
-          git checkout --detach b54d62c44e4f660c57f1636a16259d28132cbdb3
-          test "$(git rev-parse HEAD)" = b54d62c44e4f660c57f1636a16259d28132cbdb3
-      - name: Install locked tooling without lifecycle scripts or merchant secrets
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-password-auth-hook
+          git cat-file -e "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx"
+          git checkout --detach 16a33a143c76e9f74629d115cb0eed2b4f8b9914
+          test "$(git rev-parse HEAD)" = 16a33a143c76e9f74629d115cb0eed2b4f8b9914
+          node <<'JS'
+          const {execFileSync} = require('node:child_process');
+          const assert = require('node:assert/strict');
+          const base = 'b54d62c44e4f660c57f1636a16259d28132cbdb3';
+          const list = args => execFileSync('git',args,{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
+          assert.deepEqual(list(['diff','--name-only',base,'HEAD']),['__tests__/auth/legacy-auth-retirement.test.ts','hooks/use-customer.ts','lib/auth-utils.ts'].sort());
+          assert.deepEqual(list(['diff','--name-only','--diff-filter=D',base,'HEAD']),['hooks/use-customer.ts','lib/auth-utils.ts'].sort());
+          assert.deepEqual(list(['diff','--name-only',base,'HEAD','--','app','components','src','package.json','pnpm-lock.yaml','next.config.ts','tsconfig.json']),[]);
+          console.log('PASS: two obsolete modules removed, one test added, active routes/components/settings unchanged.');
+          JS
+      - name: Install unchanged locked tooling without lifecycle scripts
         working-directory: source
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
-      - name: Inspect all tracked sources without executing application code
+      - name: Prepare isolated test process and truthful reports
+        id: prepare
         working-directory: source
         run: |
-          node <<'JS' | tee legacy-auth-audit.json
-          const fs = require('node:fs');
-          const path = require('node:path');
-          const {execFileSync} = require('node:child_process');
-          const ts = require('typescript');
-          const root = process.cwd();
-          const target = path.resolve('hooks/use-customer.ts');
-          const cfg = ts.readConfigFile('tsconfig.json', ts.sys.readFile);
-          if (cfg.error) throw new Error(ts.flattenDiagnosticMessageText(cfg.error.messageText,'\n'));
-          const parsed = ts.parseJsonConfigFileContent(cfg.config, ts.sys, root);
-          const files = execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
-          const refs = [], imports = [], ambient = [], dynamic = [];
-          const needles = [ ['legacyHook',/\buseCustomer\b|use-customer(?!-oauth)/], ['authHelpers',/auth-utils|\blogAuthStatus\b|\bhandleAuthError\b/], ['legacyEndpoints',/\/api\/customer\/(?:login|logout|register|password-reset)(?:\b|\/)/] ];
-          const sourceFiles = files.filter(f=>/\.(?:[cm]?[jt]sx?|md|json|ya?ml)$/.test(f)&&!/(?:^|\/)(?:package-lock\.json|pnpm-lock\.yaml)$/.test(f));
-          for (const file of sourceFiles) {
-            const content = fs.readFileSync(file,'utf8');
-            content.split('\n').forEach((line,i)=>{
-              for(const [kind,needle] of needles) if(needle.test(line)) refs.push({kind,file,line:i+1});
-            });
-            if(!/\.[cm]?[jt]sx?$/.test(file)) continue;
-            const sf = ts.createSourceFile(file,content,ts.ScriptTarget.Latest,true);
-            function walk(n) {
-              if(ts.isStringLiteralLike(n)) {
-                const resolved = ts.resolveModuleName(n.text,path.resolve(file),parsed.options,ts.sys).resolvedModule;
-                if(resolved && path.resolve(resolved.resolvedFileName) === target) imports.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,specifier:n.text});
-              }
-              if(file==='hooks/use-customer.ts'&&ts.isModuleDeclaration(n)) ambient.push(n.getText(sf));
-              if(ts.isCallExpression(n) && n.expression.kind===ts.SyntaxKind.ImportKeyword && (!n.arguments[0] || !ts.isStringLiteralLike(n.arguments[0]))) dynamic.push({file,line:sf.getLineAndCharacterOfPosition(n.getStart()).line+1,expression:n.getText(sf).slice(0,160)});
-              ts.forEachChild(n,walk);
-            }
-            walk(sf);
+          cat > .pr32-no-network.cjs <<'JS'
+          const fail = () => { throw new Error('PR32_TEST_NETWORK_BLOCKED: mock external requests'); };
+          for (const name of ['node:http','node:https']) {
+            const transport = require(name); transport.request = fail; transport.get = fail;
           }
-          const result={source:'b54d62c44e4f660c57f1636a16259d28132cbdb3',trackedFiles:files.length,scannedTextFiles:sourceFiles.length,legacyHookIncludedByTsconfig:parsed.fileNames.includes(target),legacyHookLines:fs.readFileSync(target,'utf8').split('\n').length,importsResolvingToLegacyHook:imports,ambientDeclarationsInLegacyHook:ambient,allLegacyReferences:refs,nonLiteralDynamicImports:dynamic,scope:'Static audit of complete pinned checkout including tests and scripts; no application execution, secrets or API requests.'};
-          console.log(JSON.stringify(result,null,2));
+          const net = require('node:net'); net.connect = fail; net.createConnection = fail;
+          require('node:tls').connect = fail;
+          globalThis.fetch = async () => fail();
           JS
-      - name: Record audit scope
+          cat > .pr32-summary.cjs <<'JS'
+          const fs = require('node:fs');
+          const file = process.argv[2];
+          if (!fs.existsSync(file)) { console.error('RESULT_FILE_MISSING',file); process.exit(1); }
+          const r = JSON.parse(fs.readFileSync(file,'utf8'));
+          console.log(JSON.stringify({report:file,success:r.success,files:r.testResults.length,
+            tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,
+            failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({file:f.name.split('/source/').pop(),message:(f.message||'').slice(0,1400),
+              assertions:f.assertionResults.filter(a=>a.status==='failed').map(a=>({name:a.fullName,errors:a.failureMessages.map(m=>m.slice(0,1400))}))}))},null,2));
+          JS
+      - name: Run auth cart analytics RTL and navigation regressions including retirement checks
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.pr32-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/seo/navigation-url.test.ts --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=pr32-results.json >pr32-validation.log 2>&1
+          result=$?
+          node .pr32-summary.cjs pr32-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 pr32-validation.log; fi
+          exit "$result"
+      - name: Repeat retirement tests with shuffled execution order
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.pr32-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth/legacy-auth-retirement.test.ts --sequence.shuffle --sequence.seed=3201 --reporter=json --outputFile=pr32-shuffled-results.json >pr32-shuffled.log 2>&1
+          result=$?
+          node .pr32-summary.cjs pr32-shuffled-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 pr32-shuffled.log; fi
+          exit "$result"
+      - name: Recheck actual EN AR login and mobile-menu interactions
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        working-directory: source
+        run: |
+          set -eu
+          mkdir -p __tests__/review
+          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.pr32-no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --reporter=json --outputFile=pr32-ui-results.json >pr32-ui.log 2>&1
+          result=$?
+          node .pr32-summary.cjs pr32-ui-results.json
+          if [ "$result" -ne 0 ]; then tail -n 100 pr32-ui.log; fi
+          exit "$result"
+      - name: Record scope and results without suppressing failed checks
         if: always()
         working-directory: source
         run: |
-          { echo '## Legacy auth dependency audit'; echo '```json'; cat legacy-auth-audit.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '## PR32 legacy-auth retirement validation'
+            echo 'Exact source: 16a33a143c76e9f74629d115cb0eed2b4f8b9914; parent: PR31 b54d62c.'
+            echo 'No Shopify or Vercel secrets, customer changes, orders, merges or Production deployment.'
+            echo 'These are isolated actual-source tests, not a deployed-preview browser or real OAuth checkout session.'
+            for report in pr32-results.json pr32-shuffled-results.json pr32-ui-results.json; do
+              echo '```json'
+              if [ -f "$report" ]; then node .pr32-summary.cjs "$report"; else echo "RESULT_FILE_MISSING $report"; fi
+              echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
