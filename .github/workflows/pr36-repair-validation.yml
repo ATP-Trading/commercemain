@@ -1,0 +1,113 @@
+name: PR36 bounded menu and regression-test repair
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr36-repair-validation.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch immutable application and review test inputs
+        run: |
+          set -eu
+          git init source
+          cd source
+          git config gc.auto 0
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch --no-auto-maintenance origin refs/heads/test/pr30-isolated-validation refs/heads/cleanup/retire-lingui-runtime
+          git checkout --detach 060397c03cdac89614b4ddd9f0569beff83c7aeb
+          test "$(git rev-parse HEAD)" = 060397c03cdac89614b4ddd9f0569beff83c7aeb
+          mkdir -p __tests__/review
+          git show "$GITHUB_SHA:__tests__/review/pr30-auth-ui.test.tsx" > __tests__/review/pr30-auth-ui.test.tsx
+          git show "$GITHUB_SHA:__tests__/review/mobile-menu-route-stability.test.tsx" > __tests__/rtl/mobile-menu-route-stability.test.tsx
+      - name: Install unchanged frozen tools without lifecycle scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Block unmocked external access
+        working-directory: source
+        run: |
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('REPAIR_TEST_NETWORK_BLOCKED');};
+          for(const n of ['node:http','node:https']){const t=require(n);t.request=fail;t.get=fail;}
+          const net=require('node:net');net.connect=fail;net.createConnection=fail;
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          JS
+      - name: Reproduce four same-URL closure failures on UNCHANGED application
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/rtl/mobile-menu-route-stability.test.tsx --reporter=json --outputFile=menu-before.json >menu-before.log 2>&1
+          code=$?
+          set -e
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const r=JSON.parse(fs.readFileSync('menu-before.json','utf8'));
+          const failed=r.testResults.flatMap(f=>f.assertionResults).filter(a=>a.status==='failed');
+          console.log(JSON.stringify({source:'060397c',tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,failures:failed.map(a=>a.fullName)},null,2));
+          assert.equal(r.numTotalTests,14);assert.equal(r.numFailedTests,4);assert.equal(r.numPassedTests,10);
+          assert.ok(failed.every(a=>a.fullName.includes('stays open when a refresh replaces the query object without changing URL')));
+          assert.equal(r.numPendingTests,0);
+          JS
+          test "$code" -ne 0
+      - name: Apply only the candidate repair in ephemeral checkout
+        working-directory: source
+        run: |
+          set -eu
+          node <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const p='components/layout/navbar/mobile-menu.tsx';let s=fs.readFileSync(p,'utf8');
+          const from='  const searchParams = useSearchParams()';
+          assert.equal(s.split(from).length,2);
+          s=s.replace(from,from+'\n  // Compare URL content, not object identity: same-URL refreshes must not close the menu.\n  const searchQuery = searchParams.toString()');
+          assert.equal(s.split('  }, [pathname, searchParams])').length,2);
+          s=s.replace('  }, [pathname, searchParams])','  }, [pathname, searchQuery])');
+          fs.writeFileSync(p,s);
+          JS
+          git show "$GITHUB_SHA:__tests__/review/release-security-current.test.ts" > __tests__/seo/release-security.test.ts
+          git show "$GITHUB_SHA:__tests__/review/member-cart-current.test.ts" > __tests__/seo/member-cart-operations.test.ts
+          git diff --check
+          git diff --stat
+          mkdir -p repair-evidence/source
+          cp --parents components/layout/navbar/mobile-menu.tsx __tests__/rtl/mobile-menu-route-stability.test.tsx __tests__/seo/release-security.test.ts __tests__/seo/member-cart-operations.test.ts repair-evidence/source/
+          git diff > repair-evidence/repair.patch
+      - name: Execute full previously-expanded scope plus new route-stability coverage
+        working-directory: source
+        run: |
+          set +e
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/auth __tests__/cart __tests__/analytics __tests__/rtl __tests__/i18n __tests__/seo __tests__/review/pr30-auth-ui.test.tsx --maxWorkers=2 --no-file-parallelism --reporter=json --outputFile=repair-results.json >repair.log 2>&1
+          code=$?
+          node <<'JS'
+          const fs=require('node:fs');const r=JSON.parse(fs.readFileSync('repair-results.json','utf8'));
+          console.log(JSON.stringify({success:r.success,files:r.testResults.length,total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests,pending:r.numPendingTests,failedFiles:r.testResults.filter(f=>f.status==='failed').map(f=>({name:f.name,message:f.message,failures:f.assertionResults.filter(a=>a.status==='failed')}))},null,2));
+          JS
+          if [ "$code" -ne 0 ]; then tail -n 120 repair.log; fi
+          exit "$code"
+      - name: Repeat the three repaired/new suites with shuffled order
+        if: ${{ !cancelled() }}
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          ./node_modules/.bin/vitest run __tests__/rtl/mobile-menu-route-stability.test.tsx __tests__/seo/release-security.test.ts __tests__/seo/member-cart-operations.test.ts --sequence.shuffle --sequence.seed=3601 --maxWorkers=2 --reporter=json --outputFile=repair-shuffled.json >repair-shuffled.log 2>&1
+      - name: Preserve all baseline failures and candidate outcomes
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr36-bounded-repair-evidence
+          path: |
+            source/repair-evidence/
+            source/menu-before.json
+            source/menu-before.log
+            source/repair-results.json
+            source/repair.log
+            source/repair-shuffled.json
+            source/repair-shuffled.log
+          retention-days: 3
+          if-no-files-found: error
