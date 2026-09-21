@@ -6,7 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Fragment, Suspense, useEffect, useMemo, useState } from "react"
-import { useCustomer } from "@/hooks/use-customer"
+import { useCustomerOAuth } from "@/hooks/use-customer-oauth"
 import { LanguageSwitcher } from "@/components/language-switcher"
 
 import { Bars3Icon, XMarkIcon, HomeIcon, UserIcon, PhoneIcon, InformationCircleIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline"
@@ -38,7 +38,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
   const locale = useLocale()
   const isRTL = locale === 'ar'
   const language = locale
-  const { customer, logout } = useCustomer()
+  const { customer, logout } = useCustomerOAuth()
   const [isOpen, setIsOpen] = useState(false)
   const openMobileMenu = () => setIsOpen(true)
   const closeMobileMenu = () => setIsOpen(false)
