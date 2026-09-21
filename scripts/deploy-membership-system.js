@@ -63,7 +63,6 @@ function validateMembershipComponents() {
     'lib/services/atp-membership-service.ts',
     'lib/services/shopify-integration-service.ts',
     'hooks/use-atp-membership.ts',
-    'components/membership/atp-membership-signup.tsx',
     'components/membership/atp-membership-dashboard.tsx',
     'app/api/webhooks/shopify/orders/paid/route.ts',
     'app/api/webhooks/shopify/customers/update/route.ts'

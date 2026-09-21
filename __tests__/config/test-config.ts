@@ -107,7 +107,6 @@ export const accessibilityTestConfig = {
   },
   testCases: {
     components: [
-      'AtpMembershipSignup',
       'AtpMembershipDashboard',
       'MembershipBadge',
       'MemberPricing'

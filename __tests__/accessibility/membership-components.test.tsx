@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AtpMembershipSignup } from '../../components/membership/atp-membership-signup';
 import { AtpMembershipDashboard } from '../../components/membership/atp-membership-dashboard';
 import { MembershipBadge } from '../../components/membership/membership-badge';
 import { MemberPricing } from '../../components/membership/member-pricing';
@@ -14,69 +13,6 @@ describe('Membership Components Accessibility Tests', () => {
   beforeEach(() => {
     // Reset any global state
     localStorage.clear();
-  });
-
-  describe('AtpMembershipSignup Accessibility', () => {
-    it('should have no accessibility violations', async () => {
-      const { container } = render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
-
-    it('should have proper ARIA labels and roles', () => {
-      render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      // Check for proper heading structure
-      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-      
-      // Check for form accessibility
-      const signupButton = screen.getByRole('button', { name: /sign up/i });
-      expect(signupButton).toBeInTheDocument();
-      expect(signupButton).toHaveAttribute('aria-describedby');
-
-      // Check for price information accessibility
-      const priceElement = screen.getByText(/99/i);
-      expect(priceElement).toHaveAttribute('aria-label', expect.stringContaining('99 annual membership fee'));
-    });
-
-    it('should support keyboard navigation', () => {
-      render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      const signupButton = screen.getByRole('button', { name: /sign up/i });
-      expect(signupButton).toHaveAttribute('tabIndex', '0');
-      
-      // Check for focus management
-      signupButton.focus();
-      expect(document.activeElement).toBe(signupButton);
-    });
-
-    it('should have proper color contrast', () => {
-      const { container } = render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      // Check for high contrast elements
-      const benefitsList = container.querySelector('[data-testid="membership-benefits"]');
-      expect(benefitsList).toHaveClass('text-foreground');
-      
-      const ctaButton = container.querySelector('[data-testid="membership-signup-button"]');
-      expect(ctaButton).toHaveClass('bg-primary', 'text-primary-foreground');
-    });
   });
 
   describe('AtpMembershipDashboard Accessibility', () => {
@@ -126,7 +62,6 @@ describe('Membership Components Accessibility Tests', () => {
       );
 
       const progressBar = screen.getByRole('progressbar');
-      expect(progressBar).toBeInTheDocument();
       expect(progressBar).toHaveAttribute('aria-valuenow');
       expect(progressBar).toHaveAttribute('aria-valuemin', '0');
       expect(progressBar).toHaveAttribute('aria-valuemax', '100');
@@ -236,48 +171,7 @@ describe('Membership Components Accessibility Tests', () => {
     });
   });
 
-  describe('Form Accessibility', () => {
-    it('should have proper form labels and descriptions', () => {
-      render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      // Check for form fields if present
-      const emailField = screen.queryByLabelText(/email/i);
-      if (emailField) {
-        expect(emailField).toHaveAttribute('aria-describedby');
-        expect(emailField).toHaveAttribute('aria-required', 'true');
-      }
-    });
-
-    it('should handle error states accessibly', () => {
-      render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      // Simulate error state
-      const errorMessage = screen.queryByRole('alert');
-      if (errorMessage) {
-        expect(errorMessage).toHaveAttribute('aria-live', 'assertive');
-      }
-    });
-  });
-
   describe('RTL Support', () => {
-    it('should support right-to-left layout', () => {
-      const { container } = render(
-        <TestProviders locale="ar">
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      expect(container.firstChild).toHaveAttribute('dir', 'rtl');
-    });
-
     it('should maintain accessibility in RTL mode', async () => {
       const { container } = render(
         <TestProviders locale="ar">
@@ -301,17 +195,6 @@ describe('Membership Components Accessibility Tests', () => {
       // Check for screen reader only content
       const srOnlyElements = screen.getAllByText(/screen reader/i, { selector: '.sr-only' });
       expect(srOnlyElements.length).toBeGreaterThan(0);
-    });
-
-    it('should have proper landmark regions', () => {
-      render(
-        <TestProviders>
-          <AtpMembershipSignup />
-        </TestProviders>
-      );
-
-      expect(screen.getByRole('main')).toBeInTheDocument();
-      expect(screen.getByRole('banner')).toBeInTheDocument();
     });
   });
 });
