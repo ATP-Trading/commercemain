@@ -5,7 +5,12 @@ import ts from 'typescript';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const root = process.cwd();
-const retiredFiles = ['hooks/use-customer.ts', 'lib/auth-utils.ts'];
+const retiredFiles = [
+  'hooks/use-customer.ts',
+  'lib/auth-utils.ts',
+  'lib/shopify/customer-account.ts',
+  'lib/shopify/customer-account-server.ts',
+];
 const retiredModules = retiredFiles.map(file => resolve(root, file).replace(/\.ts$/, ''));
 const boundary = vi.hoisted(() => ({ cookies: vi.fn(), headers: vi.fn() }));
 vi.mock('next/headers', () => boundary);
@@ -56,6 +61,31 @@ describe('Legacy authentication retirement', () => {
       const source = readFileSync(file, 'utf8');
       return /\buseCustomer\s*\(/.test(source) || /\/api\/customer\/(login|logout|register|password-reset)(?:[\s'"`?#]|$)/.test(source);
     }).map(file => relative(root, file));
+    expect(offenders).toEqual([]);
+  });
+
+  it('does not call the retired legacy customer API helpers', () => {
+    const retiredHelpers = new Set([
+      'customerAccountFetch', 'createCustomerServer', 'createCustomerAccessTokenServer',
+      'deleteCustomerAccessTokenServer', 'getCustomerServer', 'updateCustomerServer',
+      'recoverCustomerPasswordServer',
+    ]);
+    const offenders: string[] = [];
+    for (const file of runtimeSources) {
+      const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+      function visit(node: ts.Node): void {
+        if (ts.isCallExpression(node)) {
+          const name = ts.isIdentifier(node.expression) ? node.expression.text
+            : ts.isPropertyAccessExpression(node.expression) ? node.expression.name.text : null;
+          if (name && retiredHelpers.has(name)) {
+            const line = source.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+            offenders.push(`${relative(root, file)}:${line}: ${name}`);
+          }
+        }
+        ts.forEachChild(node, visit);
+      }
+      visit(source);
+    }
     expect(offenders).toEqual([]);
   });
 });
