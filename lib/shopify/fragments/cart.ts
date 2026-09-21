@@ -11,7 +11,7 @@ import productFragment from './product';
  * - ADDED: createdAt, updatedAt for tracking
  * - ENHANCED: cost fields with subtotalAmountEstimated, totalAmountEstimated
  * - ENHANCED: line item cost with amountPerQuantity, compareAtAmountPerQuantity
- * - ENHANCED: merchandise with sku, quantityAvailable, compareAtPrice
+ * - ENHANCED: merchandise with sku and compareAtPrice; stock counts come from the server-side Admin inventory endpoint
  */
 const cartFragment = /* GraphQL */ `
   fragment cart on Cart {
@@ -107,7 +107,6 @@ const cartFragment = /* GraphQL */ `
               id
               title
               sku
-              quantityAvailable
               compareAtPrice {
                 amount
                 currencyCode
