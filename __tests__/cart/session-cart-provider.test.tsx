@@ -3,7 +3,6 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { render, waitFor, cleanup, fireEvent } from '@testing-library/react'
 const refresh = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({useRouter: () => ({refresh})}))
-vi.mock('@/hooks/use-membership-cart', () => ({useMembershipCart: vi.fn()}))
 import { CartProvider } from '@/components/cart/cart-context'
 const linked = {id:'old',buyerIdentity:{customer:{id:'member'}},lines:[]} as any
 beforeEach(() => { vi.clearAllMocks(); vi.stubGlobal('fetch', vi.fn()) })
