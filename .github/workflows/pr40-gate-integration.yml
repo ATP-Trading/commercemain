@@ -1,0 +1,55 @@
+name: PR40 combined gate failure propagation
+on:
+  push:
+    branches: [test/pr30-isolated-validation]
+    paths: [.github/workflows/pr40-gate-integration.yml]
+permissions:
+  contents: read
+jobs:
+  confirm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Fetch pinned tooling candidate without merchant credentials
+        run: |
+          git init source; cd source
+          git remote add origin https://github.com/ATP-Trading/commercemain.git
+          git fetch origin refs/heads/fix/verification-entrypoints-and-variant-tests
+          git checkout --detach a5933d5da8ee23689746087427250c4760eb544c
+          mkdir -p ../evidence
+      - name: Install unchanged frozen dependencies without scripts
+        working-directory: source
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts --reporter=silent
+      - name: Block external requests while allowing local tool IPC
+        working-directory: source
+        run: |
+          cat > .no-network.cjs <<'JS'
+          const fail=()=>{throw new Error('PR40_GATE_EXTERNAL_NETWORK_BLOCKED');};
+          for(const n of ['node:http','node:https']){const t=require(n);t.request=fail;t.get=fail;}
+          require('node:tls').connect=fail;globalThis.fetch=async()=>fail();
+          const net=require('node:net');for(const k of ['connect','createConnection']){const fn=net[k];net[k]=function(...args){const a=args[0];if((typeof a==='string'&&a.startsWith('/'))||(a&&typeof a==='object'&&typeof a.path==='string'))return fn.apply(this,args);return fail();};}
+          JS
+      - name: Confirm the actual all-checks command remains failing while executing all checks
+        working-directory: source
+        run: |
+          export NODE_OPTIONS="--require=$(pwd)/.no-network.cjs"
+          node <<'JS'
+          const cp=require('node:child_process'),fs=require('node:fs'),assert=require('node:assert/strict');
+          const result=cp.spawnSync('npm',['run','test:all'],{encoding:'utf8',timeout:300000,maxBuffer:16*1024*1024});
+          const text=(result.stdout||'')+(result.stderr||'');fs.writeFileSync('../evidence/combined-command.log',text);
+          const report={source:'a5933d5da8ee23689746087427250c4760eb544c',actualExit:result.status,lintFailed:text.includes('FAIL: ESLint (original rule policy)'),typecheckPassed:text.includes('PASS: TypeScript'),defaultVitestPassed:text.includes('PASS: All default Vitest tests (not browser tests)'),browserNotRun:text.includes('Browser smoke NOT RUN.'),executionError:result.error?.message};
+          fs.writeFileSync('../evidence/combined-command.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          assert.equal(result.status,1);assert.equal(report.lintFailed,true);assert.equal(report.typecheckPassed,true);assert.equal(report.defaultVitestPassed,true);assert.equal(report.browserNotRun,true);
+          console.log('PASS failure-propagation verification; the actual storefront quality gate is still FAIL, not a release approval.');
+          JS
+      - name: Preserve actual failed gate output and control assertions
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr40-gate-integration
+          path: evidence/
+          retention-days: 3
+          if-no-files-found: error
