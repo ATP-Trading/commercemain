@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm exec vitest run __tests__/analytics/ga4.test.ts && pnpm exec next build"
+}
