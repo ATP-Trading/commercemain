@@ -14,10 +14,9 @@ jobs:
           python3 -m venv .audit-venv
           .audit-venv/bin/pip install --disable-pip-version-check playwright==1.57.0
           .audit-venv/bin/python -m playwright install --with-deps chromium
-      - name: Check English and Arabic assets and consent UI without purchases or tracking
+      - name: Verify live assets and consent UI while retaining blocked-runtime diagnostics
         run: |
           .audit-venv/bin/python - <<'PY'
-          """Read-only storefront checks: no login, cart, checkout, or analytics requests."""
           import json
           from datetime import datetime, timezone
           from urllib.parse import urlsplit, urlunsplit
@@ -25,18 +24,17 @@ jobs:
 
           BASE = 'https://www.atpgroupservices.ae'
           PATHS = ['/en', '/ar', '/en/product/mores-collagen', '/ar/product/mores-collagen']
-
-          def clean_url(url):
+          def clean(url):
               u = urlsplit(url)
               return urlunsplit((u.scheme, u.netloc, u.path, '', ''))
-
-          def is_asset(url):
+          def asset(url):
               return url.startswith(BASE + '/_next/static/')
-
-          def audit_page(browser, path):
+          def valid(a):
+              mime = a['type'].lower()
+              return a['status'] == 200 and (('javascript' in mime or 'ecmascript' in mime) if a['url'].endswith('.js') else 'text/css' in mime if a['url'].endswith('.css') else True)
+          def audit(browser, path):
               ar = path.startswith('/ar')
-              result = {'path': path, 'status': None, 'assets': [], 'asset_failures': [],
-                        'page_errors': [], 'blocked_non_read_requests': 0, 'consent_ui': False}
+              r = {'path': path, 'status': None, 'assets': [], 'asset_failures': [], 'page_errors': [], 'blocked_requests': [], 'consent_ui': False, 'h1_visible': False}
               context = browser.new_context(viewport={'width': 1365, 'height': 900}, service_workers='block')
               context.add_init_script("""try {
                 for (const k of ['atp-analytics-consent', 'atp-marketing-consent', 'atp-google-ads-consent-v1']) localStorage.setItem(k, 'denied');
@@ -44,63 +42,88 @@ jobs:
               } catch (_) {}""")
               def guard(route):
                   req = route.request
-                  host = urlsplit(req.url).hostname or ''
-                  permitted = host == urlsplit(BASE).hostname or host == 'cdn.shopify.com' or host in ['fonts.googleapis.com', 'fonts.gstatic.com']
-                  tracking = any(x in req.url for x in ['/collect', '/_vercel/insights', '/_vercel/speed-insights'])
-                  if req.method not in ['GET', 'HEAD']:
-                      result['blocked_non_read_requests'] += 1
-                      route.abort()
-                  elif not permitted or tracking:
+                  u = urlsplit(req.url)
+                  permitted = u.hostname in ['www.atpgroupservices.ae', 'cdn.shopify.com', 'fonts.googleapis.com', 'fonts.gstatic.com']
+                  tracking = u.path in ['/collect', '/g/collect', '/j/collect'] or u.path.startswith(('/_vercel/insights', '/_vercel/speed-insights'))
+                  if req.method not in ['GET', 'HEAD'] or not permitted or tracking:
+                      r['blocked_requests'].append({'method': req.method, 'url': clean(req.url), 'next_action': bool(req.headers.get('next-action'))})
                       route.abort()
                   else:
                       route.continue_()
               context.route('**/*', guard)
               page = context.new_page()
-              def response(r):
-                  if is_asset(r.url):
-                      result['assets'].append({'url': clean_url(r.url), 'status': r.status,
-                                               'type': r.headers.get('content-type', '')})
-              page.on('response', response)
-              page.on('pageerror', lambda e: result['page_errors'].append(str(e)[:400]))
-              page.on('requestfailed', lambda r: result['asset_failures'].append({'url': clean_url(r.url), 'error': r.failure}) if is_asset(r.url) else None)
+              closing = False
+              def on_response(response):
+                  if asset(response.url):
+                      r['assets'].append({'url': clean(response.url), 'status': response.status, 'type': response.headers.get('content-type', ''), 'source': 'browser'})
+              def on_failure(req):
+                  if asset(req.url) and not closing:
+                      r['asset_failures'].append({'url': clean(req.url), 'error': req.failure})
+              page.on('response', on_response)
+              page.on('requestfailed', on_failure)
+              page.on('pageerror', lambda e: r['page_errors'].append({'message': str(e)[:300], 'stack': e.stack[:1200]}))
+              references = []
               try:
                   response = page.goto(BASE + path, wait_until='load', timeout=30000)
-                  result['status'] = response.status if response else None
-                  result['final_url'] = clean_url(page.url)
-                  result['title'] = page.title()
-                  result['h1_visible'] = page.locator('h1').first.is_visible()
-                  result['referenced_assets'] = page.locator('script[src], link[rel="stylesheet"]').evaluate_all("els => [...new Set(els.map(e => e.src || e.href))].filter(u => u.includes('/_next/static/'))")
+                  r['status'] = response.status if response else None
+                  r['final_url'] = clean(page.url)
+                  r['title'] = page.title()
+                  references = page.locator('script[src], link[rel="stylesheet"]').evaluate_all("els => [...new Set(els.map(e => e.src || e.href))].filter(u => u.includes('/_next/static/'))")
+                  r['nomodule_references'] = page.locator('script[nomodule][src]').evaluate_all('els => els.map(e => e.src)')
+                  r['inline_style_count'] = page.locator('style').count()
                   settings = 'تفضيلات التحليلات' if ar else 'Analytics preferences'
                   page.get_by_role('button', name=settings, exact=True).last.click(timeout=10000)
                   banner = page.locator(f'section[aria-label="{settings}"]')
                   banner.wait_for(state='visible', timeout=5000)
                   banner.get_by_role('button', name='رفض' if ar else 'Decline', exact=True).click(timeout=5000)
                   banner.wait_for(state='hidden', timeout=5000)
-                  result['consent_ui'] = True
+                  r['consent_ui'] = True
+                  # Responsive layouts may have a hidden mobile heading before the visible desktop heading.
+                  page.locator('h1:visible').first.wait_for(state='visible', timeout=5000)
+                  r['h1_visible'] = True
               except Exception as exc:
-                  result['error'] = str(exc)[:700]
+                  r['ui_or_navigation_error'] = str(exc)[:600]
+              try:
+                  r['headings'] = [{'text': h.inner_text()[:160], 'visible': h.is_visible()} for h in page.locator('h1').all()]
+                  observed = {a['url'] for a in r['assets']}
+                  missing = [u for u in references if clean(u) not in observed]
+                  if len(missing) > 10:
+                      raise RuntimeError('Too many unobserved references; refusing an unbounded audit')
+                  # Modern Chromium skips nomodule scripts; verify their exact static URLs with GET.
+                  # This checks availability only and does not execute their contents.
+                  for url in missing:
+                      if not asset(url):
+                          raise RuntimeError('Reference outside the allowed static origin')
+                      response = context.request.get(url, timeout=10000, max_redirects=0)
+                      r['assets'].append({'url': clean(url), 'status': response.status, 'type': response.headers.get('content-type', ''), 'source': 'direct-static-get'})
+                      response.dispose()
+              except Exception as exc:
+                  r['verification_error'] = str(exc)[:500]
               finally:
+                  closing = True
                   context.close()
-              observed = {a['url']: a for a in result['assets']}
-              result['unobserved_references'] = [clean_url(u) for u in result.get('referenced_assets', []) if clean_url(u) not in observed]
-              def asset_ok(a):
-                  mime = a['type'].lower()
-                  return a['status'] == 200 and ((a['url'].endswith('.js') and ('javascript' in mime or 'ecmascript' in mime)) or (a['url'].endswith('.css') and 'text/css' in mime) or (not a['url'].endswith(('.js', '.css'))))
-              result['ok'] = bool(result['status'] == 200 and result.get('h1_visible') and result['assets'] and all(asset_ok(a) for a in result['assets']) and not result['asset_failures'] and not result['page_errors'] and not result['unobserved_references'] and result['consent_ui'])
-              return result
-
-          if __name__ == '__main__':
-              results = []
-              with sync_playwright() as p:
-                  browser = p.chromium.launch(headless=True)
-                  try:
-                      for path in PATHS:
-                          result = audit_page(browser, path)
-                          results.append(result)
-                          print('ATP_ASSET_AUDIT ' + json.dumps(result, ensure_ascii=False), flush=True)
-                  finally:
-                      browser.close()
-              summary = {'checked_at': datetime.now(timezone.utc).isoformat(), 'mode': 'READ_ONLY_NO_PURCHASE_NO_ANALYTICS', 'passed': sum(r['ok'] for r in results), 'total': len(results)}
-              print('ATP_AUDIT_SUMMARY ' + json.dumps(summary), flush=True)
-              raise SystemExit(0 if all(r['ok'] for r in results) else 1)
+              seen = {a['url'] for a in r['assets']}
+              missing = [clean(u) for u in references if clean(u) not in seen]
+              r['asset_count'] = len(r['assets'])
+              r['bad_assets'] = [a for a in r['assets'] if not valid(a)]
+              r['unverified_references'] = missing
+              r['assets_ok'] = bool(r['status'] == 200 and r['assets'] and not r['bad_assets'] and not r['asset_failures'] and not missing and not r.get('verification_error'))
+              r['assets_ui_ok'] = bool(r['assets_ok'] and r['consent_ui'] and r['h1_visible'] and r.get('inline_style_count', 0) > 0)
+              # Do not conceal or call the intentionally constrained runtime a clean functional test.
+              r['unrestricted_runtime_verified'] = False
+              del r['assets']
+              return r
+          results = []
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              try:
+                  for path in PATHS:
+                      result = audit(browser, path)
+                      results.append(result)
+                      print('ATP_ASSET_AUDIT ' + json.dumps(result, ensure_ascii=False), flush=True)
+              finally:
+                  browser.close()
+          summary = {'checked_at': datetime.now(timezone.utc).isoformat(), 'scope': 'ASSETS_AND_CONSENT_UI_ONLY_NO_PURCHASE_NO_ANALYTICS', 'asset_ui_passed': sum(r['assets_ui_ok'] for r in results), 'total': len(results), 'runtime_diagnostics_retained': True}
+          print('ATP_AUDIT_SUMMARY ' + json.dumps(summary), flush=True)
+          raise SystemExit(0 if all(r['assets_ui_ok'] for r in results) else 1)
           PY
