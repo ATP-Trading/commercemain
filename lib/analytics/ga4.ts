@@ -164,8 +164,9 @@ export function setAnalyticsConsent(granted: boolean, advertising: boolean = fal
   (window as unknown as Record<string, unknown>)[`ga-disable-${GA4_ID}`] = !analyticsAllowed();
   if (initialized) {
     // Remove stale click IDs before a consent update can trigger a tag request.
-    command('set', { page_location: pageUrl(), page_referrer: safePageUrl(document.referrer),
-      allow_ad_personalization_signals: googleAdsAllowed() });
+    command('config', GA4_ID, { update: true, send_page_view: false,
+      page_location: pageUrl(), page_referrer: safePageUrl(document.referrer),
+      page_title: pageTitle(), allow_ad_personalization_signals: googleAdsAllowed() });
     command('consent', 'update', consentState());
   }
   if (!analyticsAllowed()) clearCookies(false);
