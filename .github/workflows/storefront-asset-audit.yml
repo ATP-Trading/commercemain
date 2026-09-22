@@ -1,0 +1,106 @@
+name: Read-only storefront asset audit
+'on':
+  push:
+    branches: [test/storefront-asset-audit-20260922]
+    paths: [.github/workflows/storefront-asset-audit.yml]
+permissions: {}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Install isolated browser
+        run: |
+          python3 -m venv .audit-venv
+          .audit-venv/bin/pip install --disable-pip-version-check playwright==1.57.0
+          .audit-venv/bin/python -m playwright install --with-deps chromium
+      - name: Check English and Arabic assets and consent UI without purchases or tracking
+        run: |
+          .audit-venv/bin/python - <<'PY'
+          """Read-only storefront checks: no login, cart, checkout, or analytics requests."""
+          import json
+          from datetime import datetime, timezone
+          from urllib.parse import urlsplit, urlunsplit
+          from playwright.sync_api import sync_playwright
+
+          BASE = 'https://www.atpgroupservices.ae'
+          PATHS = ['/en', '/ar', '/en/product/mores-collagen', '/ar/product/mores-collagen']
+
+          def clean_url(url):
+              u = urlsplit(url)
+              return urlunsplit((u.scheme, u.netloc, u.path, '', ''))
+
+          def is_asset(url):
+              return url.startswith(BASE + '/_next/static/')
+
+          def audit_page(browser, path):
+              ar = path.startswith('/ar')
+              result = {'path': path, 'status': None, 'assets': [], 'asset_failures': [],
+                        'page_errors': [], 'blocked_non_read_requests': 0, 'consent_ui': False}
+              context = browser.new_context(viewport={'width': 1365, 'height': 900}, service_workers='block')
+              context.add_init_script("""try {
+                for (const k of ['atp-analytics-consent', 'atp-marketing-consent', 'atp-google-ads-consent-v1']) localStorage.setItem(k, 'denied');
+                window['ga-disable-G-N47GG1EVK5'] = true;
+              } catch (_) {}""")
+              def guard(route):
+                  req = route.request
+                  host = urlsplit(req.url).hostname or ''
+                  permitted = host == urlsplit(BASE).hostname or host == 'cdn.shopify.com' or host in ['fonts.googleapis.com', 'fonts.gstatic.com']
+                  tracking = any(x in req.url for x in ['/collect', '/_vercel/insights', '/_vercel/speed-insights'])
+                  if req.method not in ['GET', 'HEAD']:
+                      result['blocked_non_read_requests'] += 1
+                      route.abort()
+                  elif not permitted or tracking:
+                      route.abort()
+                  else:
+                      route.continue_()
+              context.route('**/*', guard)
+              page = context.new_page()
+              def response(r):
+                  if is_asset(r.url):
+                      result['assets'].append({'url': clean_url(r.url), 'status': r.status,
+                                               'type': r.headers.get('content-type', '')})
+              page.on('response', response)
+              page.on('pageerror', lambda e: result['page_errors'].append(str(e)[:400]))
+              page.on('requestfailed', lambda r: result['asset_failures'].append({'url': clean_url(r.url), 'error': r.failure}) if is_asset(r.url) else None)
+              try:
+                  response = page.goto(BASE + path, wait_until='load', timeout=30000)
+                  result['status'] = response.status if response else None
+                  result['final_url'] = clean_url(page.url)
+                  result['title'] = page.title()
+                  result['h1_visible'] = page.locator('h1').first.is_visible()
+                  result['referenced_assets'] = page.locator('script[src], link[rel="stylesheet"]').evaluate_all("els => [...new Set(els.map(e => e.src || e.href))].filter(u => u.includes('/_next/static/'))")
+                  settings = 'تفضيلات التحليلات' if ar else 'Analytics preferences'
+                  page.get_by_role('button', name=settings, exact=True).last.click(timeout=10000)
+                  banner = page.locator(f'section[aria-label="{settings}"]')
+                  banner.wait_for(state='visible', timeout=5000)
+                  banner.get_by_role('button', name='رفض' if ar else 'Decline', exact=True).click(timeout=5000)
+                  banner.wait_for(state='hidden', timeout=5000)
+                  result['consent_ui'] = True
+              except Exception as exc:
+                  result['error'] = str(exc)[:700]
+              finally:
+                  context.close()
+              observed = {a['url']: a for a in result['assets']}
+              result['unobserved_references'] = [clean_url(u) for u in result.get('referenced_assets', []) if clean_url(u) not in observed]
+              def asset_ok(a):
+                  mime = a['type'].lower()
+                  return a['status'] == 200 and ((a['url'].endswith('.js') and ('javascript' in mime or 'ecmascript' in mime)) or (a['url'].endswith('.css') and 'text/css' in mime) or (not a['url'].endswith(('.js', '.css'))))
+              result['ok'] = bool(result['status'] == 200 and result.get('h1_visible') and result['assets'] and all(asset_ok(a) for a in result['assets']) and not result['asset_failures'] and not result['page_errors'] and not result['unobserved_references'] and result['consent_ui'])
+              return result
+
+          if __name__ == '__main__':
+              results = []
+              with sync_playwright() as p:
+                  browser = p.chromium.launch(headless=True)
+                  try:
+                      for path in PATHS:
+                          result = audit_page(browser, path)
+                          results.append(result)
+                          print('ATP_ASSET_AUDIT ' + json.dumps(result, ensure_ascii=False), flush=True)
+                  finally:
+                      browser.close()
+              summary = {'checked_at': datetime.now(timezone.utc).isoformat(), 'mode': 'READ_ONLY_NO_PURCHASE_NO_ANALYTICS', 'passed': sum(r['ok'] for r in results), 'total': len(results)}
+              print('ATP_AUDIT_SUMMARY ' + json.dumps(summary), flush=True)
+              raise SystemExit(0 if all(r['ok'] for r in results) else 1)
+          PY
