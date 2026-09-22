@@ -1,0 +1,182 @@
+name: Guest cart and checkout handoff audit
+'on':
+  push:
+    branches: [test/storefront-asset-audit-20260922]
+    paths: [.github/workflows/cart-checkout-audit.yml]
+permissions: {}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Install isolated browser
+        run: |
+          python3 -m venv .audit-venv
+          .audit-venv/bin/pip install --disable-pip-version-check playwright==1.57.0
+          .audit-venv/bin/python -m playwright install --with-deps chromium
+      - name: Verify guest carts without orders, customer details or Google events
+        run: |
+          .audit-venv/bin/python - <<'PY'
+          import json, re, time
+          from datetime import datetime, timezone
+          from decimal import Decimal
+          from urllib.request import urlopen
+          from urllib.parse import urlsplit, parse_qs
+          from playwright.sync_api import sync_playwright
+          BASE = 'https://www.atpgroupservices.ae'
+          SOURCE = '4f347f8adeb678fe9f1f902473935a4bb0359224'
+          RAW = 'https://raw.githubusercontent.com/ATP-Trading/commercemain/' + SOURCE + '/'
+          labels = {locale: json.load(urlopen(RAW + 'messages/' + locale + '.json', timeout=15))['cart'] for locale in ['en', 'ar']}
+          def safe_url(url):
+              u = urlsplit(url)
+              if '/checkouts/' in u.path or '/cart/c/' in u.path:
+                  return u.scheme + '://' + u.netloc + '/[checkout-token-redacted]'
+              return u.scheme + '://' + u.netloc + u.path
+          def redacted(error):
+              return re.sub(r'https?://[^\s)\]"<>]+', lambda m: safe_url(m.group(0)), str(error))[:800]
+          def guest_cart(context):
+              response = context.request.get(BASE + '/api/cart', timeout=15000)
+              if response.status != 200:
+                  raise RuntimeError('Cart read HTTP ' + str(response.status))
+              data = response.json()
+              response.dispose()
+              if not data.get('success'):
+                  raise RuntimeError('Cart read returned no success')
+              cart = data.get('cart') or {}
+              if (cart.get('buyerIdentity') or {}).get('customer'):
+                  raise RuntimeError('Refusing to touch an authenticated customer cart')
+              return cart
+          def summarize(cart):
+              return {'quantity': cart.get('totalQuantity', 0), 'line_count': len(cart.get('lines', [])), 'total': (cart.get('cost') or {}).get('totalAmount'), 'subtotal': (cart.get('cost') or {}).get('subtotalAmount'), 'items': [{'quantity': line['quantity'], 'title': line['merchandise']['product']['title'], 'total': line['cost']['totalAmount']} for line in cart.get('lines', [])]}
+          def wait_quantity(context, page, qty):
+              for _ in range(20):
+                  cart = guest_cart(context)
+                  if cart.get('totalQuantity', 0) == qty:
+                      return cart
+                  page.wait_for_timeout(400)
+              raise AssertionError('Server cart did not reach quantity ' + str(qty))
+          def click_named(page, names):
+              for name in names:
+                  if not name: continue
+                  loc = page.get_by_role('button', name=name, exact=True).and_(page.locator(':visible'))
+                  if loc.count():
+                      loc.first.click(timeout=15000)
+                      return name
+              raise AssertionError('Expected cart control not found')
+          def run(browser, locale, mobile):
+              name = locale + ('-mobile' if mobile else '-desktop')
+              result = {'case': name, 'checks': {}, 'page_errors': [], 'http_errors': [], 'blocked_requests': [], 'checkout': {}, 'ok': False}
+              context = browser.new_context(viewport={'width': 390 if mobile else 1365, 'height': 844 if mobile else 900}, is_mobile=mobile, has_touch=mobile, service_workers='block')
+              context.add_init_script("""try {
+                for (const k of ['atp-analytics-consent', 'atp-marketing-consent', 'atp-google-ads-consent-v1']) localStorage.setItem(k, 'denied');
+                window['ga-disable-G-N47GG1EVK5'] = true;
+              } catch (_) {}""")
+              allowed_checkout_hosts = {'checkout.atpgroupservices.ae'}
+              first_party_posts = 0
+              def guard(route):
+                  nonlocal first_party_posts
+                  req = route.request; u = urlsplit(req.url)
+                  host = u.hostname or ''; path = u.path
+                  tracking = any(x in host for x in ['google-analytics.', 'googletagmanager.', 'googleadservices.', 'doubleclick.', 'facebook.', 'facebook.net', 'analytics.', 'monorail']) or path.startswith(('/_vercel/insights', '/_vercel/speed-insights', '/collect', '/g/collect', '/api/analytics'))
+                  permitted = host == 'www.atpgroupservices.ae' or host in allowed_checkout_hosts or host.endswith('.myshopify.com') or host in ['cdn.shopify.com', 'shopify.com', 'checkout.shopify.com', 'fonts.googleapis.com', 'fonts.gstatic.com'] or host.endswith('.shopifycdn.com')
+                  next_action = host == 'www.atpgroupservices.ae' and req.method == 'POST' and bool(req.headers.get('next-action')) and path.startswith(('/en', '/ar'))
+                  if next_action:
+                      first_party_posts += 1
+                  if tracking or not permitted or (req.method not in ['GET', 'HEAD'] and not next_action) or first_party_posts > 30:
+                      result['blocked_requests'].append({'method': req.method, 'url': safe_url(req.url), 'tracking': tracking})
+                      route.abort()
+                  else:
+                      route.continue_()
+              context.route('**/*', guard)
+              page = context.new_page()
+              page.on('pageerror', lambda e: result['page_errors'].append(redacted(e)))
+              page.on('response', lambda r: result['http_errors'].append({'status': r.status, 'url': safe_url(r.url)}) if r.status >= 400 and urlsplit(r.url).hostname == 'www.atpgroupservices.ae' else None)
+              cart_started = False
+              try:
+                  initial = guest_cart(context)
+                  assert initial.get('totalQuantity', 0) == 0, 'Context must begin with an empty guest cart'
+                  result['checks']['isolated_guest'] = True
+                  response = page.goto(BASE + '/' + locale + '/product/mores-collagen', wait_until='load', timeout=30000)
+                  assert response and response.status == 200, 'Product page unavailable'
+                  page.locator('h1:visible').first.wait_for(timeout=10000)
+                  result['checks']['product_loaded'] = True
+                  cart_started = True
+                  click_named(page, [labels[locale].get('addToCart')])
+                  one = wait_quantity(context, page, 1)
+                  result['after_add'] = summarize(one)
+                  assert len(one.get('lines', [])) == 1, 'Expected one product line'
+                  assert one['cost']['totalAmount']['currencyCode'] == 'AED', 'Unexpected cart currency'
+                  first_total = Decimal(one['cost']['totalAmount']['amount'])
+                  result['checks']['add_persisted'] = True
+                  page.goto(BASE + '/' + locale + '/cart', wait_until='load', timeout=30000)
+                  page.get_by_role('button', name=labels[locale]['increaseItemQuantity'], exact=True).first.wait_for(timeout=10000)
+                  result['checks']['cart_page_loaded'] = True
+                  click_named(page, [labels[locale]['increaseItemQuantity']])
+                  two = wait_quantity(context, page, 2)
+                  result['after_increase'] = summarize(two)
+                  assert Decimal(two['cost']['totalAmount']['amount']) == first_total * 2, 'Quantity total mismatch'
+                  result['checks']['quantity_and_total'] = True
+                  page.reload(wait_until='load', timeout=30000)
+                  assert guest_cart(context).get('totalQuantity') == 2, 'Cart did not survive reload'
+                  result['checks']['reload_persisted'] = True
+                  other = 'ar' if locale == 'en' else 'en'
+                  page.goto(BASE + '/' + other + '/cart', wait_until='load', timeout=30000)
+                  assert guest_cart(context).get('totalQuantity') == 2, 'Cart did not survive locale navigation'
+                  result['checks']['locale_persisted'] = True
+                  page.goto(BASE + '/' + locale + '/cart', wait_until='load', timeout=30000)
+                  click_named(page, [labels[locale]['reduceItemQuantity']])
+                  reduced = wait_quantity(context, page, 1)
+                  assert Decimal(reduced['cost']['totalAmount']['amount']) == first_total, 'Reduced total mismatch'
+                  result['checks']['reduce_persisted'] = True
+                  # Use the visible storefront checkout control; never submit the hosted checkout.
+                  candidates = [labels[locale].get(k) for k in ['proceedToCheckout', 'checkout', 'secureCheckout']]
+                  result['checkout']['button'] = click_named(page, candidates)
+                  page.wait_for_url(lambda url: urlsplit(str(url)).hostname != 'www.atpgroupservices.ae', timeout=25000, wait_until='domcontentloaded')
+                  u = urlsplit(page.url)
+                  assert u.scheme == 'https' and (u.hostname == 'checkout.atpgroupservices.ae' or (u.hostname or '').endswith('.myshopify.com') or u.hostname == 'checkout.shopify.com'), 'Unexpected checkout host'
+                  page.wait_for_timeout(1500)
+                  body = page.locator('body').inner_text(timeout=5000)
+                  result['checkout'].update({'url': safe_url(page.url), 'host': u.hostname, 'locale_parameter': parse_qs(u.query).get('locale', []), 'html_lang': page.locator('html').get_attribute('lang'), 'title': page.title(), 'contact_field_visible': page.locator('input[type="email"]:visible').count() > 0, 'product_visible': 'COLLAGEN' in body.upper(), 'currency_visible': 'AED' in body or 'د.إ' in body, 'personal_details_entered': False, 'submitted': False, 'non_read_checkout_requests_blocked': True})
+                  assert result['checkout']['contact_field_visible'] and result['checkout']['product_visible'], 'Hosted checkout content not verified under read-only network restrictions'
+                  result['checks']['checkout_handoff'] = True
+                  result['ok'] = True
+              except Exception as exc:
+                  result['failure'] = redacted(exc)
+                  try:
+                      result['visible_buttons'] = page.locator('button:visible').all_text_contents()[:25]
+                  except Exception: pass
+              finally:
+                  try:
+                      if cart_started:
+                          cart = guest_cart(context)
+                          if cart.get('lines'):
+                              ids = [line['id'] for line in cart['lines']]
+                              # Cleanup only this isolated guest cart. No orders or inventory writes.
+                              response = context.request.delete(BASE + '/api/cart', data={'lineIds': ids}, timeout=20000)
+                              result['cleanup_http'] = response.status
+                              response.dispose()
+                          result['cleanup_empty'] = guest_cart(context).get('totalQuantity', 0) == 0
+                      else:
+                          result['cleanup_empty'] = True
+                  except Exception as exc:
+                      result['cleanup_error'] = redacted(exc)
+                      result['cleanup_empty'] = False
+                  result['ok'] = result['ok'] and result['cleanup_empty']
+                  result['first_party_server_actions'] = first_party_posts
+                  result['no_purchase_claim'] = 'No checkout form submitted; no personal data entered; optional Google/Meta tracking blocked. Store platform request logs may still record this audit.'
+                  context.close()
+              return result
+          results = []
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              try:
+                  for locale, mobile in [('en', False), ('ar', False), ('en', True), ('ar', True)]:
+                      r = run(browser, locale, mobile)
+                      results.append(r)
+                      print('ATP_CART_AUDIT ' + json.dumps(r, ensure_ascii=False), flush=True)
+              finally:
+                  browser.close()
+          summary = {'checked_at': datetime.now(timezone.utc).isoformat(), 'source_ref': SOURCE, 'passed': sum(r['ok'] for r in results), 'total': len(results), 'all_guest_carts_emptied': all(r.get('cleanup_empty') for r in results), 'purchase_event_delivery_verified': False}
+          print('ATP_CART_SUMMARY ' + json.dumps(summary), flush=True)
+          raise SystemExit(0 if all(r['ok'] for r in results) else 1)
+          PY
