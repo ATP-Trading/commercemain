@@ -269,9 +269,8 @@ export function ATPProductDescription({
         </a>
 
         {!isMembershipProduct && (
-          <div className="mb-5 space-y-2 text-sm leading-relaxed text-neutral-700">
-            <p>{isRTL ? 'التسليم للمندوب خلال ٢٤ ساعة، والتوصيل داخل الإمارات خلال ٢٤ ساعة بعدها. رسوم التوصيل ١٥ درهمًا، ومجانية للطلبات من ٢٥٠ درهمًا وللأعضاء الفعّالين.' : 'Handed to the courier within 24 hours, then delivered within 24 hours in the UAE. Delivery is AED 15, free on orders from AED 250 and for active members.'}</p>
-            <p>{isRTL ? 'طلب إرجاع المنتج السليم غير المفتوح خلال ٣ أيام من الاستلام، وتكاليف إرجاع تغيير الرأي على العميل. للمنتج المعيب أو الخطأ شروط منفصلة.' : 'Request return of unopened, non-defective products within 3 days of receipt. Change-of-mind return shipping is paid by the customer. Separate terms apply to defective or incorrect products.'} <a href={`/${locale}/policies/refund-policy`} className="underline underline-offset-4">{isRTL ? 'سياسة الاسترداد' : 'Refund policy'}</a></p>
+          <div className="mb-5 text-sm leading-relaxed text-neutral-700">
+            <p>{isRTL ? 'التوصيل خلال ٤٨ ساعة داخل الإمارات.' : 'Delivery within 48 hours across the UAE.'}</p>
           </div>
         )}
 
