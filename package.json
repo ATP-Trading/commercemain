@@ -73,6 +73,7 @@
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
     "@shopify/admin-api-client": "^1.1.1",
+    "@shopify/hydrogen-react": "2026.4.3",
     "@shopify/storefront-api-client": "^1.0.9",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

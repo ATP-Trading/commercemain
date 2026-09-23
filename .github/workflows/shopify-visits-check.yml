@@ -1,0 +1,20 @@
+name: Shopify visitor measurement checks
+'on':
+  push:
+    branches: [fix/shopify-visitor-analytics-20260923]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install locked dependencies without lifecycle scripts
+        run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
+      - name: Test consent, privacy, deduplication and provider failures
+        run: npx --yes pnpm@9.15.4 exec vitest run __tests__/analytics/ga4.test.ts __tests__/analytics/shopify-visits.test.ts
+      - name: Type-check project including its existing ambient declarations
+        run: npx --yes pnpm@9.15.4 exec tsc --noEmit --incremental false
+      - name: Compile production bundle without store credentials
+        run: npx --yes pnpm@9.15.4 run build
