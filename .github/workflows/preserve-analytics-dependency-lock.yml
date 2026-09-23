@@ -1,0 +1,87 @@
+name: Preserve existing storefront dependency versions
+'on':
+  push:
+    branches: [fix/shopify-visitor-analytics-20260923]
+    paths: [.github/workflows/preserve-analytics-dependency-lock.yml]
+permissions:
+  contents: write
+jobs:
+  lock:
+    if: github.ref == 'refs/heads/fix/shopify-visitor-analytics-20260923'
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Restore baseline locks and append only verified SDK transitive entries
+        run: |
+          git fetch --depth=1 origin 4f347f8adeb678fe9f1f902473935a4bb0359224
+          git show 4f347f8adeb678fe9f1f902473935a4bb0359224:pnpm-lock.yaml > /tmp/atp-baseline-lock.yaml
+          python3 -m venv /tmp/atp-lock-venv
+          /tmp/atp-lock-venv/bin/pip -q install PyYAML==6.0.2
+          /tmp/atp-lock-venv/bin/python - <<'PY'
+          import yaml, re, copy
+          from pathlib import Path
+          baseline_text=Path('/tmp/atp-baseline-lock.yaml').read_text()
+          current_text=Path('pnpm-lock.yaml').read_text()
+          baseline=yaml.safe_load(baseline_text)
+          current=yaml.safe_load(current_text)
+          sdk='@shopify/hydrogen-react'
+          dependency=current['importers']['.']['dependencies'][sdk]
+          assert dependency['specifier']=='2026.4.3'
+          required={}
+          packages={}
+          def visit(name, version):
+              key=name+'@'+version
+              if key in baseline['snapshots'] or key in required:return
+              assert key in current['snapshots'], 'Missing snapshot '+key
+              node=current['snapshots'][key]
+              required[key]=node
+              package=name+'@'+version.split('(')[0]
+              if package not in baseline['packages']:
+                  assert package in current['packages'], 'Missing package metadata '+package
+                  packages[package]=current['packages'][package]
+              for section in ['dependencies','optionalDependencies']:
+                  for n,v in node.get(section,{}).items():visit(n,v)
+          visit(sdk,dependency['version'])
+          def blocks(text,section):
+              part=text.split('\n'+section+':\n',1)[1]
+              match=re.search(r'^\S[^\n]*:\n',part,re.M)
+              if match:part=part[:match.start()]
+              matches=list(re.finditer(r'^  (\S[^\n]*):\n',part,re.M))
+              result={}
+              for i,m in enumerate(matches):
+                  key=yaml.safe_load(m.group(1))
+                  end=matches[i+1].start() if i+1<len(matches) else len(part)
+                  result[key]=part[m.start():end].rstrip()+'\n\n'
+              return result
+          source_packages=blocks(current_text,'packages')
+          source_snapshots=blocks(current_text,'snapshots')
+          result=baseline_text
+          importer_text=yaml.safe_dump({sdk:dependency},sort_keys=False,width=100000).rstrip()
+          importer_text='\n'.join('      '+line for line in importer_text.splitlines())+'\n'
+          result=result.replace('    dependencies:\n','    dependencies:\n'+importer_text,1)
+          result=result.replace('\npackages:\n','\npackages:\n\n'+''.join(source_packages[k] for k in sorted(packages)),1)
+          result=result.replace('\nsnapshots:\n','\nsnapshots:\n\n'+''.join(source_snapshots[k] for k in sorted(required)),1)
+          expected=copy.deepcopy(baseline)
+          expected['importers']['.']['dependencies'][sdk]=dependency
+          expected['packages'].update(packages)
+          expected['snapshots'].update(required)
+          assert yaml.safe_load(result)==expected, 'Lock reconstruction mismatch'
+          Path('pnpm-lock.yaml').write_text(result)
+          print('Existing direct and transitive resolutions unchanged; added SDK snapshots:',len(required))
+          print('New package metadata entries:',len(packages))
+          PY
+      - name: Verify frozen install, regressions, and full project types
+        run: |
+          npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
+          npx --yes pnpm@9.15.4 exec vitest run __tests__/analytics/ga4.test.ts __tests__/analytics/shopify-visits.test.ts
+          npx --yes pnpm@9.15.4 exec tsc --noEmit --incremental false
+      - name: Commit only the repaired lock on the isolated branch
+        run: |
+          git diff --stat -- pnpm-lock.yaml
+          git config user.name 'ATP analytics maintenance'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- pnpm-lock.yaml
+          git commit -m 'Preserve all existing package resolutions while adding Shopify analytics SDK'
+          git push origin HEAD:refs/heads/fix/shopify-visitor-analytics-20260923
+          echo "REPAIRED_LOCK_COMMIT=$(git rev-parse HEAD)"
