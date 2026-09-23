@@ -1,8 +1,7 @@
 import {handleShopifyVisitRequest} from '@/lib/analytics/shopify-visit-proxy';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
+// POST/DELETE are not cacheable. The handler also sets private no-store responses.
+// Use Next.js's default Node runtime without incompatible segment overrides.
 function handle(request: Request) {
   return handleShopifyVisitRequest(request, {
     domain: process.env.SHOPIFY_STORE_DOMAIN || '',
