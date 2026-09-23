@@ -1,0 +1,154 @@
+name: Public-page Shopify visitor receipt verification
+'on':
+  push:
+    branches: [test/shopify-visitor-receipt-20260923]
+    paths: [.github/workflows/shopify-visitor-receipt.yml]
+permissions: {}
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Prepare isolated Chromium
+        run: |
+          python3 -m venv .visit-check
+          .visit-check/bin/pip -q install playwright==1.57.0
+          .visit-check/bin/python -m playwright install --with-deps chromium
+      - name: Verify actual consent and page-view delivery only
+        run: |
+          .visit-check/bin/python - <<'PY'
+          import json, re
+          from datetime import datetime, timezone
+          from urllib.parse import urlsplit
+          from playwright.sync_api import sync_playwright
+          BASE='https://www.atpgroupservices.ae'
+          ENDPOINT=BASE+'/api/analytics/shopify'
+          COLLECTOR='https://monorail-edge.shopifysvc.com/unstable/produce_batch'
+          TAG='?utm_source=atp_analytics_check&utm_medium=diagnostic&utm_campaign=shopify_link_20260923'
+          def receipt_codes(value):
+              codes=[]; errors=False
+              if isinstance(value,dict):
+                  for k,v in value.items():
+                      if k in ['error','errors'] and v:errors=True
+                      if k in ['status','status_code','code'] and str(v).isdigit():codes.append(int(v))
+                      if isinstance(v,(dict,list)):
+                          c,e=receipt_codes(v);codes+=c;errors=errors or e
+              elif isinstance(value,list):
+                  for v in value:
+                      c,e=receipt_codes(v);codes+=c;errors=errors or e
+              return codes,errors
+          def check(browser,locale,mobile):
+              r={'locale':locale,'mobile_emulation':mobile,'bootstrap':[],'receipts':[],'events':[],'violations':[],'blocked_optional_requests':0,'runtime_error_count':0,'ok':False}
+              stage='before_consent';posts=0;tokens=[]
+              ctx=browser.new_context(viewport={'width':390 if mobile else 1365,'height':844 if mobile else 900},is_mobile=mobile,has_touch=mobile,service_workers='block')
+              def guard(route):
+                  nonlocal posts
+                  req=route.request;u=urlsplit(req.url)
+                  if req.url==COLLECTOR:
+                      posts+=1
+                      if stage!='consented' or posts>4:
+                          r['violations'].append('Collector request outside explicit consent or bound');route.abort();return
+                      try:
+                          value=json.loads(req.post_data or '{}')
+                          for event in value.get('events',[]):
+                              payload=event.get('payload') or {}
+                              shop=str(payload.get('shopId',payload.get('shop_id','')))
+                              schema=event.get('schema_id','')
+                              r['events'].append({'schema':schema,'correct_shop':shop in ['72307441902','gid://shopify/Shop/72307441902'],'diagnostic_visit': 'atp_analytics_check' in str(payload.get('url',''))})
+                              if 'trekkie_storefront_page_view' in schema:
+                                  tokens.append((payload.get('uniqToken',payload.get('uniqueToken')),payload.get('visitToken')))
+                      except Exception:r['violations'].append('Unreadable SDK event envelope')
+                      route.continue_();return
+                  if req.url==ENDPOINT:
+                      if req.method=='POST' and stage!='consented':
+                          r['violations'].append('Bootstrap request without explicit consent');route.abort();return
+                      if req.method not in ['POST','DELETE','OPTIONS']:
+                          route.abort();return
+                      route.continue_();return
+                  host=u.hostname or ''
+                  permitted=host in ['www.atpgroupservices.ae','cdn.shopify.com','fonts.googleapis.com','fonts.gstatic.com']
+                  optional=any(word in host for word in ['google-analytics','googletagmanager','googleadservices','doubleclick','facebook','shopifysvc']) or u.path.startswith(('/_vercel/insights','/_vercel/speed-insights'))
+                  if optional or not permitted or req.method not in ['GET','HEAD']:
+                      r['blocked_optional_requests']+=1;route.abort()
+                  else:route.continue_()
+              ctx.route('**/*',guard)
+              page=ctx.new_page()
+              def response(resp):
+                  if resp.url==ENDPOINT:
+                      timing=resp.headers.get('server-timing','')
+                      r['bootstrap'].append({'method':resp.request.method,'status':resp.status,'no_store':'no-store' in resp.headers.get('cache-control',''),'tracking_header_names':[n for n in ['_y','_s','_cmp'] if re.search(r'(?:^|,)\s*'+n+r';',timing)]})
+              page.on('response',response)
+              page.on('pageerror',lambda _:r.update(runtime_error_count=r['runtime_error_count']+1))
+              def accepted(resp):
+                  text=resp.text()
+                  try:value=json.loads(text) if text else {}
+                  except Exception:value={}
+                  codes,errors=receipt_codes(value)
+                  r['receipts'].append({'http_status':resp.status,'result_codes':codes,'errors_present':errors})
+                  assert resp.status in [200,202,207] and not errors and all(c<400 for c in codes),'Shopify did not accept the page-view request'
+              settings='تفضيلات التحليلات' if locale=='ar' else 'Analytics preferences'
+              decline='رفض' if locale=='ar' else 'Decline'
+              analytics='التحليلات فقط' if locale=='ar' else 'Analytics only'
+              try:
+                  resp=page.goto(BASE+'/'+locale+'/product/mores-collagen'+TAG,wait_until='load',timeout=30000)
+                  assert resp and resp.status==200,'Product page HTTP failure'
+                  banner=page.locator('section[aria-label="'+settings+'"]')
+                  banner.wait_for(state='visible',timeout=15000)
+                  assert 'Shopify' in banner.inner_text(),'New visitor measurement release not displayed'
+                  page.wait_for_timeout(400)
+                  assert posts==0 and not r['bootstrap'],'Tracking occurred before consent'
+                  banner.get_by_role('button',name=decline,exact=True).click()
+                  page.wait_for_timeout(400)
+                  assert posts==0 and not r['bootstrap'],'Tracking occurred after refusal'
+                  r['refusal_before_grant_ok']=True
+                  page.get_by_role('button',name=settings,exact=True).last.click()
+                  stage='consented'
+                  with page.expect_response(lambda resp:resp.url==COLLECTOR,timeout=20000) as first:
+                      banner.get_by_role('button',name=analytics,exact=True).click()
+                  accepted(first.value)
+                  r['cookies_after_grant']=[{'name':c['name'],'secure':c['secure'],'http_only':c['httpOnly']} for c in ctx.cookies() if c['name'] in ['_shopify_analytics','_shopify_marketing','_shopify_essential']]
+                  assert r['cookies_after_grant'],'Modern Shopify cookies not available'
+                  # Navigation to a second public page must remain one session, not mint a new visitor.
+                  with page.expect_response(lambda resp:resp.url==COLLECTOR,timeout=20000) as second:
+                      page.goto(BASE+'/'+locale+'/collections/amazing-thai-products'+TAG,wait_until='load',timeout=30000)
+                  accepted(second.value)
+                  r['same_visitor_session']=len(tokens)==2 and all(tokens[0]) and tokens[0]==tokens[1]
+                  assert r['same_visitor_session'],'Visitor/session tokens changed across a short navigation'
+                  count=posts
+                  page.get_by_role('button',name=settings,exact=True).last.click()
+                  banner.get_by_role('button',name=analytics,exact=True).click()
+                  page.wait_for_timeout(600)
+                  assert posts==count,'Same page counted twice after repeating consent'
+                  r['duplicate_preference_event_prevented']=True
+                  page.get_by_role('button',name=settings,exact=True).last.click()
+                  stage='withdrawn'
+                  with page.expect_response(lambda resp:resp.url==ENDPOINT and resp.request.method=='DELETE',timeout=10000) as withdrawal:
+                      banner.get_by_role('button',name=decline,exact=True).click()
+                  assert withdrawal.value.status==204,'Withdrawal cookie cleanup failed'
+                  assert not any(c['name']=='_shopify_analytics' for c in ctx.cookies()),'Analytics cookie survived withdrawal'
+                  page.goto(BASE+'/'+locale+TAG,wait_until='load',timeout=30000)
+                  page.wait_for_timeout(600)
+                  assert posts==count,'Page-view sent after withdrawal'
+                  r['withdrawal_ok']=True
+                  assert not r['violations'],'Consent violations observed'
+                  assert all(e['correct_shop'] for e in r['events']),'Event sent under wrong shop'
+                  assert all(b['status']==200 and len(b['tracking_header_names'])==3 for b in r['bootstrap'] if b['method']=='POST'),'Bootstrap or modern tracking headers failed'
+                  r['ok']=True
+              except Exception as exc:
+                  r['failure']=re.sub(r'https?://[^\s]+','[url-redacted]',str(exc))[:600]
+              finally:
+                  r['page_view_requests']=posts
+                  r['scope']='PUBLIC_PAGES_ONLY_MARKED_DIAGNOSTIC_NO_GOOGLE_META_DELIVERY_NO_CART_NO_CHECKOUT_NO_ORDER'
+                  ctx.close()
+              return r
+          results=[]
+          with sync_playwright() as p:
+              browser=p.chromium.launch(headless=True)
+              try:
+                  for locale,mobile in [('en',False),('ar',True)]:
+                      result=check(browser,locale,mobile);results.append(result)
+                      print('ATP_SHOPIFY_VISITOR_RECEIPT '+json.dumps(result,ensure_ascii=False),flush=True)
+              finally:browser.close()
+          print('ATP_VISITOR_SUMMARY '+json.dumps({'checked_at':datetime.now(timezone.utc).isoformat(),'passed':sum(r['ok'] for r in results),'total':len(results),'dashboard_receipt_independently_required':True}),flush=True)
+          raise SystemExit(0 if all(r['ok'] for r in results) else 1)
+          PY
