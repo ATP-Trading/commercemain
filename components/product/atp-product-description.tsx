@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
 import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
@@ -142,6 +143,29 @@ export function ATPProductDescription({
               {isMembershipProduct && <p className="mt-3 text-base leading-relaxed text-neutral-700">{locale === 'ar' ? 'خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة، مع توصيل مجاني داخل الإمارات.' : '15% off eligible supplements and skincare, and 10% off water and soil products, with free delivery within the UAE.'}</p>}
               {isMembershipProduct && <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600">{locale === 'ar' ? 'تتجدد العضوية تلقائيًا كل سنة. يمكنك إلغاء التجديد من حسابك أو بالتواصل معنا. راجع شروط الاشتراك قبل الدفع.' : 'Membership renews automatically each year. You can cancel renewal through your account or by contacting us. Review the subscription terms before payment.'}</p>}
             </div>
+          )}
+
+          {!isMembershipProduct && (
+            <aside
+              aria-label={locale === "ar" ? "خيارات الدفع المرن" : "Flexible payment options"}
+              className="mb-4 rounded-xl border border-atp-gold/25 bg-atp-gold/5 p-4"
+              dir={isRTL ? "rtl" : "ltr"}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-foreground">
+                  {locale === "ar" ? "تسوّق الآن وادفع على دفعات" : "Shop now, pay in instalments"}
+                </p>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Image src="/payment-icons/tabby.svg" alt={locale === "ar" ? "تابي" : "Tabby"} width={57} height={36} />
+                  <Image src="/payment-icons/tamara.svg" alt={locale === "ar" ? "تمارا" : "Tamara"} width={57} height={36} />
+                </div>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {locale === "ar"
+                  ? "اختر تابي أو تمارا عند الدفع. تظهر الخيارات المتاحة لطلبك في صفحة الدفع، وتخضع لموافقة مزوّد الخدمة وشروطه."
+                  : "Choose Tabby or Tamara at checkout. Available options are shown at checkout and are subject to the provider’s approval and terms."}
+              </p>
+            </aside>
           )}
 
           {/* Tabby Promo - Buy Now, Pay Later */}
