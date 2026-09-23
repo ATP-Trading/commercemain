@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Image from "next/image";
+import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
 import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
@@ -41,6 +42,15 @@ export function ATPProductDescription({
   const t = useTranslations('product');
   const { isRTL } = useRTL();
   const { price, selectedVariant } = useSelectedVariant(product);
+  const { hasActiveMembership, calculateServiceDiscount } = useMembershipDiscount();
+  const memberPriceApplies = hasActiveMembership && isMemberDiscountEligible(product);
+  const installmentBase = memberPriceApplies
+    ? calculateServiceDiscount(Number(price.amount), undefined, getMemberDiscountRate(product)).finalPrice
+    : Number(price.amount);
+  const estimatedInstallment = new Intl.NumberFormat(locale === "ar" ? "ar-AE" : "en-AE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(installmentBase / 4);
   const addToCartRef = useRef<HTMLDivElement>(null);
 
   // Fetch real inventory quantity from Shopify Admin API
@@ -145,25 +155,31 @@ export function ATPProductDescription({
             </div>
           )}
 
-          {!isMembershipProduct && (
+          {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
             <aside
               aria-label={locale === "ar" ? "خيارات الدفع المرن" : "Flexible payment options"}
               className="mb-4 rounded-xl border border-atp-gold/25 bg-atp-gold/5 p-4"
               dir={isRTL ? "rtl" : "ltr"}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-foreground">
-                  {locale === "ar" ? "تسوّق الآن وادفع على دفعات" : "Shop now, pay in instalments"}
-                </p>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Image src="/payment-icons/tabby.svg" alt={locale === "ar" ? "تابي" : "Tabby"} width={57} height={36} />
-                  <Image src="/payment-icons/tamara.svg" alt={locale === "ar" ? "تمارا" : "Tamara"} width={57} height={36} />
-                </div>
+              <p className="text-sm font-semibold text-foreground">
+                {locale === "ar" ? "كم تكون الدفعة؟" : "How much per payment?"}
+              </p>
+              <div className="mt-3 space-y-2">
+                {(["tabby", "tamara"] as const).map((provider) => (
+                  <div key={provider} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-background p-3">
+                    <Image src={`/payment-icons/${provider}.svg`} alt={provider === "tabby" ? (locale === "ar" ? "تابي" : "Tabby") : (locale === "ar" ? "تمارا" : "Tamara")} width={57} height={36} />
+                    <div className="text-sm text-foreground">
+                      <span className="font-semibold"><bdi>{estimatedInstallment} {price.currencyCode === "AED" ? (locale === "ar" ? "درهم" : "AED") : price.currencyCode}</bdi></span>
+                      {locale === "ar" ? " تقريبًا × ٤ دفعات" : " approx. × 4 payments"}
+                    </div>
+                  </div>
+                ))}
               </div>
+              {memberPriceApplies && <p className="mt-2 text-xs font-medium text-foreground">{locale === "ar" ? "محسوبة بعد خصم عضويتك." : "Based on your member price."}</p>}
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {locale === "ar"
-                  ? "اختر تابي أو تمارا عند الدفع. تظهر الخيارات المتاحة لطلبك في صفحة الدفع، وتخضع لموافقة مزوّد الخدمة وشروطه."
-                  : "Choose Tabby or Tamara at checkout. Available options are shown at checkout and are subject to the provider’s approval and terms."}
+                  ? "تقدير لسعر قطعة واحدة على ٤ دفعات، قبل التوصيل وأي رسوم للمزوّد. المبالغ والخطط النهائية تظهر عند الدفع وتخضع للأهلية وموافقة المزوّد."
+                  : "Estimate for one item split into 4 payments, before delivery and any provider fees. Final amounts and plans are shown at checkout, subject to eligibility and provider approval."}
               </p>
             </aside>
           )}
