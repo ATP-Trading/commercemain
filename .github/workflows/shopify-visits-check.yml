@@ -14,10 +14,7 @@ jobs:
         run: npx --yes pnpm@9.15.4 install --frozen-lockfile --ignore-scripts
       - name: Test consent, privacy, deduplication and provider failures
         run: npx --yes pnpm@9.15.4 exec vitest run __tests__/analytics/ga4.test.ts __tests__/analytics/shopify-visits.test.ts
-      - name: Type-check analytics source against real SDK types
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          fs.writeFileSync('tsconfig.analytics-check.json',JSON.stringify({extends:'./tsconfig.json',compilerOptions:{noEmit:true,incremental:false},include:['lib/analytics/shopify-visits.ts','lib/analytics/shopify-visit-proxy.ts','components/analytics/shopify-storefront-analytics.tsx','components/analytics/google-analytics.tsx','app/api/analytics/shopify/route.ts'],exclude:['node_modules','__tests__']}));
-          JS
-          npx --yes pnpm@9.15.4 exec tsc -p tsconfig.analytics-check.json
+      - name: Type-check project including its existing ambient declarations
+        run: npx --yes pnpm@9.15.4 exec tsc --noEmit --incremental false
+      - name: Compile production bundle without store credentials
+        run: npx --yes pnpm@9.15.4 run build
