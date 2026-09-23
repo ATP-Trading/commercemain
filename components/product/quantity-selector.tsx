@@ -80,11 +80,11 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
     <LazyMotion features={domAnimation}>
       <div className={`space-y-2 ${className}`}>
         <div className="flex items-center justify-between mb-2">
-          <Label className="text-sm font-medium text-neutral-400">
+          <Label className="text-sm font-semibold text-neutral-800">
             {t('quantity')}
           </Label>
           {cartQuantity > 0 && (
-            <m.span 
+            <m.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-xs text-[#d4af37] font-medium bg-[#d4af37]/10 px-2 py-0.5 rounded-full border border-[#d4af37]/20"
@@ -95,27 +95,23 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
         </div>
 
         {inventory.error && <p role="alert" className="text-sm">{ar ? "تعذر التحقق من المخزون." : "Stock could not be checked."} <button type="button" onClick={inventory.refetch} className="underline">{ar ? "أعد المحاولة" : "Try again"}</button></p>}
-        {remaining !== undefined && <p role="status" className="text-sm text-neutral-300">{remaining === 0 ? (ar ? "الكمية المتوفرة موجودة في سلتك أو نفدت." : "Available stock is already in your cart or sold out.") : (ar ? `يمكنك إضافة ${remaining} قطعة كحد أقصى.` : `You can add up to ${remaining} more.`)}</p>}
-        <div className="group relative w-fit">
-          {/* Enhanced glow backing on hover */}
-          <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-[#d4af37]/0 via-[#d4af37]/20 to-[#d4af37]/0 opacity-0 blur-lg transition-opacity duration-500 group-hover:opacity-100" />
-
-          {/* Main container */}
-          <div className="relative inline-flex items-center rounded-full bg-black/40 backdrop-blur-xl border border-white/10 ring-1 ring-black/5 shadow-lg overflow-hidden transition-all duration-300 group-hover:border-[#d4af37]/30 group-hover:shadow-[#d4af37]/5">
+        {remaining !== undefined && <p role="status" className="text-sm text-neutral-600">{remaining === 0 ? (ar ? "الكمية المتوفرة موجودة في سلتك أو نفدت." : "Available stock is already in your cart or sold out.") : (ar ? `يمكنك إضافة ${remaining} قطعة كحد أقصى.` : `You can add up to ${remaining} more.`)}</p>}
+        <div className="w-fit">
+          <div className="inline-flex items-center overflow-hidden rounded-xl border-2 border-neutral-300 bg-white shadow-sm">
             <m.button
               whileTap={{ scale: 0.9 }}
-              whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+
               type="button"
               aria-label={ar ? "تقليل الكمية" : "Decrease quantity"}
               onClick={decrementQuantity}
               disabled={quantity <= 1}
-              className="flex items-center justify-center w-12 h-12 text-neutral-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed active:text-[#d4af37]"
+              className="flex h-14 w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
             >
-              <Minus className="h-4 w-4 transition-transform group-hover:scale-110" />
+              <Minus className="h-6 w-6" strokeWidth={2.5} />
             </m.button>
 
             {/* Subtle separator */}
-            <div className="h-5 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+            <div className="h-8 w-px bg-neutral-300" />
 
             <input
               aria-label={t("quantity")}
@@ -125,22 +121,22 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               disabled={inventory.isLoading || !!inventory.error || remaining === 0}
               value={quantity}
               onChange={handleInputChange}
-              className="h-12 w-16 text-center border-0 bg-transparent text-white text-lg font-medium tabular-nums caret-[#d4af37] focus:outline-none focus:ring-0 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none p-0 selection:bg-[#d4af37]/30"
+              className="h-14 w-16 text-center border-0 bg-white text-neutral-950 text-xl font-semibold tabular-nums caret-[#d4af37] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-neutral-900 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none p-0 selection:bg-[#d4af37]/30"
             />
 
             {/* Subtle separator */}
-            <div className="h-5 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+            <div className="h-8 w-px bg-neutral-300" />
 
             <m.button
               whileTap={{ scale: 0.9 }}
-              whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+
               type="button"
               aria-label={ar ? "زيادة الكمية" : "Increase quantity"}
               onClick={incrementQuantity}
               disabled={inventory.isLoading || !!inventory.error || (remaining !== undefined && quantity >= remaining)}
-              className="flex items-center justify-center w-12 h-12 text-neutral-400 hover:text-white transition-colors active:text-[#d4af37]"
+              className="flex h-14 w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
             >
-              <Plus className="h-4 w-4 transition-transform group-hover:scale-110" />
+              <Plus className="h-6 w-6" strokeWidth={2.5} />
             </m.button>
           </div>
         </div>
