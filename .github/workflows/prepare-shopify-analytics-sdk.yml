@@ -1,0 +1,28 @@
+name: Prepare Shopify analytics SDK
+'on':
+  push:
+    branches: [fix/shopify-visitor-analytics-20260923]
+    paths: [.github/workflows/prepare-shopify-analytics-sdk.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/fix/shopify-visitor-analytics-20260923'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: fix/shopify-visitor-analytics-20260923
+      - name: Pin official SDK and regenerate only its dependency lock
+        run: |
+          npx --yes pnpm@9.15.4 add --save-exact --lockfile-only --ignore-scripts @shopify/hydrogen-react@2026.4.3
+          git diff --stat
+          git config user.name 'ATP analytics maintenance'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- package.json pnpm-lock.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m 'Pin hydrogen-react 2026.4.3 for supported tracking-value utilities'
+            git push origin HEAD:refs/heads/fix/shopify-visitor-analytics-20260923
+          fi
+          echo "SDK_PREPARATION_COMMIT=$(git rev-parse HEAD)"
