@@ -18,10 +18,10 @@ export default function CollectionSort({ locale, categories = [] }: { locale: "e
   ];
   const sort = searchParams.get("sort") || "";
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-end gap-3" dir={ar ? "rtl" : "ltr"} aria-busy={pending}>
-      {categories.length > 0 && <><label htmlFor="collection-category" className="font-medium text-atp-black">{ar ? "الفئة" : "Category"}</label>
+    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2" dir={ar ? "rtl" : "ltr"} aria-busy={pending}>
+      {categories.length > 0 && <div className="flex min-w-0 flex-col gap-2"><label htmlFor="collection-category" className="text-start text-sm font-medium text-atp-black">{ar ? "الفئة" : "Category"}</label>
       <select id="collection-category" value={categories.some(c => c.value === searchParams.get("category")) ? searchParams.get("category")! : ""} disabled={pending}
-        className="min-h-12 max-w-full rounded-lg border border-neutral-400 bg-white px-4 py-3 text-base text-neutral-900 focus:ring-2 focus:ring-atp-gold disabled:opacity-60"
+        className="h-12 w-full min-w-0 rounded-lg border border-neutral-400 bg-white px-4 py-3 text-base text-neutral-900 focus:ring-2 focus:ring-atp-gold disabled:opacity-60"
         onChange={event => {
           const query = new URLSearchParams(searchParams.toString());
           if (event.target.value) query.set("category", event.target.value); else query.delete("category");
@@ -30,13 +30,14 @@ export default function CollectionSort({ locale, categories = [] }: { locale: "e
         }}>
         <option value="">{ar ? "جميع المنتجات" : "All products"}</option>
         {categories.map(c => <option key={c.value} value={c.value}>{ar ? c.ar : c.en}</option>)}
-      </select></>}
-      <label htmlFor="collection-sort" className="font-medium text-atp-black">{ar ? "ترتيب حسب" : "Sort by"}</label>
+      </select></div>}
+      <div className="flex min-w-0 flex-col gap-2">
+      <label htmlFor="collection-sort" className="text-start text-sm font-medium text-atp-black">{ar ? "ترتيب حسب" : "Sort by"}</label>
       <select
         id="collection-sort"
         value={options.some(option => option.value === sort) ? sort : ""}
         disabled={pending}
-        className="min-h-12 max-w-full rounded-lg border border-neutral-400 bg-white px-4 py-3 text-base text-neutral-900 focus:outline-none focus:ring-2 focus:ring-atp-gold disabled:opacity-60"
+        className="h-12 w-full min-w-0 rounded-lg border border-neutral-400 bg-white px-4 py-3 text-base text-neutral-900 focus:outline-none focus:ring-2 focus:ring-atp-gold disabled:opacity-60"
         onChange={event => {
           const query = new URLSearchParams(searchParams.toString());
           if (event.target.value) query.set("sort", event.target.value);
@@ -48,7 +49,8 @@ export default function CollectionSort({ locale, categories = [] }: { locale: "e
       >
         {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
-      <span role="status" className="text-sm text-neutral-600">{pending ? (ar ? "جارٍ الترتيب…" : "Sorting…") : ""}</span>
+      </div>
+      <span role="status" className="sr-only">{pending ? (ar ? "جارٍ الترتيب…" : "Sorting…") : ""}</span>
     </div>
   );
 }
