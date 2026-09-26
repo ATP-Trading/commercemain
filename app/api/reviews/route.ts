@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
-export async function POST() {
- return NextResponse.json({ error: 'Reviews are currently unavailable' }, { status: 503 })
+import { submitReview, reviewResponse, reviewFailure } from '@/lib/reviews/server'
+export async function POST(request: Request) {
+ try { await submitReview(request); return reviewResponse({ok: true}, 201) }
+ catch (error) { return reviewFailure(error) }
 }
