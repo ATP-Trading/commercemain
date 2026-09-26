@@ -1,5 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
+import CollectionSort from "@/components/collections/collection-sort";
+
 import { m, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Grid } from "@/components/grid";
@@ -15,12 +18,14 @@ interface CollectionPageClientProps {
     description: string;
     handle: string;
   };
+  categories?: readonly {value: string; en: string; ar: string}[];
   products: Product[];
   locale: "en" | "ar";
 }
 
 export default function CollectionPageClient({
   collection,
+  categories,
   products,
   locale,
 }: CollectionPageClientProps) {
@@ -75,6 +80,8 @@ export default function CollectionPageClient({
               {t("discoverCuratedSelection")}
             </m.p>
           </m.div>
+
+          <Suspense fallback={null}><CollectionSort locale={locale} categories={categories} /></Suspense>
 
           {/* Products Grid */}
           {products.length === 0 ? (

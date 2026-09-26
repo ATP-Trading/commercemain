@@ -1,3 +1,4 @@
+import { filterCollectionProducts } from "@/lib/collection-categories";
 import { canonicalCollectionHandle } from "@/lib/collection-handle";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isInactiveCollection } from "@/lib/publication-policy";
@@ -86,6 +87,8 @@ export default async function CollectionPage(props: {
         notFound();
     }
 
+  const filtered = filterCollectionProducts(products, typeof searchParams.category === "string" ? searchParams.category : undefined);
+
     const isRTL = params.locale === 'ar';
 
     const collectionArt: Record<string, string> = {
@@ -123,7 +126,8 @@ export default async function CollectionPage(props: {
                         description: collection.description,
                         handle: collection.handle,
                     }}
-                    products={products}
+                    products={filtered.products}
+                    categories={filtered.categories}
                     locale={params.locale as "en" | "ar"}
                 />
             </Suspense>

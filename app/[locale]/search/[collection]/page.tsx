@@ -1,3 +1,4 @@
+import { filterCollectionProducts } from "@/lib/collection-categories";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
 import { isEmsPromotion } from "@/lib/publication-policy";
 import { getCollection, getCollectionProducts } from "@/lib/shopify/server";
@@ -9,7 +10,7 @@ export default async function CategoryPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   // Await the params and searchParams
-  const searchParams = await props.searchParams;
+  const searchParams = (await props.searchParams) || {};
   const params = await props.params;
   if (isEmsPromotion(params.collection)) return <InactiveServicePage locale={params.locale} />;
   
@@ -33,9 +34,12 @@ export default async function CategoryPage(props: {
     getCollection(params.collection, localeForApi),
   ]);
 
+  const filtered = filterCollectionProducts(products, typeof searchParams.category === "string" ? searchParams.category : undefined);
+
   return (
     <CollectionResults 
-      products={products || []}
+      products={filtered.products}
+      categories={filtered.categories}
       collection={collection}
       locale={params.locale as "en" | "ar"}
     />

@@ -1,5 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
+import CollectionSort from "@/components/collections/collection-sort";
+
 import Grid from "@/components/grid";
 import ProductGridItems from "@/components/layout/product-grid-items";
 import CollectionHero from "@/components/collection/collection-hero";
@@ -11,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { staggerSlow, fadeInUp, getAccessibleVariants, defaultViewport } from "@/lib/animations";
 
 interface CollectionResultsProps {
+  categories?: readonly {value: string; en: string; ar: string}[];
   products: any[];
   collection: any;
   locale: "en" | "ar";
@@ -18,7 +22,8 @@ interface CollectionResultsProps {
 
 export default function CollectionResults({ 
   products, 
-  collection, 
+  collection,
+  categories,
   locale 
 }: CollectionResultsProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -108,6 +113,8 @@ export default function CollectionResults({
               {t('discoverCuratedSelection')}
             </m.p>
           </m.div>
+
+          <Suspense fallback={null}><CollectionSort locale={locale} categories={categories} /></Suspense>
 
           {/* Products Grid */}
           {products.length === 0 ? (
