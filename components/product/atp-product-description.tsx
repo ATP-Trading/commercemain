@@ -124,6 +124,15 @@ export function ATPProductDescription({
             {localizedTitle}
           </h1>
 
+          {product.handle === "s-mone-sherbet-sunscreen-spf-50-pa" && (
+            <ul className="mb-4 flex flex-wrap gap-2 text-sm text-neutral-700" aria-label={isRTL ? "مميزات المنتج" : "Product highlights"}>
+              {(isRTL
+                ? ["حماية SPF 50+ PA++++", "قوام شربت خفيف وغير دهني", "٣٠ مل"]
+                : ["SPF 50+ PA++++ protection", "Lightweight, non-greasy sherbet texture", "30 ml"]
+              ).map((benefit) => <li key={benefit} className="rounded-lg bg-neutral-100 px-3 py-2">{benefit}</li>)}
+            </ul>
+          )}
+
           {/* Enhanced ATP Member Pricing Display - Hidden for membership product */}
           {!isMembershipProduct && isMemberDiscountEligible(product) ? (
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
@@ -164,7 +173,7 @@ export function ATPProductDescription({
               <p className="text-sm font-semibold text-foreground">
                 {locale === "ar" ? "كم تكون الدفعة؟" : "How much per payment?"}
               </p>
-              <div className="mt-3 space-y-2">
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {(["tabby", "tamara"] as const).map((provider) => (
                   <div key={provider} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-background p-3">
                     <Image src={`/payment-icons/${provider}.svg`} alt={provider === "tabby" ? (locale === "ar" ? "تابي" : "Tabby") : (locale === "ar" ? "تمارا" : "Tamara")} width={57} height={36} />
@@ -176,11 +185,12 @@ export function ATPProductDescription({
                 ))}
               </div>
               {memberPriceApplies && <p className="mt-2 text-xs font-medium text-foreground">{locale === "ar" ? "محسوبة بعد خصم عضويتك." : "Based on your member price."}</p>}
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {locale === "ar"
+              <details className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                <summary className="cursor-pointer py-1 underline">{locale === "ar" ? "تفاصيل التقسيط وشروطه" : "Payment plan details and terms"}</summary>
+                <p>{locale === "ar"
                   ? "تقدير لسعر قطعة واحدة على ٤ دفعات، قبل التوصيل وأي رسوم للمزوّد. المبالغ والخطط النهائية تظهر عند الدفع وتخضع للأهلية وموافقة المزوّد."
-                  : "Estimate for one item split into 4 payments, before delivery and any provider fees. Final amounts and plans are shown at checkout, subject to eligibility and provider approval."}
-              </p>
+                  : "Estimate for one item split into 4 payments, before delivery and any provider fees. Final amounts and plans are shown at checkout, subject to eligibility and provider approval."}</p>
+              </details>
             </aside>
           )}
 
