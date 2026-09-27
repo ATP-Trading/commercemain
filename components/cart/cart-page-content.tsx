@@ -562,6 +562,12 @@ export function CartPageContent() {
                                         </div>
                                     </div>
 
+                                    <p className="text-sm leading-relaxed text-neutral-300">
+                                        {isRTL
+                                            ? "التوصيل داخل الإمارات: ١٥ درهمًا، ومجاني للطلبات من ٢٥٠ درهمًا وللأعضاء الفعّالين. يتأكد الإجمالي النهائي عند الدفع."
+                                            : "UAE delivery: AED 15, free on orders from AED 250 and for active members. Your final total is confirmed at checkout."}
+                                    </p>
+
                                     {/* Checkout Button */}
                                     <form action={redirectToCheckout} className="w-full pt-2">
                                         <CheckoutButton isMember={isMember} t={tCart} />
