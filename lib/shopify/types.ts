@@ -13,6 +13,7 @@ export type Cart = Omit<ShopifyCart, 'lines'> & {
 };
 
 export type CartProduct = {
+  collections?: Product["collections"];
   id: string;
   handle: string;
   title: string;

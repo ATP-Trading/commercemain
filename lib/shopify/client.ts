@@ -98,6 +98,7 @@ const sanitizeCartLine = (line: any): any => {
         handle: product.handle || 'unknown-product',
         title: product.title || 'Product',
         featuredImage: product.featuredImage || null,
+        collections: product.collections,
       }
     }
   };
