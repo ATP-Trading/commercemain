@@ -101,6 +101,7 @@ function createOrUpdateCartItem(
         handle: product.handle,
         title: product.title,
         featuredImage: product.featuredImage,
+        collections: product.collections,
       },
     },
   };

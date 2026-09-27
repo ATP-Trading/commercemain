@@ -1,5 +1,6 @@
 "use client";
 
+import { getCartMemberEstimate } from "@/lib/shopify/cart-member-estimate";
 import { useCart } from "@/components/cart/cart-context";
 import { useMembership } from "@/hooks/use-membership";
 import { useTranslations } from "@/hooks/use-translations";
@@ -173,6 +174,8 @@ export function CartPageContent() {
         return cart.lines.filter(isValidCartItem);
     }, [cart]);
 
+    const memberEstimate = getCartMemberEstimate(cart);
+
     if (!cart || validCartItems.length === 0) {
         const BackArrow = isRTL ? ArrowRight : ArrowLeft;
         
@@ -338,6 +341,19 @@ export function CartPageContent() {
                                             <p className="text-neutral-400 text-sm leading-relaxed">
                                                 {tCart("page.memberBenefitsDescription")}
                                             </p>
+                                            {memberEstimate && (
+                                                <div className="mt-3 space-y-1" aria-live="polite">
+                                                    <div className="flex flex-wrap items-center gap-2 text-white">
+                                                        <span>{isRTL ? "سعر منتجات سلتك كعضو:" : "Your cart items with membership:"}</span>
+                                                        <Price amount={memberEstimate.total} currencyCode={memberEstimate.currencyCode} className="text-lg font-semibold text-[#d4af37]" />
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-300">
+                                                        <span>{isRTL ? "التوفير:" : "You save:"}</span>
+                                                        <Price amount={memberEstimate.savings} currencyCode={memberEstimate.currencyCode} />
+                                                    </div>
+                                                    <p className="text-xs text-neutral-400">{isRTL ? "تقدير قبل رسوم العضوية والتوصيل؛ يُطبّق الخصم بعد تفعيل العضوية." : "Estimate before membership and delivery fees; discount applies after membership activation."}</p>
+                                                </div>
+                                            )}
                                         </div>
                                         <Button
                                             asChild
