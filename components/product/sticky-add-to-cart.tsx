@@ -36,8 +36,8 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
 
         const observer = new IntersectionObserver(
             ([entry]) => {
-                // Show sticky bar when the main CTA is NOT visible
-                setIsVisible(!entry.isIntersecting);
+                // Keep product information first; show the shortcut only after passing the main CTA.
+                setIsVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0);
             },
             {
                 root: null,
@@ -89,7 +89,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
                                 {product.title}
                             </p>
                             <Price
-                                amount={displayPrice}
+                                amount={(Math.round(Number(displayPrice) * 100) * quantity / 100).toFixed(2)}
                                 currencyCode={selectedVariant.price.currencyCode}
                                 className="text-lg font-bold text-atp-gold"
                             />

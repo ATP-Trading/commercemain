@@ -6,13 +6,8 @@ import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
 import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
-import { EnhancedMemberPricing } from "@/components/membership/enhanced-member-pricing";
-import { FreeDeliveryIndicator } from "@/components/membership/free-delivery-indicator";
 import Price from "@/components/price";
-import Prose from "@/components/prose";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { TrustBadges } from "@/components/ui/trust-badges";
 import { ProductReviews } from "@/components/reviews/product-reviews";
 import { useRTL } from "@/hooks/use-rtl";
 import { useSelectedVariant } from "@/hooks/use-selected-variant";
@@ -20,12 +15,11 @@ import { useTranslations } from "next-intl";
 import type { Product } from "@/lib/shopify/types";
 import {
   getLocalizedProductTitle,
-  getLocalizedProductDescription,
   getLocalizedProductDescriptionHtml,
 } from "@/lib/shopify/i18n-queries";
 import { Award, Leaf, Star } from "lucide-react";
 import { VariantSelector } from "./variant-selector";
-import { QuantitySelector, QuantityProvider } from "./quantity-selector";
+import { QuantitySelector, QuantityProvider, useQuantity } from "./quantity-selector";
 import { StickyAddToCart } from "./sticky-add-to-cart";
 import { UrgencySignals } from "./urgency-signals";
 import { TabbyPromo } from "./tabby-promo";
@@ -39,6 +33,11 @@ export function ATPProductDescription({
   product: Product;
   locale: "en" | "ar";
 }) {
+  return <QuantityProvider product={product}><ProductDescriptionContent product={product} locale={locale} /></QuantityProvider>;
+}
+
+function ProductDescriptionContent({ product, locale }: { product: Product; locale: "en" | "ar" }) {
+  const { quantity } = useQuantity();
   const t = useTranslations('product');
   const { isRTL } = useRTL();
   const { price, selectedVariant } = useSelectedVariant(product);
@@ -47,10 +46,11 @@ export function ATPProductDescription({
   const installmentBase = memberPriceApplies
     ? calculateServiceDiscount(Number(price.amount), undefined, getMemberDiscountRate(product)).finalPrice
     : Number(price.amount);
+  const totalPrice = (Math.round(installmentBase * 100) * quantity / 100).toFixed(2);
   const estimatedInstallment = new Intl.NumberFormat(locale === "ar" ? "ar-AE" : "en-AE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(installmentBase / 4);
+  }).format(Number(totalPrice) / 4);
   const addToCartRef = useRef<HTMLDivElement>(null);
 
   // Fetch real inventory quantity from Shopify Admin API
@@ -60,7 +60,6 @@ export function ATPProductDescription({
 
   // Get localized content
   const localizedTitle = getLocalizedProductTitle(product, locale);
-  const localizedDescription = getLocalizedProductDescription(product, locale);
   const localizedDescriptionHtml = getLocalizedProductDescriptionHtml(
     product,
     locale
@@ -84,7 +83,7 @@ export function ATPProductDescription({
   ) || product.handle.toLowerCase().includes("membership");
 
   return (
-    <QuantityProvider product={product}>
+    <>
       <div className={isRTL ? "font-arabic" : ""}>
         <div
           className={`mb-6 flex flex-col border-b border-atp-light-gray pb-6 ${isRTL ? "text-right" : ""
@@ -124,35 +123,12 @@ export function ATPProductDescription({
             {localizedTitle}
           </h1>
 
-          {product.handle === "s-mone-sherbet-sunscreen-spf-50-pa" && (
-            <ul className="mb-4 flex flex-wrap gap-2 text-sm text-neutral-700" aria-label={isRTL ? "مميزات المنتج" : "Product highlights"}>
-              {(isRTL
-                ? ["حماية SPF 50+ PA++++", "قوام شربت خفيف وغير دهني", "٣٠ مل"]
-                : ["SPF 50+ PA++++ protection", "Lightweight, non-greasy sherbet texture", "30 ml"]
-              ).map((benefit) => <li key={benefit} className="rounded-lg bg-neutral-100 px-3 py-2">{benefit}</li>)}
-            </ul>
-          )}
-
-          {/* Enhanced ATP Member Pricing Display - Hidden for membership product */}
-          {!isMembershipProduct && isMemberDiscountEligible(product) ? (
-            <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
-              <EnhancedMemberPricing
-                originalPrice={price.amount}
-                discountRate={getMemberDiscountRate(product)}
-                serviceId="cosmetics-supplements"
-                currencyCode={price.currencyCode}
-                showFreeDelivery={true}
-                showMembershipCTA={true}
-                productType="product"
-              />
-            </div>
-          ) : (
-            /* Simple price display for membership product */
+            {/* Unit price; membership discounts still apply without promotional cards. */}
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-semibold text-neutral-900">
                   <Price
-                    amount={price.amount}
+                    amount={installmentBase.toFixed(2)}
                     className="text-2xl font-semibold"
                     currencyCode={price.currencyCode}
                   />
@@ -162,7 +138,44 @@ export function ATPProductDescription({
               {isMembershipProduct && <p className="mt-3 text-base leading-relaxed text-neutral-700">{locale === 'ar' ? 'خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة، مع توصيل مجاني داخل الإمارات.' : '15% off eligible supplements and skincare, and 10% off water and soil products, with free delivery within the UAE.'}</p>}
               {isMembershipProduct && <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600">{locale === 'ar' ? 'تتجدد العضوية تلقائيًا كل سنة. يمكنك إلغاء التجديد من حسابك أو بالتواصل معنا. راجع شروط الاشتراك قبل الدفع.' : 'Membership renews automatically each year. You can cancel renewal through your account or by contacting us. Review the subscription terms before payment.'}</p>}
             </div>
+
+        </div>
+
+        {/* Product Description - Structured Accordion Layout */}
+        {(localizedDescriptionHtml || product.descriptionHtml) && (
+          <div className="mb-6">
+            <ProductDescriptionAccordion
+              descriptionHtml={localizedDescriptionHtml || product.descriptionHtml}
+              isRTL={isRTL}
+              className={isRTL ? "text-right" : ""}
+            />
+          </div>
+        )}
+
+        {/* Variant Selector (only show if there are actual variants with options) */}
+        {product.options.length > 0 &&
+          product.options.some((option) => option.values.length > 1) && (
+            <div className="mb-6">
+              <VariantSelector
+                options={product.options}
+                variants={product.variants}
+              />
+            </div>
           )}
+
+        {/* Quantity Selector - hidden for membership/digital products */}
+        {!isMembershipProduct && (
+          <div className="mb-4">
+            <QuantitySelector product={product} />
+          </div>
+        )}
+
+        {!isMembershipProduct && (
+          <div className="mb-4" aria-live="polite" aria-atomic="true">
+            <p className="text-sm text-neutral-600">{isRTL ? "إجمالي الكمية المختارة" : "Total for selected quantity"}</p>
+            <Price amount={totalPrice} currencyCode={price.currencyCode} className="text-2xl font-semibold" />
+          </div>
+        )}
 
           {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
             <aside
@@ -184,12 +197,11 @@ export function ATPProductDescription({
                   </div>
                 ))}
               </div>
-              {memberPriceApplies && <p className="mt-2 text-xs font-medium text-foreground">{locale === "ar" ? "محسوبة بعد خصم عضويتك." : "Based on your member price."}</p>}
               <details className="mt-2 text-xs leading-relaxed text-muted-foreground">
                 <summary className="cursor-pointer py-1 underline">{locale === "ar" ? "تفاصيل التقسيط وشروطه" : "Payment plan details and terms"}</summary>
                 <p>{locale === "ar"
-                  ? "تقدير لسعر قطعة واحدة على ٤ دفعات، قبل التوصيل وأي رسوم للمزوّد. المبالغ والخطط النهائية تظهر عند الدفع وتخضع للأهلية وموافقة المزوّد."
-                  : "Estimate for one item split into 4 payments, before delivery and any provider fees. Final amounts and plans are shown at checkout, subject to eligibility and provider approval."}</p>
+                  ? "تقدير لإجمالي الكمية المختارة على ٤ دفعات، قبل التوصيل وأي رسوم للمزوّد. المبالغ والخطط النهائية تظهر عند الدفع وتخضع للأهلية وموافقة المزوّد."
+                  : "Estimate for the selected quantity split into 4 payments, before delivery and any provider fees. Final amounts and plans are shown at checkout, subject to eligibility and provider approval."}</p>
               </details>
             </aside>
           )}
@@ -197,7 +209,7 @@ export function ATPProductDescription({
           {/* Tabby Promo - Buy Now, Pay Later */}
           <div className={`mb-4 ${isRTL ? "text-right" : ""}`}>
             <TabbyPromo
-              price={price.amount}
+              price={totalPrice}
               currencyCode={price.currencyCode}
               locale={locale}
               publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
@@ -214,7 +226,7 @@ export function ATPProductDescription({
           {/* Tamara Widget - Buy Now, Pay Later */}
           <div className={`mb-4 ${isRTL ? "text-right" : ""}`}>
             <TamaraWidget
-              price={price.amount}
+              price={totalPrice}
               currencyCode={price.currencyCode}
               locale={locale}
               publicKey={process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || ""}
@@ -229,27 +241,6 @@ export function ATPProductDescription({
               }
             />
           </div>
-
-
-        </div>
-
-        {/* Variant Selector (only show if there are actual variants with options) */}
-        {product.options.length > 0 &&
-          product.options.some((option) => option.values.length > 1) && (
-            <div className="mb-6">
-              <VariantSelector
-                options={product.options}
-                variants={product.variants}
-              />
-            </div>
-          )}
-
-        {/* Quantity Selector - hidden for membership/digital products */}
-        {!isMembershipProduct && (
-          <div className="mb-4">
-            <QuantitySelector product={product} />
-          </div>
-        )}
 
         {/* Urgency Signals - Stock Indicator (Real inventory from Shopify Admin API) */}
         {/* Hidden for membership/digital products since they have unlimited inventory */}
@@ -281,22 +272,7 @@ export function ATPProductDescription({
         {!isMembershipProduct && (
           <div className="mb-5 text-sm leading-relaxed text-neutral-700">
             <p>{isRTL ? 'التوصيل خلال ٤٨ ساعة داخل الإمارات.' : 'Delivery within 48 hours across the UAE.'}</p>
-          </div>
-        )}
-
-        {/* Trust Badges - below Add to Cart */}
-        <div className="mb-6 border-b border-atp-light-gray pb-6">
-          <TrustBadges variant="horizontal" />
-        </div>
-
-        {/* Product Description - Structured Accordion Layout */}
-        {(localizedDescriptionHtml || product.descriptionHtml) && (
-          <div className="mb-6">
-            <ProductDescriptionAccordion
-              descriptionHtml={localizedDescriptionHtml || product.descriptionHtml}
-              isRTL={isRTL}
-              className={isRTL ? "text-right" : ""}
-            />
+            <p>{isRTL ? 'شحن مجاني للطلبات من ٢٥٠ درهم.' : 'Free shipping on orders from AED 250.'}</p>
           </div>
         )}
 
@@ -317,6 +293,6 @@ export function ATPProductDescription({
           triggerRef={addToCartRef}
         />
       )}
-    </QuantityProvider>
+    </>
   );
 }
