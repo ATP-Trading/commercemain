@@ -448,81 +448,6 @@ export function CartPageContent() {
                                 </m.div>
                             </m.div>
 
-                            {/* Member Benefits Banner */}
-                            {!isMember && !membershipLoading && !membershipError && (
-                                <m.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-neutral-900 via-neutral-800/90 to-neutral-900 border border-[#d4af37]/20 p-6"
-                                >
-                                    {/* Decorative elements */}
-                                    <div className="absolute top-0 end-0 w-40 h-40 bg-[#d4af37]/5 rounded-full blur-3xl" />
-                                    <div className="absolute bottom-0 start-0 w-32 h-32 bg-[#d4af37]/5 rounded-full blur-2xl" />
-                                    
-                                    <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 border border-[#d4af37]/30 flex items-center justify-center">
-                                                <Crown className="w-7 h-7 text-[#d4af37]" />
-                                            </div>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-[#d4af37] mb-1">
-                                                {tCart("page.unlockMemberBenefits")}
-                                            </h3>
-                                            <p className="text-neutral-400 text-sm leading-relaxed">
-                                                {tCart("page.memberBenefitsDescription")}
-                                            </p>
-                                            {memberEstimate && (
-                                                <div className="mt-3 space-y-1" aria-live="polite">
-                                                    <div className="flex flex-wrap items-center gap-2 text-white">
-                                                        <span>{isRTL ? "سعر منتجات سلتك كعضو:" : "Your cart items with membership:"}</span>
-                                                        <Price amount={memberEstimate.total} currencyCode={memberEstimate.currencyCode} className="text-lg font-semibold text-[#d4af37]" />
-                                                    </div>
-                                                    <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-300">
-                                                        <span>{isRTL ? "التوفير:" : "You save:"}</span>
-                                                        <Price amount={memberEstimate.savings} currencyCode={memberEstimate.currencyCode} />
-                                                    </div>
-                                                    <p className="text-xs text-neutral-400">{isRTL ? "تقدير قبل رسوم العضوية والتوصيل؛ يُطبّق الخصم بعد تفعيل العضوية." : "Estimate before membership and delivery fees; discount applies after membership activation."}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Button
-                                            asChild
-                                            className="bg-gradient-to-r from-[#d4af37] to-[#c9a432] hover:from-[#e5c354] hover:to-[#d4af37] text-black font-semibold rounded-xl shadow-lg shadow-[#d4af37]/20 transition-all hover:shadow-[#d4af37]/30 hover:scale-[1.02] whitespace-nowrap"
-                                        >
-                                            <Link href="/product/atp-membership">
-                                                {tMembership("joinMembership")}
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </m.div>
-                            )}
-
-                            {/* Trust Badges */}
-                            <m.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.25 }}
-                                className="grid grid-cols-3 gap-4"
-                            >
-                                {[
-                                    { icon: Shield, labelKey: "page.trustBadges.securePayment", descKey: "page.trustBadges.sslDesc" },
-                                    { icon: Truck, labelKey: "page.trustBadges.fastDelivery", descKey: "page.trustBadges.deliveryTime" },
-                                    { icon: Gift, labelKey: "page.trustBadges.easyReturns", descKey: "page.trustBadges.returnPolicy" },
-                                ].map((badge, i) => (
-                                    <div 
-                                        key={i}
-                                        className="flex flex-col items-center gap-2 p-4 rounded-xl bg-neutral-900/30 border border-neutral-800/30 text-center"
-                                    >
-                                        <badge.icon className="w-5 h-5 text-[#d4af37]" />
-                                        <div>
-                                            <p className="text-sm font-medium text-white">{tCart(badge.labelKey)}</p>
-                                            <p className="text-sm leading-relaxed text-neutral-400">{tCart(badge.descKey)}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </m.div>
                         </div>
 
                         {/* Order Summary Column */}
@@ -604,6 +529,84 @@ export function CartPageContent() {
                                         <span>{tCart("page.secureCheckout")}</span>
                                     </div>
                                 </div>
+                            </m.div>
+                        </div>
+
+                        <div className="space-y-6 lg:col-span-3">
+                            {/* Member Benefits Banner */}
+                            {!isMember && !membershipLoading && !membershipError && (
+                                <m.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-neutral-900 via-neutral-800/90 to-neutral-900 border border-[#d4af37]/20 p-6"
+                                >
+                                    {/* Decorative elements */}
+                                    <div className="absolute top-0 end-0 w-40 h-40 bg-[#d4af37]/5 rounded-full blur-3xl" />
+                                    <div className="absolute bottom-0 start-0 w-32 h-32 bg-[#d4af37]/5 rounded-full blur-2xl" />
+
+                                    <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#d4af37]/20 to-[#d4af37]/5 border border-[#d4af37]/30 flex items-center justify-center">
+                                                <Crown className="w-7 h-7 text-[#d4af37]" />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-semibold text-[#d4af37] mb-1">
+                                                {tCart("page.unlockMemberBenefits")}
+                                            </h3>
+                                            <p className="text-neutral-400 text-sm leading-relaxed">
+                                                {tCart("page.memberBenefitsDescription")}
+                                            </p>
+                                            {memberEstimate && (
+                                                <div className="mt-3 space-y-1" aria-live="polite">
+                                                    <div className="flex flex-wrap items-center gap-2 text-white">
+                                                        <span>{isRTL ? "سعر منتجات سلتك كعضو:" : "Your cart items with membership:"}</span>
+                                                        <Price amount={memberEstimate.total} currencyCode={memberEstimate.currencyCode} className="text-lg font-semibold text-[#d4af37]" />
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-2 text-sm text-neutral-300">
+                                                        <span>{isRTL ? "التوفير:" : "You save:"}</span>
+                                                        <Price amount={memberEstimate.savings} currencyCode={memberEstimate.currencyCode} />
+                                                    </div>
+                                                    <p className="text-xs text-neutral-400">{isRTL ? "تقدير قبل رسوم العضوية والتوصيل؛ يُطبّق الخصم بعد تفعيل العضوية." : "Estimate before membership and delivery fees; discount applies after membership activation."}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <Button
+                                            asChild
+                                            className="bg-gradient-to-r from-[#d4af37] to-[#c9a432] hover:from-[#e5c354] hover:to-[#d4af37] text-black font-semibold rounded-xl shadow-lg shadow-[#d4af37]/20 transition-all hover:shadow-[#d4af37]/30 hover:scale-[1.02] whitespace-nowrap"
+                                        >
+                                            <Link href="/product/atp-membership">
+                                                {tMembership("joinMembership")}
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </m.div>
+                            )}
+
+                            {/* Trust Badges */}
+                            <m.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.25 }}
+                                className="grid grid-cols-3 gap-4"
+                            >
+                                {[
+                                    { icon: Shield, labelKey: "page.trustBadges.securePayment", descKey: "page.trustBadges.sslDesc" },
+                                    { icon: Truck, labelKey: "page.trustBadges.fastDelivery", descKey: "page.trustBadges.deliveryTime" },
+                                    { icon: Gift, labelKey: "page.trustBadges.easyReturns", descKey: "page.trustBadges.returnPolicy" },
+                                ].map((badge, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex flex-col items-center gap-2 p-4 rounded-xl bg-neutral-900/30 border border-neutral-800/30 text-center"
+                                    >
+                                        <badge.icon className="w-5 h-5 text-[#d4af37]" />
+                                        <div>
+                                            <p className="text-sm font-medium text-white">{tCart(badge.labelKey)}</p>
+                                            <p className="text-sm leading-relaxed text-neutral-400">{tCart(badge.descKey)}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </m.div>
                         </div>
                     </div>
