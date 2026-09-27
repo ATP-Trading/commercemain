@@ -177,6 +177,11 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
           </div>
         )}
 
+        {/* Add to Cart Button - with ref for sticky CTA */}
+        <div className="mb-4" ref={addToCartRef}>
+          <ATPAddToCart product={product} />
+        </div>
+
           {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
             <aside
               aria-label={locale === "ar" ? "خيارات الدفع المرن" : "Flexible payment options"}
@@ -258,11 +263,6 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             />
           </div>
         )}
-
-        {/* Add to Cart Button - with ref for sticky CTA */}
-        <div className="mb-4" ref={addToCartRef}>
-          <ATPAddToCart product={product} />
-        </div>
 
         <a href="https://wa.me/971569586422" target="_blank" rel="noopener noreferrer"
           className="mb-4 flex min-h-11 items-center justify-center rounded-lg border border-atp-gold px-4 text-base font-medium text-atp-black md:hidden">
