@@ -5,6 +5,8 @@ export const createCartMutation = `
       cart {
         id
         checkoutUrl
+        discountCodes { code applicable }
+        discountAllocations { discountedAmount { amount currencyCode } }
         cost {
           totalAmount {
             amount
@@ -20,6 +22,8 @@ export const createCartMutation = `
             node {
               id
               quantity
+              discountAllocations { discountedAmount { amount currencyCode } }
+              sellingPlanAllocation { sellingPlan { id } }
               cost {
                 totalAmount {
                   amount
@@ -38,6 +42,7 @@ export const createCartMutation = `
                     id
                     handle
                     title
+                    collections(first: 100) { edges { node { id handle title } } }
                     featuredImage {
                       id
                       altText
@@ -64,6 +69,8 @@ export const addToCartMutation = `
       cart {
         id
         checkoutUrl
+        discountCodes { code applicable }
+        discountAllocations { discountedAmount { amount currencyCode } }
         cost {
           totalAmount {
             amount
@@ -79,6 +86,8 @@ export const addToCartMutation = `
             node {
               id
               quantity
+              discountAllocations { discountedAmount { amount currencyCode } }
+              sellingPlanAllocation { sellingPlan { id } }
               cost {
                 totalAmount {
                   amount
@@ -97,6 +106,7 @@ export const addToCartMutation = `
                     id
                     handle
                     title
+                    collections(first: 100) { edges { node { id handle title } } }
                     featuredImage {
                       id
                       altText
@@ -122,6 +132,8 @@ export const removeFromCartMutation = `
       cart {
         id
         checkoutUrl
+        discountCodes { code applicable }
+        discountAllocations { discountedAmount { amount currencyCode } }
         cost {
           totalAmount {
             amount
@@ -137,6 +149,8 @@ export const removeFromCartMutation = `
             node {
               id
               quantity
+              discountAllocations { discountedAmount { amount currencyCode } }
+              sellingPlanAllocation { sellingPlan { id } }
               cost {
                 totalAmount {
                   amount
@@ -155,6 +169,7 @@ export const removeFromCartMutation = `
                     id
                     handle
                     title
+                    collections(first: 100) { edges { node { id handle title } } }
                     featuredImage {
                       id
                       altText
@@ -181,6 +196,8 @@ export const editCartItemsMutation = `
       cart {
         id
         checkoutUrl
+        discountCodes { code applicable }
+        discountAllocations { discountedAmount { amount currencyCode } }
         cost {
           totalAmount {
             amount
@@ -196,6 +213,8 @@ export const editCartItemsMutation = `
             node {
               id
               quantity
+              discountAllocations { discountedAmount { amount currencyCode } }
+              sellingPlanAllocation { sellingPlan { id } }
               cost {
                 totalAmount {
                   amount
@@ -214,6 +233,7 @@ export const editCartItemsMutation = `
                     id
                     handle
                     title
+                    collections(first: 100) { edges { node { id handle title } } }
                     featuredImage {
                       id
                       altText
@@ -238,6 +258,8 @@ export const getCartQuery = `
     cart(id: $cartId) {
       id
       checkoutUrl
+        discountCodes { code applicable }
+        discountAllocations { discountedAmount { amount currencyCode } }
       cost {
         totalAmount {
           amount
@@ -253,6 +275,8 @@ export const getCartQuery = `
           node {
             id
             quantity
+            discountAllocations { discountedAmount { amount currencyCode } }
+            sellingPlanAllocation { sellingPlan { id } }
             cost {
               totalAmount {
                 amount
@@ -271,7 +295,8 @@ export const getCartQuery = `
                   id
                   handle
                   title
-                  featuredImage {
+                  collections(first: 100) { edges { node { id handle title } } }
+                    featuredImage {
                     id
                     altText
                     url
