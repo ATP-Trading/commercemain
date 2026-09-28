@@ -1,5 +1,8 @@
 "use server"
 
+import { cookies } from "next/headers"
+import { CHECKOUT_CONSENT_COOKIE } from "@/lib/analytics/checkout-consent"
+import { getConsentedCheckoutUrl } from "@/lib/cart/checkout-consent-server"
 import { getLocale } from "next-intl/server"
 import { cartForSession } from "@/lib/cart/session-cart"
 import { localizeCheckoutUrl } from "@/lib/cart/checkout-locale"
@@ -164,7 +167,12 @@ export async function getCheckoutUrl(): Promise<string> {
     }
   }
   
-  let checkoutUrl = checkoutCart.checkoutUrl
+  // Apply the latest recorded choice after session/buyer reconciliation.
+  // Shopify owns the _cs encoding; localization below preserves that parameter.
+  const consentCookie = (await cookies()).get(CHECKOUT_CONSENT_COOKIE)?.value
+  let checkoutUrl = await getConsentedCheckoutUrl(
+    checkoutCart.id, checkoutCart.checkoutUrl, consentCookie
+  )
   
   // For headless storefronts, we use a dedicated checkout subdomain
   // This subdomain (e.g., checkout.atpgroupservices.ae) is set as Primary for Online Store
