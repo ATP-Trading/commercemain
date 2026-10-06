@@ -1,0 +1,13 @@
+import product0 from './product-8757286961390.json';
+import product1 from './product-8757287583982.json';
+import product2 from './product-8757288206574.json';
+import product3 from './product-8801824309486.json';
+import product4 from './product-8900200628462.json';
+import product5 from './product-8901190418670.json';
+import product6 from './product-8904560836846.json';
+import product7 from './product-8906627154158.json';
+import product8 from './product-8906884874478.json';
+import product9 from './product-8958618370286.json';
+import product10 from './product-9130449305838.json';
+import product11 from './product-9155861643502.json';
+export default [product0, product1, product2, product3, product4, product5, product6, product7, product8, product9, product10, product11];
