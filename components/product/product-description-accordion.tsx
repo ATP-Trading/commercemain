@@ -33,6 +33,7 @@ interface ProductDescriptionAccordionProps {
     descriptionHtml: string;
     className?: string;
     isRTL?: boolean;
+    children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -96,7 +97,7 @@ const SECTION_CONFIGS: SectionConfig[] = [
         type: 'contents',
         priority: 2,
         icon: <Package className="w-5 h-5 text-purple-500" />,
-        displayTitle: { en: "What's Included", ar: 'محتويات الطقم' },
+        displayTitle: { en: "What's Included", ar: 'محتويات العبوة' },
         keywords: [
             { word: 'contents', weight: 9 },
             { word: 'included', weight: 8 },
@@ -343,6 +344,7 @@ const SECTION_CONFIGS: SectionConfig[] = [
         ],
         patterns: [
             /^disclaimer:?$/i,
+            /^تنبيه(?:ات)?:?$/i,
             /^note:?$/i,
             /^important(\s*note)?:?$/i,
             /^notice:?$/i,
@@ -443,50 +445,6 @@ function identifySectionType(headerText: string): SectionConfig | null {
     return bestScore >= THRESHOLD ? bestConfig : null;
 }
 
-/**
- * Content-based heuristic: detects section type from content patterns
- * when no header match is found.
- */
-function inferSectionFromContent(text: string): SectionType | null {
-    const lines = text.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return null;
-
-    // Check for numbered steps → usage
-    const numberedPattern = /^[\d١٢٣٤٥٦٧٨٩٠]+[.):\-]/;
-    const stepPattern = /^(step|خطوة)\s*[\d١٢٣٤٥٦٧٨٩٠]+/i;
-    const numberedLines = lines.filter(l => numberedPattern.test(l.trim()) || stepPattern.test(l.trim()));
-    if (numberedLines.length >= 2 && numberedLines.length / lines.length > 0.5) {
-        return 'usage';
-    }
-
-    // Check for warning patterns in content
-    const warningPatterns = [
-        /للاستخدام\s*الخارجي/,
-        /تجنب\s*ملامسة/,
-        /external\s*use\s*only/i,
-        /avoid\s*contact/i,
-        /keep\s*out\s*of\s*reach/i,
-        /بعيدًا\s*عن\s*متناول/,
-        /يُحفظ\s*بعيدًا/,
-        /توقف\s*عن\s*الاستخدام/,
-        /discontinue\s*use/i,
-    ];
-    const warningHits = warningPatterns.filter(p => p.test(text)).length;
-    if (warningHits >= 2) return 'warnings';
-
-    // Check for storage patterns
-    const storagePatterns = [
-        /يُخزن|يحفظ|store\s*(in|at)/i,
-        /بارد\s*وجاف|cool\s*and\s*dry/i,
-        /أشعة\s*الشمس|sunlight|direct\s*light/i,
-        /room\s*temperature|درجة\s*حرارة/i,
-    ];
-    const storageHits = storagePatterns.filter(p => p.test(text)).length;
-    if (storageHits >= 2) return 'storage';
-
-    return null;
-}
-
 // ============================================================================
 // Smart HTML Parser
 // ============================================================================
@@ -500,7 +458,7 @@ function inferSectionFromContent(text: string): SectionType | null {
  * 5. Content heuristics for unmatched blocks
  * 6. Canonical ordering by priority
  */
-function parseDescriptionHtml(
+export function parseDescriptionHtml(
     html: string,
     isRTL: boolean
 ): ProductDescriptionSection[] {
@@ -531,9 +489,10 @@ function parseDescriptionHtml(
     /**
      * Try to detect a section header from text. Returns config if found.
      */
-    function tryHeader(text: string): SectionConfig | null {
+    function tryHeader(text: string, exactOnly = false): SectionConfig | null {
         const cleaned = text.replace(/[:\-–—]/g, '').trim();
         if (cleaned.length < 2 || cleaned.length > 80) return null;
+        if (exactOnly) return SECTION_CONFIGS.find(config => config.patterns.some(pattern => pattern.test(cleaned))) || null;
         return identifySectionType(cleaned);
     }
 
@@ -546,7 +505,7 @@ function parseDescriptionHtml(
             if (!text) return;
 
             // Check if standalone text is a header
-            const headerConfig = tryHeader(text);
+            const headerConfig = tryHeader(text, true);
             if (headerConfig && text.length < 60) {
                 switchSection(headerConfig);
                 return;
@@ -583,27 +542,20 @@ function parseDescriptionHtml(
             if (['p', 'div'].includes(tagName)) {
                 const fullText = element.textContent?.trim() || '';
 
-                // If the paragraph is short enough it could be a standalone header line
-                if (fullText.length < 60) {
-                    const headerConfig = tryHeader(fullText);
-                    if (headerConfig) {
-                        switchSection(headerConfig);
-                        return;
-                    }
+                // Pack facts are metadata, not a heading that changes the following section.
+                const packLabel = element.firstElementChild;
+                if (packLabel && /^(pack contents|محتويات العبوة)\s*:?$/i.test(packLabel.textContent?.trim() || '')) {
+                    const config = SECTION_CONFIGS.find(c => c.type === 'contents')!;
+                    if (!sectionMap.has('contents')) sectionMap.set('contents', { config, contents: [] });
+                    addToSection('contents', element.outerHTML);
+                    return;
                 }
 
-                // Check if first child is a <strong>/<b> that is a header
-                const firstChild = element.firstElementChild;
-                if (firstChild && ['strong', 'b'].includes(firstChild.tagName.toLowerCase())) {
-                    const boldText = firstChild.textContent?.trim() || '';
-                    const headerConfig = tryHeader(boldText);
+                // Only an exact standalone label can start a section.
+                if (fullText.length < 60) {
+                    const headerConfig = tryHeader(fullText, true);
                     if (headerConfig) {
                         switchSection(headerConfig);
-                        // Get remaining content after the bold header
-                        const remaining = fullText.substring(boldText.length).trim();
-                        if (remaining) {
-                            addToSection(headerConfig.type, remaining);
-                        }
                         return;
                     }
                 }
@@ -654,10 +606,10 @@ function parseDescriptionHtml(
 
     const existingOverview = sectionMap.get('overview');
     if (existingOverview) {
-        if (introText && introText.length > 10) {
+        if (introText) {
             existingOverview.contents.unshift(introText);
         }
-    } else if (introText && introText.length > 20) {
+    } else if (introText) {
         sectionMap.set('overview', {
             config: overviewConfig,
             contents: [introText]
@@ -668,26 +620,6 @@ function parseDescriptionHtml(
     sectionMap.forEach(({ config, contents }, type) => {
         const content = contents.join('\n').trim();
         if (!content) return;
-
-        // Content-based re-classification: if this was put into a generic section
-        // but content heuristics say otherwise, reclassify
-        if (type === 'overview' && sections.length === 0) {
-            const inferred = inferSectionFromContent(content);
-            if (inferred && !sectionMap.has(inferred)) {
-                const inferredConfig = SECTION_CONFIGS.find(c => c.type === inferred);
-                if (inferredConfig) {
-                    sections.push({
-                        id: `section-${inferred}`,
-                        title: inferred,
-                        displayTitle: isRTL ? inferredConfig.displayTitle.ar : inferredConfig.displayTitle.en,
-                        content: wrapInParagraphs(content),
-                        icon: inferredConfig.icon,
-                        priority: inferredConfig.priority,
-                    });
-                    return;
-                }
-            }
-        }
 
         sections.push({
             id: `section-${type}`,
@@ -746,6 +678,7 @@ export function ProductDescriptionAccordion({
     descriptionHtml,
     className,
     isRTL = false,
+    children,
 }: ProductDescriptionAccordionProps) {
     const [mounted, setMounted] = useState(false);
 
@@ -758,9 +691,13 @@ export function ProductDescriptionAccordion({
         return parseDescriptionHtml(descriptionHtml, isRTL);
     }, [descriptionHtml, isRTL, mounted]);
 
+    const summary = sections.filter(s => s.title === 'overview' || s.title === 'contents');
+    const details = sections.filter(s => s.title !== 'overview' && s.title !== 'contents');
+
     // SSR/hydration guard — show raw HTML during SSR
     if (!mounted) {
         return (
+            <>
             <div
                 className={cn(
                     "prose prose-sm dark:prose-invert max-w-none",
@@ -769,12 +706,15 @@ export function ProductDescriptionAccordion({
                 )}
                 dangerouslySetInnerHTML={{ __html: descriptionHtml }}
             />
+            {children}
+            </>
         );
     }
 
     // If only one section or no structured content, show inline
     if (sections.length <= 1) {
         return (
+            <>
             <div
                 className={cn(
                     "prose prose-sm dark:prose-invert max-w-none",
@@ -786,17 +726,26 @@ export function ProductDescriptionAccordion({
                 )}
                 dangerouslySetInnerHTML={{ __html: sections[0]?.content || descriptionHtml }}
             />
+            {children}
+            </>
         );
     }
 
     return (
         <div className={cn("space-y-3", className)} dir={isRTL ? "rtl" : "ltr"}>
+            {summary.map(section => (
+                <section key={section.id} aria-label={section.displayTitle} className="mb-5">
+                    <h2 className="mb-2 text-base font-semibold">{section.displayTitle}</h2>
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: section.content }} />
+                </section>
+            ))}
+            {children}
             <Accordion
                 type="multiple"
-                defaultValue={sections.slice(0, 1).map(s => s.id)}
+                defaultValue={[]}
                 className="w-full"
             >
-                {sections.map((section) => (
+                {details.map((section) => (
                     <AccordionItem
                         key={section.id}
                         value={section.id}
