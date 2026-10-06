@@ -44,3 +44,54 @@ describe('product description layout', () => {
     expect(screen.getByText(/Contains milk/)).toBeVisible();
   });
 });
+
+import fixtures from './fixtures/product-descriptions';
+
+const parsed = (id: string, locale: 'en' | 'ar') => parseDescriptionHtml(fixtures.find(f => f.id === id)![locale], locale === 'ar');
+const section = (id: string, locale: 'en' | 'ar', type: string) => parsed(id, locale).find(s => s.title === type)?.content || '';
+
+describe('live catalog description regressions', () => {
+  for (const fixture of fixtures) for (const locale of ['en', 'ar'] as const) {
+    it(`preserves body facts for ${fixture.id} ${locale}`, () => {
+      const source = new DOMParser().parseFromString(fixture[locale], 'text/html');
+      const sections = parsed(fixture.id, locale);
+      const output = new DOMParser().parseFromString(sections.map(s => s.content).join(''), 'text/html');
+      const normalize = (s: string) => s.replace(/\s+/g, ' ').trim();
+      const text = normalize(output.body.textContent || '');
+      for (const el of source.querySelectorAll('p, li, td')) {
+        const fact = normalize(el.textContent || '');
+        // Short, standalone labels may become accordion titles; body facts must remain.
+        if (fact.length > 65 || el.matches('li, td') || /\d/.test(fact)) expect(text).toContain(fact);
+      }
+      expect(sections.every(s => s.content.trim())).toBe(true);
+    });
+  }
+  it.each(['en', 'ar'] as const)('separates ingredients, details, warnings and operational sections in %s', locale => {
+    expect(section('8906627154158', locale, 'ingredients')).toContain(locale === 'en' ? 'Mushroom' : 'الفطر');
+    expect(section('8906627154158', locale, 'product-details')).toContain('250');
+    expect(section('8958618370286', locale, 'product-details')).toContain('30');
+    expect(section('8757287583982', locale, 'product-details')).toContain('300');
+    for (const id of ['8900200628462', '8904560836846']) {
+      expect(section(id, locale, 'filter-components')).toContain('KDF');
+      expect(section(id, locale, 'delivery')).toContain('10');
+      expect(section(id, locale, 'usage')).not.toContain(locale === 'en' ? 'date of order' : 'تاريخ الطلب');
+    }
+    expect(section('8900200628462', locale, 'warranty')).toBeTruthy();
+    expect(section('8901190418670', locale, 'lab-results')).toBeTruthy();
+    expect(section('8901190418670', locale, 'contents')).toContain('1');
+    for (const number of [1, 2, 3, 4]) expect(section('8901190418670', locale, 'usage')).toContain(locale === 'en' ? `Method ${number}` : `الطريقة ${number}`);
+    for (const id of ['8757286961390', '8801824309486', '8906884874478', '9130449305838']) {
+      expect(section(id, locale, 'contents')).toBeTruthy();
+      expect(section(id, locale, 'usage')).toBeTruthy();
+    }
+    expect(section('9130449305838', locale, 'audience')).toBeTruthy();
+    expect(section('9130449305838', locale, 'disclaimer')).toBeTruthy();
+    expect(parsed('9130449305838', locale).map(s => s.content).join('')).not.toContain('<details');
+  });
+  it('recognizes Arabic legacy labels and removes decorative separators', () => {
+    expect(section('8757288206574', 'ar', 'warnings')).toBeTruthy();
+    expect(section('9155861643502', 'ar', 'ingredients')).toContain('Q10');
+    expect(section('9155861643502', 'ar', 'benefits')).not.toContain('Q10');
+    expect(parsed('9155861643502', 'ar').map(s => s.content).join('')).not.toContain('⸻');
+  });
+});

@@ -50,7 +50,10 @@ type SectionType =
     | 'certifications'
     | 'warnings'
     | 'disclaimer'
-    | 'faq';
+    | 'faq'
+    | 'product-details' | 'filter-components' | 'mineral-technology'
+    | 'maintenance' | 'audience' | 'delivery' | 'warranty' | 'compatibility'
+    | 'lab-results' | 'dosage' | 'quality';
 
 interface SectionConfig {
     type: SectionType;
@@ -375,6 +378,36 @@ const SECTION_CONFIGS: SectionConfig[] = [
     },
 ];
 
+// Explicit legacy headings take precedence over fuzzy keyword matches.
+const EXTRA_SECTIONS: [SectionType, number, string, string, RegExp][] = [
+    ['product-details', 2.1, 'Product Details', 'تفاصيل المنتج', /^(product (details|information)|تفاصيل المنتج|معلومات المنتج)$/i],
+    ['filter-components', 4, 'Filter Components', 'مكونات الفلتر', /^(filter components|مكونات الفلتر)$/i],
+    ['mineral-technology', 4.1, 'Mineral Technology', 'تقنية المعادن', /^(mineral technology|تقنية المعادن)$/i],
+    ['audience', 4.5, 'Suitable For', 'لمن يناسب المنتج؟', /^(who is it for\??|ideal for|suitable for|لمن يناسب(?: هذا المنتج)؟|مناسب لـ)$/i],
+    ['dosage', 5.1, 'Recommended Dosage', 'الجرعات الموصى بها', /^(recommended dosage|الجرعات الموصى بها)$/i],
+    ['maintenance', 5.2, 'Maintenance', 'الصيانة', /^(maintenance|الصيانة)$/i],
+    ['compatibility', 5.3, 'Compatibility', 'التوافق', /^(compatibility|التوافق)$/i],
+    ['lab-results', 7.1, 'Laboratory Test Results', 'نتائج الاختبار المخبري', /^(laboratory test results|نتائج الاختبار المخبري)$/i],
+    ['quality', 8.1, 'Standards & Quality References', 'مراجع المعايير والجودة', /^(standards & quality references|مراجع المعايير والجودة)$/i],
+    ['delivery', 8.2, 'Delivery', 'التوصيل', /^(delivery|التوصيل)$/i],
+    ['warranty', 8.3, 'Warranty', 'الضمان', /^(warranty|الضمان)$/i],
+];
+for (const [type, priority, en, ar, pattern] of EXTRA_SECTIONS) {
+    SECTION_CONFIGS.push({ type, priority, displayTitle: { en, ar },
+        icon: <Info className="w-5 h-5 text-blue-500" />, keywords: [], patterns: [pattern] });
+}
+const LEGACY_ALIASES: Partial<Record<SectionType, RegExp>> = {
+    overview: /^(المقدمة|وصف المنتج)$/i,
+    contents: /^(package information|معلومات العبوة)$/i,
+    ingredients: /^(what[’']s inside|ماذا يحتوي؟|المكونات الرئيسية (وفوائدها|ودورها)|key ingredients & their roles)$/i,
+    warnings: /^التنبيهات$/i,
+    disclaimer: /^(important (information|note)|معلومات مهمة|ملاحظة مهمة)$/i,
+};
+for (const config of SECTION_CONFIGS) {
+    const alias = LEGACY_ALIASES[config.type];
+    if (alias) config.patterns.push(alias);
+}
+
 // ============================================================================
 // Smart Matching Engine
 // ============================================================================
@@ -489,7 +522,7 @@ export function parseDescriptionHtml(
      * Try to detect a section header from text. Returns config if found.
      */
     function tryHeader(text: string, exactOnly = false): SectionConfig | null {
-        const cleaned = text.replace(/[:\-–—]/g, '').trim();
+        const cleaned = text.replace(/^✨\s*/, '').replace(/[:\-–—]/g, '').trim();
         if (cleaned.length < 2 || cleaned.length > 80) return null;
         if (exactOnly) return SECTION_CONFIGS.find(config => config.patterns.some(pattern => pattern.test(cleaned))) || null;
         return identifySectionType(cleaned);
@@ -501,7 +534,7 @@ export function parseDescriptionHtml(
     function processNode(node: Node): void {
         if (node.nodeType === Node.TEXT_NODE) {
             const text = node.textContent?.trim() || '';
-            if (!text) return;
+            if (!text || /^[⸻—–\s]+$/.test(text)) return;
 
             // Check if standalone text is a header
             const headerConfig = tryHeader(text, true);
@@ -523,18 +556,28 @@ export function parseDescriptionHtml(
             const element = node as Element;
             const tagName = element.tagName.toLowerCase();
 
+            // Unwrap legacy layout containers so their headings enter the same accordion.
+            if (tagName === 'details' || (tagName === 'div' && element.querySelector('details, p, ul, ol, h2, h3'))) {
+                element.childNodes.forEach(processNode);
+                return;
+            }
+            if (/^[⸻—–\s]+$/.test(element.textContent || '')) return;
+
             // --- Header elements: strong, b, h1-h6 ---
-            const isHeaderElement = ['strong', 'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName);
+            const isHeaderElement = ['strong', 'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'summary'].includes(tagName);
 
             if (isHeaderElement) {
                 const headerText = element.textContent?.trim() || '';
-                const headerConfig = tryHeader(headerText);
+                const headerConfig = tryHeader(headerText, tagName !== 'h2' && tagName !== 'h1');
 
                 if (headerConfig) {
                     switchSection(headerConfig);
                     return; // Skip children — this was a header
                 }
-                // If the bold/strong text isn't a header, fall through to render as content
+                // Preserve subheadings (including numbered methods) verbatim.
+                if (currentSectionType) addToSection(currentSectionType, element.outerHTML);
+                else introContent.push(element.outerHTML);
+                return;
             }
 
             // --- Paragraphs and divs — check first-line header ---
@@ -543,7 +586,10 @@ export function parseDescriptionHtml(
 
                 // Pack facts are metadata, not a heading that changes the following section.
                 const packLabel = element.firstElementChild;
-                if (packLabel && /^(pack contents|محتويات العبوة)\s*:?$/i.test(packLabel.textContent?.trim() || '')) {
+                const labeledPack = packLabel && /^(pack contents|pack size|محتويات العبوة|حجم العبوة)\s*:?$/i.test(packLabel.textContent?.trim() || '');
+                // Entire pack-only lines, never preparation quantities or daily doses.
+                const packOnly = /^\d+\s*(?:sachets?|ظرف[ًا]*|أظرف)\s*×\s*\d+\s*(?:g|جم)(?:\s*\|\s*(?:net weight|الوزن الصافي):\s*\d+\s*(?:g|جم))?\.?$/i.test(fullText);
+                if (labeledPack || packOnly) {
                     const config = SECTION_CONFIGS.find(c => c.type === 'contents')!;
                     if (!sectionMap.has('contents')) sectionMap.set('contents', { config, contents: [] });
                     addToSection('contents', element.outerHTML);
