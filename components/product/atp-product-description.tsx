@@ -25,6 +25,7 @@ import { UrgencySignals } from "./urgency-signals";
 import { TabbyPromo } from "./tabby-promo";
 import { TamaraWidget } from "./tamara-widget";
 import { ProductDescriptionAccordion } from "./product-description-accordion";
+import { productDeliveryMessage } from "@/lib/product-delivery";
 
 export function ATPProductDescription({
   product,
@@ -271,7 +272,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         {!isMembershipProduct && (
           <div className="mb-5 text-sm leading-relaxed text-neutral-700">
-            <p>{isRTL ? 'التوصيل خلال ٤٨ ساعة داخل الإمارات.' : 'Delivery within 48 hours across the UAE.'}</p>
+            <p>{productDeliveryMessage(product.handle, locale)}</p>
             <p>{isRTL ? 'شحن مجاني للطلبات من ٢٥٠ درهم.' : 'Free shipping on orders from AED 250.'}</p>
           </div>
         )}

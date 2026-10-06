@@ -3,7 +3,7 @@ import { merchantOfferPolicy } from '@/lib/merchant-offer-policy';
 it('uses standard guest delivery at the threshold and the confirmed 48-hour delivery window', () => {
   expect(merchantOfferPolicy('/en/product/cream', '249.99', 'AED').shippingDetails?.shippingRate.value).toBe(15);
   expect(merchantOfferPolicy('/en/product/cream', '250', 'AED').shippingDetails?.shippingRate.value).toBe(0);
-  expect(merchantOfferPolicy('/en/product/cream', '79', 'AED').shippingDetails?.deliveryTime.transitTime.maxValue).toBe(1);
+  expect(merchantOfferPolicy('/en/product/cream', '79', 'AED').shippingDetails?.deliveryTime?.transitTime.maxValue).toBe(1);
   expect(merchantOfferPolicy('/en/product/cream', '250', 'USD').shippingDetails).toBeUndefined();
 });
 it('separates unopened product returns from unused paid membership refunds', () => {
@@ -14,4 +14,13 @@ it('separates unopened product returns from unused paid membership refunds', () 
   const membership = merchantOfferPolicy('/en/product/atp-membership','99','AED',true);
   expect(membership.hasMerchantReturnPolicy.merchantReturnDays).toBe(7);
   expect(membership.shippingDetails).toBeUndefined();
+});
+it.each([
+  '/en/product/alkamag-9-stage-mineral-alkaline-water-filter',
+  '/ar/product/فلتر-alkamag-لتنقية-المياه',
+  '/ar/product/فلتر-مياه-قلوي-معدني-alkamag',
+])('does not promise standard two-day delivery for %s', (url) => {
+  const offer = merchantOfferPolicy(url, '750', 'AED');
+  expect(offer.shippingDetails?.deliveryTime).toBeUndefined();
+  expect(offer.shippingDetails?.shippingRate.value).toBe(0);
 });

@@ -1,5 +1,4 @@
 import { getShopPolicy } from '@/lib/shopify/server';
-import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -46,7 +45,6 @@ export default async function TermsOfServicePage({
   params,
 }: TermsOfServicePageProps) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'common' });
   const isArabic = locale === 'ar';
 
   const policy = await getShopPolicy('termsOfService', {
@@ -90,7 +88,7 @@ export default async function TermsOfServicePage({
           {isArabic ? '→ العودة للرئيسية' : '← Back to Home'}
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{policy.title}</h1>
+        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{isArabic ? 'شروط الخدمة' : policy.title}</h1>
 
         <div
           className="prose prose-invert prose-lg max-w-none

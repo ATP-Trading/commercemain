@@ -1,5 +1,4 @@
 import { getShopPolicy } from '@/lib/shopify/server';
-import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AnalyticsSettingsButton } from '@/components/analytics/google-analytics';
@@ -47,7 +46,6 @@ export default async function PrivacyPolicyPage({
   params,
 }: PrivacyPolicyPageProps) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'common' });
   const isArabic = locale === 'ar';
 
   const policy = await getShopPolicy('privacyPolicy', {
@@ -91,11 +89,11 @@ export default async function PrivacyPolicyPage({
           {isArabic ? '→ العودة للرئيسية' : '← Back to Home'}
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{policy.title}</h1>
+        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{isArabic ? 'سياسة الخصوصية' : policy.title}</h1>
 
         <section className="mb-8 rounded-xl border border-neutral-700 p-6 text-neutral-300">
-          <h2 className="mb-3 text-xl font-semibold text-white">{isArabic ? 'تحليلات الموقع' : 'Website analytics'}</h2>
-          <p className="text-base leading-7">{isArabic ? 'بموافقتك، نستخدم Google Analytics لقياس زيارات الصفحات والتفاعل مع المنتجات وتحسين تجربة التسوق. لا نرسل اسمك أو بريدك أو رقم هاتفك ضمن أحداث تحليلات واجهة الموقع. يمكنك تغيير اختيارك من تفضيلات التحليلات في أسفل الصفحة.' : 'With your consent, we use Google Analytics to measure page visits and product interactions and improve the shopping experience. We do not include your name, email or phone number in storefront analytics events. You can change your choice using Analytics preferences in the footer.'}</p>
+          <h2 className="mb-3 text-xl font-semibold text-white">{isArabic ? 'التحليلات والإعلانات' : 'Analytics and advertising'}</h2>
+          <p className="text-base leading-7">{isArabic ? 'بموافقتك، نستخدم Google Analytics وShopify لفهم استخدام الموقع، وGoogle وMeta لقياس الإعلانات وتخصيصها. يمكنك السماح للجميع أو السماح بالتحليلات فقط أو رفض ملفات الارتباط الاختيارية، وتغيير اختيارك من تفضيلات التحليلات.' : 'With your consent, we use Google Analytics and Shopify to understand site usage, and Google and Meta to measure and personalise ads. You can allow all, allow analytics only, or decline optional cookies, and change your choice in Analytics preferences.'}</p>
           <a className="mt-3 block text-atp-gold underline" href="https://policies.google.com/technologies/partner-sites">{isArabic ? 'كيف تستخدم Google البيانات' : 'How Google uses data'}</a>
           <AnalyticsSettingsButton />
         </section>
