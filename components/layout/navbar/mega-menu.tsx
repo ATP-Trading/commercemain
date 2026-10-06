@@ -358,7 +358,7 @@ export function MegaMenu({
                     {isRTL ? "عرض خاص للأعضاء" : "ATP Member Exclusive"}
                   </p>
                   <p className={cn("text-sm text-neutral-400", isRTL && "font-arabic")}>
-                    {isRTL ? "احصل على خصم 15% على جميع المنتجات" : "Get 15% off on all products"}
+                    {isRTL ? "خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة" : "15% off eligible supplements and skincare; 10% off water and soil products"}
                   </p>
                 </div>
               </div>
