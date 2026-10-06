@@ -20,7 +20,7 @@ function SubmitButton({ type, onClick, disabled }: { type: UpdateType; onClick: 
       disabled={disabled}
       aria-label={type === "plus" ? t('increaseItemQuantity') : t('reduceItemQuantity')}
       className={clsx(
-        "ease flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full p-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed",
+        "flex h-10 w-10 flex-none items-center justify-center rounded-md border border-neutral-500 bg-neutral-800 p-2 text-white transition-colors duration-150 enabled:hover:border-[#d4af37] enabled:hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#d4af37] disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500",
         {
           "ml-auto": type === "minus",
         },
@@ -28,9 +28,9 @@ function SubmitButton({ type, onClick, disabled }: { type: UpdateType; onClick: 
       onClick={onClick}
     >
       {type === "plus" ? (
-        <PlusIcon className="h-4 w-4 dark:text-neutral-500" />
+        <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
       ) : (
-        <MinusIcon className="h-4 w-4 dark:text-neutral-500" />
+        <MinusIcon className="h-5 w-5" strokeWidth={2.5} />
       )}
     </button>
   )
