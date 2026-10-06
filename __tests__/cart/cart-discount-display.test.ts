@@ -30,8 +30,20 @@ describe('Shopify discount presentation', () => {
     const input = line();
     input.quantity = 3;
     input.cost.totalAmount = money('561');
+    input.cost.subtotalAmount = undefined;
     expect(getLineDiscountDisplay(input)).toBeNull();
     expect(getCartItemDiscountDisplay(cart([input], '561'))).toBeNull();
+  });
+  it('uses the explicit subtotal even when the unit amount already reflects a discount', () => {
+    const input = line();
+    input.cost.amountPerQuantity = money('187');
+    expect(getCartItemDiscountDisplay(cart([input]))?.savings).toBe('66.00');
+  });
+  it('uses actual line allocations when Shopify already discounted the subtotal', () => {
+    const input = line('374', '374');
+    input.cost.amountPerQuantity = money('187');
+    input.discountAllocations = [{ discountedAmount: money('66') }];
+    expect(getCartItemDiscountDisplay(cart([input]))).toEqual({ before: '440.00', savings: '66.00', currencyCode: 'AED' });
   });
   it('rejects missing, invalid, mismatched-currency and inconsistent amounts', () => {
     const missing = line();
