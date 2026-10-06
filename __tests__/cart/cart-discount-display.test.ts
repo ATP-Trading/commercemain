@@ -63,3 +63,12 @@ describe('Shopify discount presentation', () => {
     expect(hasAppliedCartDiscount(input)).toBe(true);
   });
 });
+
+// Exercise the query module imported by server.ts, not the separate fragment module.
+import { getCartQuery, createCartMutation, addToCartMutation, editCartItemsMutation, removeFromCartMutation, getCartWithSellingPlansQuery } from '@/lib/shopify/queries';
+it.each([getCartQuery, createCartMutation, addToCartMutation, editCartItemsMutation, removeFromCartMutation, getCartWithSellingPlansQuery])('fetches the before-discount amount for cart lines on every cart operation', query => {
+  const lineSelection = query.slice(query.indexOf('lines(first:'));
+  const lineCost = lineSelection.match(/cost\s*\{([\s\S]*?)merchandise/);
+  expect(lineCost?.[1]).toContain('subtotalAmount');
+  expect(lineCost?.[1]).toContain('totalAmount');
+});

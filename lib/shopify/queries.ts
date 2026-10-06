@@ -25,6 +25,7 @@ export const createCartMutation = `
               discountAllocations { discountedAmount { amount currencyCode } }
               sellingPlanAllocation { sellingPlan { id } }
               cost {
+                subtotalAmount { amount currencyCode }
                 totalAmount {
                   amount
                   currencyCode
@@ -89,6 +90,7 @@ export const addToCartMutation = `
               discountAllocations { discountedAmount { amount currencyCode } }
               sellingPlanAllocation { sellingPlan { id } }
               cost {
+                subtotalAmount { amount currencyCode }
                 totalAmount {
                   amount
                   currencyCode
@@ -152,6 +154,7 @@ export const removeFromCartMutation = `
               discountAllocations { discountedAmount { amount currencyCode } }
               sellingPlanAllocation { sellingPlan { id } }
               cost {
+                subtotalAmount { amount currencyCode }
                 totalAmount {
                   amount
                   currencyCode
@@ -216,6 +219,7 @@ export const editCartItemsMutation = `
               discountAllocations { discountedAmount { amount currencyCode } }
               sellingPlanAllocation { sellingPlan { id } }
               cost {
+                subtotalAmount { amount currencyCode }
                 totalAmount {
                   amount
                   currencyCode
@@ -278,6 +282,7 @@ export const getCartQuery = `
             discountAllocations { discountedAmount { amount currencyCode } }
             sellingPlanAllocation { sellingPlan { id } }
             cost {
+                subtotalAmount { amount currencyCode }
               totalAmount {
                 amount
                 currencyCode
@@ -1025,6 +1030,7 @@ export const getCartWithSellingPlansQuery = `
             id
             quantity
             cost {
+                subtotalAmount { amount currencyCode }
               totalAmount {
                 amount
                 currencyCode
