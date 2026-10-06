@@ -1,6 +1,7 @@
 "use client";
 
 import { getCartMemberEstimate } from "@/lib/shopify/cart-member-estimate";
+import { getCartItemDiscountDisplay, getLineDiscountDisplay, hasAppliedCartDiscount } from "@/lib/shopify/cart-discount-display";
 import { useCart } from "@/components/cart/cart-context";
 import { useMembership } from "@/hooks/use-membership";
 import { useTranslations } from "@/hooks/use-translations";
@@ -175,6 +176,8 @@ export function CartPageContent() {
     }, [cart]);
 
     const memberEstimate = getCartMemberEstimate(cart);
+    const itemDiscount = getCartItemDiscountDisplay(cart);
+    const hasDiscount = hasAppliedCartDiscount(cart);
 
     if (!cart || validCartItems.length === 0) {
         const BackArrow = isRTL ? ArrowRight : ArrowLeft;
@@ -335,6 +338,7 @@ export function CartPageContent() {
                                 >
                                     <AnimatePresence mode="popLayout">
                                         {validCartItems.map((item: CartItem, i: number) => {
+                                            const lineDiscount = getLineDiscountDisplay(item);
                                             const merchandiseSearchParams = {} as MerchandiseSearchParams;
 
                                             // Safe iteration over selectedOptions
@@ -432,6 +436,12 @@ export function CartPageContent() {
 
                                                                 {/* Price */}
                                                                 <div className={isRTL ? "text-left" : "text-right"}>
+                                                                    {lineDiscount && Number(lineDiscount.savings) > 0 && (
+                                                                        <div className="mb-1 text-neutral-400">
+                                                                            <span className="sr-only">{isRTL ? "قبل الخصم" : "Before discount"}</span>
+                                                                            <Price className="text-sm line-through" amount={lineDiscount.before} currencyCode={lineDiscount.currencyCode} />
+                                                                        </div>
+                                                                    )}
                                                                     <Price
                                                                         className="text-lg font-semibold text-white"
                                                                         amount={item.cost.totalAmount.amount}
@@ -468,8 +478,20 @@ export function CartPageContent() {
 
                                     {/* Summary Lines */}
                                     <div className="space-y-3">
+                                        {itemDiscount && (
+                                            <>
+                                                <div className="flex justify-between gap-3 text-neutral-300">
+                                                    <span>{isRTL ? "المنتجات قبل الخصم" : "Items before discount"}</span>
+                                                    <Price className="font-medium" amount={itemDiscount.before} currencyCode={itemDiscount.currencyCode} />
+                                                </div>
+                                                <div className="flex justify-between gap-3 text-[#d4af37]">
+                                                    <span>{isRTL ? "خصم المنتجات" : "Item discounts"}</span>
+                                                    <div className="flex items-center gap-1"><span aria-hidden="true">−</span><Price className="font-medium" amount={itemDiscount.savings} currencyCode={itemDiscount.currencyCode} /></div>
+                                                </div>
+                                            </>
+                                        )}
                                         <div className="flex justify-between text-neutral-300">
-                                            <span>{tCart("page.subtotalLabel")}</span>
+                                            <span>{itemDiscount ? (isRTL ? "المنتجات بعد الخصم" : "Items after discount") : tCart("page.subtotalLabel")}</span>
                                             <Price
                                                 className="font-medium"
                                                 amount={cart.cost.subtotalAmount.amount}
@@ -534,7 +556,7 @@ export function CartPageContent() {
 
                         <div className="space-y-6 lg:col-span-3">
                             {/* Member Benefits Banner */}
-                            {!isMember && !membershipLoading && !membershipError && (
+                            {!isMember && !membershipLoading && !membershipError && !hasDiscount && (
                                 <m.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
