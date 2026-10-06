@@ -33,7 +33,6 @@ interface ProductDescriptionAccordionProps {
     descriptionHtml: string;
     className?: string;
     isRTL?: boolean;
-    children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -678,7 +677,6 @@ export function ProductDescriptionAccordion({
     descriptionHtml,
     className,
     isRTL = false,
-    children,
 }: ProductDescriptionAccordionProps) {
     const [mounted, setMounted] = useState(false);
 
@@ -691,13 +689,9 @@ export function ProductDescriptionAccordion({
         return parseDescriptionHtml(descriptionHtml, isRTL);
     }, [descriptionHtml, isRTL, mounted]);
 
-    const summary = sections.filter(s => s.title === 'overview' || s.title === 'contents');
-    const details = sections.filter(s => s.title !== 'overview' && s.title !== 'contents');
-
     // SSR/hydration guard — show raw HTML during SSR
     if (!mounted) {
         return (
-            <>
             <div
                 className={cn(
                     "prose prose-sm dark:prose-invert max-w-none",
@@ -706,15 +700,12 @@ export function ProductDescriptionAccordion({
                 )}
                 dangerouslySetInnerHTML={{ __html: descriptionHtml }}
             />
-            {children}
-            </>
         );
     }
 
     // If only one section or no structured content, show inline
     if (sections.length <= 1) {
         return (
-            <>
             <div
                 className={cn(
                     "prose prose-sm dark:prose-invert max-w-none",
@@ -726,26 +717,17 @@ export function ProductDescriptionAccordion({
                 )}
                 dangerouslySetInnerHTML={{ __html: sections[0]?.content || descriptionHtml }}
             />
-            {children}
-            </>
         );
     }
 
     return (
         <div className={cn("space-y-3", className)} dir={isRTL ? "rtl" : "ltr"}>
-            {summary.map(section => (
-                <section key={section.id} aria-label={section.displayTitle} className="mb-5">
-                    <h2 className="mb-2 text-base font-semibold">{section.displayTitle}</h2>
-                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: section.content }} />
-                </section>
-            ))}
-            {children}
             <Accordion
                 type="multiple"
-                defaultValue={[]}
+                defaultValue={sections.slice(0, 1).map(s => s.id)}
                 className="w-full"
             >
-                {details.map((section) => (
+                {sections.map((section) => (
                     <AccordionItem
                         key={section.id}
                         value={section.id}

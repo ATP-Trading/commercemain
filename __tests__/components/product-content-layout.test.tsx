@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { parseDescriptionHtml, ProductDescriptionAccordion } from '@/components/product/product-description-accordion';
 
 const en = '<h2>Overview</h2><p><strong>Pack contents:</strong> 10 sachets × 15 g (150 g total).</p><p>A cocoa drink for everyday use.</p><h2>Ingredients</h2><p>Cocoa powder.</p><h2>How to use</h2><p>Mix with water.</p><h2>Disclaimer</h2><p>Contains milk-derived ingredients.</p><p>Use as part of a balanced diet.</p>';
@@ -27,14 +27,20 @@ describe('product description layout', () => {
     expect(sections.map(s => s.content).join('')).toContain('Keep this information.');
     expect(sections.find(s => s.title === 'ingredients')!.content).toContain('Contains cocoa.');
   });
-  it('shows pack contents before purchase and detail controls after purchase', () => {
-    render(<ProductDescriptionAccordion descriptionHtml={en}><button>Purchase product</button></ProductDescriptionAccordion>);
-    const pack = screen.getByRole('region', {name: "What's Included"});
-    const purchase = screen.getByRole('button', {name: 'Purchase product'});
+  it('keeps the original accordion layout and purchasing controls below every section', () => {
+    render(<><ProductDescriptionAccordion descriptionHtml={en} /><button>Purchase product</button></>);
+    const overview = screen.getByRole('button', {name: 'Overview'});
+    const pack = screen.getByRole('button', {name: "What's Included"});
     const ingredients = screen.getByRole('button', {name: 'Ingredients'});
-    expect(pack.compareDocumentPosition(purchase) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(purchase.compareDocumentPosition(ingredients) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const disclaimer = screen.getByRole('button', {name: 'Disclaimer'});
+    const purchase = screen.getByRole('button', {name: 'Purchase product'});
+    expect(overview).toHaveAttribute('aria-expanded', 'true');
+    expect(pack).toHaveAttribute('aria-expanded', 'false');
+    expect(pack.compareDocumentPosition(ingredients) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(disclaimer.compareDocumentPosition(purchase) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(pack);
     expect(screen.getByText(/10 sachets/)).toBeVisible();
-    expect(ingredients).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(disclaimer);
+    expect(screen.getByText(/Contains milk/)).toBeVisible();
   });
 });
