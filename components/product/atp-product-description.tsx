@@ -142,17 +142,10 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         </div>
 
-        {/* Product Description - Structured Accordion Layout */}
-        {(localizedDescriptionHtml || product.descriptionHtml) && (
-          <div className="mb-6">
-            <ProductDescriptionAccordion
-              descriptionHtml={localizedDescriptionHtml || product.descriptionHtml}
-              isRTL={isRTL}
-              className={isRTL ? "text-right" : ""}
-            />
-          </div>
-        )}
-
+        <ProductDescriptionAccordion
+          descriptionHtml={localizedDescriptionHtml || product.descriptionHtml || ''}
+          isRTL={isRTL}
+        >
         {/* Variant Selector (only show if there are actual variants with options) */}
         {product.options.length > 0 &&
           product.options.some((option) => option.values.length > 1) && (
@@ -182,6 +175,8 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
         <div className="mb-4" ref={addToCartRef}>
           <ATPAddToCart product={product} />
         </div>
+
+        </ProductDescriptionAccordion>
 
           {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
             <aside
