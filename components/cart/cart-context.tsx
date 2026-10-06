@@ -63,6 +63,9 @@ function updateCartItem(
     quantity: newQuantity,
     cost: {
       ...item.cost,
+      // A previous subtotal is not valid for the new quantity. Wait for Shopify
+      // before displaying a discount breakdown; offers may have thresholds.
+      subtotalAmount: undefined,
       totalAmount: {
         ...item.cost.totalAmount,
         amount: newTotalAmount,

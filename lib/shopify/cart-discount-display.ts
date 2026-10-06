@@ -9,12 +9,18 @@ function cents(money: Money | undefined, currency: string): number | null {
 /** Only Shopify line costs; never infer membership or savings from compare-at prices. */
 export function getLineDiscountDisplay(line: CartItem) {
   const currencyCode = line.cost.totalAmount.currencyCode;
-  const before = cents(line.cost.subtotalAmount, currencyCode);
+  let before = cents(line.cost.subtotalAmount, currencyCode);
   const after = cents(line.cost.totalAmount, currencyCode);
   if (before === null || after === null || before < after) return null;
-  // Optimistic quantity changes retain the old subtotal until Shopify responds.
-  const unit = cents(line.cost.amountPerQuantity, currencyCode);
-  if (unit !== null && Math.abs(unit * line.quantity - before) > 1) return null;
+  // Allocations explicitly describe the savings applied to this line, including
+  // discounts that Shopify has already reflected in its subtotal/unit amount.
+  let allocated = 0;
+  for (const discount of line.discountAllocations ?? []) {
+    const amount = cents(discount.discountedAmount, currencyCode);
+    if (amount === null) return null;
+    allocated += amount;
+  }
+  if (allocated > 0) before = after + allocated;
   return { before: (before / 100).toFixed(2), savings: ((before - after) / 100).toFixed(2), currencyCode };
 }
 
