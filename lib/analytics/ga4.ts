@@ -1,3 +1,5 @@
+import { syncCheckoutConsentCookie } from './checkout-consent';
+
 // Public measurement ID of the existing Shopify-connected GA4 stream.
 export const GA4_ID = 'G-N47GG1EVK5';
 export const CONSENT_KEY = 'atp-analytics-consent';
@@ -108,6 +110,8 @@ export function initializeGA4() {
 }
 
 export function trackPage() {
+  // Sync even when analytics is denied; checkout must receive the refusal too.
+  syncCheckoutConsentCookie(storageBlocked);
   if (!analyticsAllowed()) return;
   initializeGA4();
   const page = pageUrl();
@@ -157,10 +161,12 @@ export function setAnalyticsConsent(granted: boolean, advertising: boolean = fal
   } catch {
     // A partial/failed preference write must never leave tracking enabled.
     storageBlocked = true;
+    syncCheckoutConsentCookie(true);
     (window as unknown as Record<string, unknown>)[`ga-disable-${GA4_ID}`] = true;
     if (initialized) command('consent', 'update', consentState());
     return;
   }
+  syncCheckoutConsentCookie();
   (window as unknown as Record<string, unknown>)[`ga-disable-${GA4_ID}`] = !analyticsAllowed();
   if (initialized) {
     // Remove stale click IDs before a consent update can trigger a tag request.
