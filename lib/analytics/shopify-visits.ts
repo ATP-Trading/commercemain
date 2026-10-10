@@ -1,6 +1,8 @@
+import {measurementMode} from './measurement-mode';
 import {getClientBrowserParameters, sendShopifyAnalytics} from '@shopify/hydrogen-react/analytics';
 import {getTrackingValues} from '@shopify/hydrogen-react/tracking-utils';
-import {analyticsAllowed, googleAdsAllowed, safePageUrl} from './ga4';
+import {analyticsAllowed, measurementPageUrl, safePageUrl} from './ga4';
+import {normalizeCheckoutConsent} from '@/lib/cart/checkout-consent';
 
 export const SHOPIFY_VISIT_CONSENT_KEY = 'atp-shopify-analytics-consent-v1';
 const ENDPOINT = '/api/analytics/shopify';
@@ -16,9 +18,15 @@ export function hasShopifyVisitChoice() {
   catch { return false; }
 }
 export function shopifyVisitsAllowed() {
-  if (storageBlocked || !analyticsAllowed()) return false;
+  if (storageBlocked || measurementMode() !== 'normal' || !analyticsAllowed()) return false;
   try { return localStorage.getItem(SHOPIFY_VISIT_CONSENT_KEY) === 'granted'; }
   catch { return false; }
+}
+export function shopifyCheckoutConsent() {
+  // Never turn a Google-only analytics choice into consent for Shopify.
+  // Checkout tests must not create ordinary Shopify marketing/analytics events.
+  return normalizeCheckoutConsent({analytics: measurementMode() !== 'normal' ? false
+    : hasShopifyVisitChoice() ? shopifyVisitsAllowed() : null});
 }
 function cancel() {
   sequence++;
@@ -44,7 +52,7 @@ export function shopifyPageUrl() {
   if (typeof window === 'undefined' || !shopifyVisitsAllowed()) return '';
   // Never send account details, search inputs, payment tokens, or private page titles.
   if (!/^\/(en|ar)(\/|$)/.test(location.pathname) || /\/(account|auth|checkout|checkouts|login|signup|search|api)(\/|$)/i.test(location.pathname)) return '';
-  return safePageUrl(location.href, {campaign: true, advertising: googleAdsAllowed()});
+  return measurementPageUrl();
 }
 export function trackShopifyPageView(): Promise<void> {
   const pageUrl = shopifyPageUrl();
@@ -88,3 +96,30 @@ export function trackShopifyPageView(): Promise<void> {
   return promise;
 }
 export function stopPendingShopifyPageView() { cancel(); }
+
+
+export async function trackShopifyAddToCart(input: {
+  cartId: string; productId: string; variantId: string; name: string; price: number; quantity: number;
+}) {
+  if (!shopifyVisitsAllowed() || !/^gid:\/\/shopify\/Cart\/[^?]+$/.test(input.cartId)) return;
+  const page = shopifyPageUrl();
+  try {
+    await trackShopifyPageView();
+    if (!shopifyVisitsAllowed() || !page || lastPageKey !== safePageUrl(page, {campaign: true})) return;
+    const values = getTrackingValues();
+    if (!values.uniqueToken || !values.visitToken || [values.uniqueToken, values.visitToken].some(v => v.startsWith('00000000-'))) return;
+    const url = new URL(page);
+    await sendShopifyAnalytics({eventName: 'ADD_TO_CART', payload: {
+      ...getClientBrowserParameters(), shopId: 'gid://shopify/Shop/72307441902',
+      shopifySalesChannel: 'headless', hasUserConsent: true,
+      analyticsAllowed: true, marketingAllowed: false, saleOfDataAllowed: false,
+      uniqueToken: values.uniqueToken, visitToken: values.visitToken,
+      currency: 'AED', acceptedLanguage: url.pathname.startsWith('/ar') ? 'AR' : 'EN',
+      url: page, path: url.pathname, search: url.search, referrer: safePageUrl(document.referrer),
+      title: document.title.slice(0, 250), cartId: input.cartId,
+      totalValue: input.price * input.quantity,
+      products: [{productGid: input.productId, variantGid: input.variantId, name: input.name,
+        brand: '', price: String(input.price), quantity: input.quantity}],
+    }});
+  } catch { /* A tracking outage cannot undo a successful cart mutation. */ }
+}

@@ -32,7 +32,8 @@ import { DEFAULT_OPTION } from "@/lib/constants";
 import { createUrl } from "@/lib/utils";
 import { DeleteItemButton } from "@/components/cart/delete-item-button";
 import { EditItemQuantityButton } from "@/components/cart/edit-item-quantity-button";
-import { redirectToCheckout } from "@/components/cart/actions";
+import { CheckoutForm } from "./checkout-form";
+import { CartAnalytics } from "@/components/analytics/cart-analytics";
 import { useFormStatus } from "react-dom";
 import LoadingDots from "@/components/loading-dots";
 import type { CartItem } from "@/lib/shopify/types";
@@ -532,9 +533,10 @@ export function CartPageContent() {
                                     </p>
 
                                     {/* Checkout Button */}
-                                    <form action={redirectToCheckout} className="w-full pt-2">
+                                    <CheckoutForm className="w-full pt-2">
+                                        <CartAnalytics cart={cart} />
                                         <CheckoutButton isMember={isMember} t={tCart} />
-                                    </form>
+                                    </CheckoutForm>
 
                                     {/* Continue Shopping */}
                                     <Button 

@@ -14,6 +14,8 @@ import { revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 import { cookies, headers as requestHeaders } from "next/headers"
 import { config } from "@/lib/config"
+import { checkoutConsentQuery, type CheckoutConsent } from '@/lib/cart/checkout-consent'
+import { selectShopifyCookies } from '@/lib/analytics/shopify-visit-proxy'
 
 import {
   Cart,
@@ -373,6 +375,23 @@ export async function getCart(): Promise<Cart | undefined> {
   });
 
   return reshapeCart(res.body.data.cart);
+}
+
+// Called only after the cart has been validated for the current buyer session.
+// Shopify encodes this explicit choice into checkoutUrl. Its own consented
+// analytics cookies connect the storefront session to the checkout request.
+export async function getConsentedCheckoutUrl(cartId: string, consent: CheckoutConsent): Promise<string> {
+  const headers: Record<string, string> = {};
+  if (consent.analytics === true) {
+    const selected = selectShopifyCookies((await requestHeaders()).get('cookie') || '');
+    if (selected) headers.Cookie = selected;
+  }
+  const result = await shopifyFetch<{
+    data: { cart: { checkoutUrl: string } | null };
+    variables: { cartId: string; consent: CheckoutConsent };
+  }>({query: checkoutConsentQuery, variables: {cartId, consent}, headers});
+  if (!result.body.data.cart?.checkoutUrl) throw new Error('Checkout unavailable');
+  return result.body.data.cart.checkoutUrl;
 }
 
 // ============================================================================

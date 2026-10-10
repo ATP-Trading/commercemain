@@ -3,6 +3,7 @@
 import { getLocale } from "next-intl/server"
 import { cartForSession } from "@/lib/cart/session-cart"
 import { localizeCheckoutUrl } from "@/lib/cart/checkout-locale"
+import { normalizeCheckoutConsent } from '@/lib/cart/checkout-consent'
 import { TAGS } from "@/lib/constants"
 import {
   addToCart,
@@ -12,6 +13,7 @@ import {
   createCart,
   getCollectionProducts,
   updateCartBuyerIdentity,
+  getConsentedCheckoutUrl,
 } from "@/lib/shopify/server"
 import { updateTag } from "next/cache"
 import { redirect } from "next/navigation"
@@ -136,7 +138,7 @@ export async function updateItemQuantity(
  * (e.g., checkout.example.com) which is configured as Primary for Online Store
  * in Shopify Admin > Settings > Domains.
  */
-export async function getCheckoutUrl(): Promise<string> {
+export async function getCheckoutUrl(consent?: unknown): Promise<string> {
   const cart = await getCart()
   if (!cart) {
     throw new Error('No cart found')
@@ -165,6 +167,9 @@ export async function getCheckoutUrl(): Promise<string> {
   }
   
   let checkoutUrl = checkoutCart.checkoutUrl
+  if (consent !== undefined) {
+    checkoutUrl = await getConsentedCheckoutUrl(checkoutCart.id!, normalizeCheckoutConsent(consent))
+  }
   
   // For headless storefronts, we use a dedicated checkout subdomain
   // This subdomain (e.g., checkout.atpgroupservices.ae) is set as Primary for Online Store
@@ -238,12 +243,12 @@ export async function addToCartOptimistic(
   merchandiseId: string,
   quantity: number = 1,
   _customerId?: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; analyticsCartId?: string }> {
   try {
-    await addToCart([{ merchandiseId, quantity }])
+    const cart = await addToCart([{ merchandiseId, quantity }])
     updateTag(TAGS.cart)
 
-    return { success: true }
+    return { success: true, analyticsCartId: cart.id?.split('?')[0] }
   } catch (e) {
     updateTag(TAGS.cart)
     console.error('Error adding to cart:', e)
