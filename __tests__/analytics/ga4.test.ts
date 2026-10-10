@@ -14,6 +14,18 @@ const measurements = () => events().filter(x => x[0] === 'event');
 const allDenied = { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' };
 
 describe('GA4 storefront measurement', () => {
+  it('captures only the current campaign when a returning visitor changes refusal to consent', async () => {
+    const ga = await import('@/lib/analytics/ga4');
+    localStorage.setItem(ga.CONSENT_KEY, 'denied');
+    Object.defineProperty(window, 'location', {configurable: true, value: new URL('https://www.atpgroupservices.ae/en?utm_source=old')});
+    ga.trackPage(); expect(events()).toHaveLength(0);
+    Object.defineProperty(window, 'location', {configurable: true, value: new URL('https://www.atpgroupservices.ae/en/product/mores-collagen?utm_source=instagram')});
+    ga.setAnalyticsConsent(true); ga.trackPage();
+    Object.defineProperty(window, 'location', {configurable: true, value: new URL('https://www.atpgroupservices.ae/en/cart')});
+    ga.trackPage();
+    expect(measurements().at(-1)?.[2].page_location).toBe('https://www.atpgroupservices.ae/en/cart?utm_source=instagram');
+    expect(JSON.stringify(events())).not.toContain('utm_source=old');
+  });
   it('does not load or queue analytics before consent or after rejection', async () => {
     const ga = await import('@/lib/analytics/ga4');
     ga.trackPage(); ga.setAnalyticsConsent(false); ga.trackPage();
