@@ -66,9 +66,9 @@ export function safePageUrl(value: string, options: { campaign?: boolean; advert
 // request, or pre-consent page history is created. Explicit refusal discards it.
 export function captureMeasurementEntry() {
   if (typeof window === 'undefined' || capturedEntry) return;
-  capturedEntry = true;
   try {
     if (localStorage.getItem(CONSENT_KEY) === 'denied') return;
+    capturedEntry = true;
     entryUrl = safePageUrl(window.location.href, { campaign: true, advertising: true });
     entryReferrer = safePageUrl(document.referrer);
   } catch { /* Storage denial must not enable measurement. */ }
@@ -225,7 +225,7 @@ export function setAnalyticsConsent(granted: boolean, advertising: boolean = fal
       page_title: pageTitle(), allow_ad_personalization_signals: googleAdsAllowed() });
     command('consent', 'update', consentState());
   }
-  if (!analyticsAllowed()) { clearCookies(false); entryUrl = ''; entryReferrer = ''; }
+  if (!analyticsAllowed()) { clearCookies(false); entryUrl = ''; entryReferrer = ''; capturedEntry = false; }
   if (!googleAdsAllowed()) clearCookies(true);
   if (!previouslyAllowed || !analyticsAllowed()) {
     lastPage = ''; lastPageKey = '';
