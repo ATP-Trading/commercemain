@@ -1,3 +1,4 @@
+import { measurementMode } from './measurement-mode';
 // Same dataset as the Shopify Facebook & Instagram channel.
 export const META_PIXEL_ID = '24439733515663379';
 export const MARKETING_CONSENT_KEY = 'atp-marketing-consent';
@@ -9,7 +10,7 @@ type Pixel = ((...args: unknown[]) => void) & { callMethod?: (...args: unknown[]
 
 export function marketingAllowed() {
   try {
-    return window.location.hostname === 'www.atpgroupservices.ae' && localStorage.getItem(MARKETING_CONSENT_KEY) === 'granted';
+    return measurementMode() === 'normal' && window.location.hostname === 'www.atpgroupservices.ae' && localStorage.getItem(MARKETING_CONSENT_KEY) === 'granted';
   } catch { return false; }
 }
 

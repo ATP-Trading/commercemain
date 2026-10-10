@@ -67,6 +67,11 @@ describe('consent-aware storefront visits',()=>{
  });
  const load=()=>import('../../lib/analytics/shopify-visits');
  const accept=async()=>{const m=await load();m.setShopifyVisitConsent(true);return m;};
+ it('does not assume checkout consent from Google-only consent',async()=>{
+  const m=await load(); expect(m.shopifyCheckoutConsent().analytics).toBeNull();
+  m.setShopifyVisitConsent(true); expect(m.shopifyCheckoutConsent().analytics).toBe(true);
+  m.setShopifyVisitConsent(false); expect(m.shopifyCheckoutConsent().analytics).toBe(false);
+ });
  it('does not treat legacy Google consent as Shopify consent',async()=>{await (await load()).trackShopifyPageView();expect(fetcher).not.toHaveBeenCalled();});
  it('records only a public page with sanitized URL and correct shop identity',async()=>{
   await (await accept()).trackShopifyPageView();expect(mocked.send).toHaveBeenCalledTimes(1);
@@ -97,4 +102,19 @@ describe('consent-aware storefront visits',()=>{
  it('does not interrupt shopping when measurement fails',async()=>{
   fetcher.mockRejectedValue(new Error('offline'));await expect((await accept()).trackShopifyPageView()).resolves.toBeUndefined();expect(mocked.send).not.toHaveBeenCalled();
  });
+ it('links successful cart additions to the real Shopify session without cart secrets',async()=>{
+  const m=await accept();
+  await m.trackShopifyAddToCart({cartId:'gid://shopify/Cart/cart-token',productId:'gid://shopify/Product/1',variantId:'gid://shopify/ProductVariant/2',name:'Sunscreen',price:180,quantity:2});
+  expect(mocked.send.mock.calls.map((call:any)=>call[0].eventName)).toEqual(['PAGE_VIEW','ADD_TO_CART']);
+  const event=mocked.send.mock.calls[1]?.[0] as any;
+  expect(event.payload).toMatchObject({cartId:'gid://shopify/Cart/cart-token',visitToken:'provider-visit',totalValue:360});
+  expect(event.payload.products[0]).toMatchObject({quantity:2,productGid:'gid://shopify/Product/1'});
+  await m.trackShopifyAddToCart({cartId:'gid://shopify/Cart/cart-token?key=secret',productId:'1',variantId:'2',name:'Sunscreen',price:180,quantity:1});
+  expect(mocked.send).toHaveBeenCalledTimes(2);
+ });
+ it('does not replay a cart action without consent',async()=>{
+  await (await load()).trackShopifyAddToCart({cartId:'gid://shopify/Cart/test',productId:'1',variantId:'2',name:'Sunscreen',price:180,quantity:1});
+  expect(fetcher).not.toHaveBeenCalled();expect(mocked.send).not.toHaveBeenCalled();
+ });
+
 });

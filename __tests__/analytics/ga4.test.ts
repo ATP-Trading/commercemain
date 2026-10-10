@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 beforeEach(() => {
   vi.resetModules();
   localStorage.clear();
+  sessionStorage.clear();
   document.head.innerHTML = '';
   Object.defineProperty(window, 'location', { configurable: true, value: new URL('https://www.atpgroupservices.ae/ar') });
   (window as any).dataLayer = [];
@@ -95,5 +96,58 @@ describe('GA4 storefront measurement', () => {
     const ga = await import('@/lib/analytics/ga4');
     expect(ga.safePageUrl('https://www.atpgroupservices.ae/en?utm_source=person%40example.com&utm_campaign=person%2540example.com', { campaign: true })).toBe('https://www.atpgroupservices.ae/en');
     expect(ga.safePageUrl('javascript:alert(1)')).toBe('');
+  });
+});
+
+describe('measurement repairs', () => {
+  it('retains only safe entry attribution when consent follows client navigation', async () => {
+    const ga = await import('@/lib/analytics/ga4');
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/en?utm_source=instagram&utm_medium=social&gclid=Click123&email=private@example.com')});
+    ga.trackPage();
+    expect(events()).toHaveLength(0);
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/ar/product/coffee')});
+    ga.setAnalyticsConsent(true, false); ga.trackPage(); ga.trackPage();
+    expect(measurements()).toHaveLength(1);
+    expect(measurements()[0][2].page_location).toBe('https://www.atpgroupservices.ae/ar/product/coffee?utm_source=instagram&utm_medium=social');
+    expect(JSON.stringify(events())).not.toContain('Click123');
+    expect(JSON.stringify(events())).not.toContain('private@example.com');
+  });
+  it('does not replay a rejected campaign on later consent', async () => {
+    const ga = await import('@/lib/analytics/ga4');
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/en?utm_source=instagram')});
+    ga.trackPage(); ga.setAnalyticsConsent(false);
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/en/cart')});
+    ga.setAnalyticsConsent(true); ga.trackPage();
+    expect(measurements()[0][2].page_location).toBe('https://www.atpgroupservices.ae/en/cart');
+  });
+  it('excludes an explicitly marked staff visit', async () => {
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/en?atp_measurement=off')});
+    const ga = await import('@/lib/analytics/ga4');
+    ga.setAnalyticsConsent(true, true); ga.trackPage();
+    expect(events()).toHaveLength(0);
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/en/cart')});
+    ga.trackPage(); expect(events()).toHaveLength(0);
+  });
+  it('marks developer events for the GA4 developer filter without inventing a sale', async () => {
+    Object.defineProperty(window, 'location', {configurable:true,value:new URL('https://www.atpgroupservices.ae/en?atp_measurement=debug')});
+    const ga = await import('@/lib/analytics/ga4');
+    ga.setAnalyticsConsent(true); ga.trackPage();
+    expect(events().find(x=>x[0]==='config')?.[2]).toMatchObject({debug_mode:true,traffic_type:'internal'});
+    const item={item_id:'1',item_name:'Sunscreen',price:180,quantity:2};
+    ga.trackCart('view_cart',[item],'AED',360);
+    ga.trackProduct('remove_from_cart',{...item,quantity:1},'AED');
+    expect(measurements().map(x=>x[1])).toEqual(['page_view','view_cart','remove_from_cart']);
+    expect(measurements()[1][2].value).toBe(360);
+  });
+  it('bounds checkout tracking wait when the tag is blocked', async () => {
+    vi.useFakeTimers();
+    try {
+      const ga=await import('@/lib/analytics/ga4');ga.setAnalyticsConsent(true);
+      const done=vi.fn();const task=ga.trackCheckoutClick([{item_id:'1',item_name:'Sunscreen',price:180,quantity:1}],'AED',180).then(done);
+      expect(done).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(500);await task;
+      expect(done).toHaveBeenCalledOnce();
+      expect(measurements().map(x=>x[1])).toEqual(['checkout_click']);
+    } finally {vi.useRealTimers();}
   });
 });

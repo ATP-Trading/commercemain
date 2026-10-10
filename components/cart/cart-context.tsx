@@ -1,4 +1,6 @@
 "use client";
+import { cartAnalyticsItem } from '@/lib/analytics/cart-measurement';
+import { trackShopifyAddToCart } from '@/lib/analytics/shopify-visits';
 
 import { assertStockQuantity } from "@/lib/shopify/inventory-limit";
 import { trackProduct } from "@/lib/analytics/ga4";
@@ -329,6 +331,7 @@ export function useCart() {
             console.error("❌ Remove server action failed:", result.error);
           } else {
             console.log("✅ Remove server action succeeded");
+            trackProduct('remove_from_cart', cartAnalyticsItem(lineItem), lineItem.cost.totalAmount.currencyCode);
           }
         } else {
           console.error("❌ Line item not found for deletion");
@@ -363,6 +366,12 @@ export function useCart() {
             throw new Error(result.error);
           } else {
             console.log("✅ Update quantity server action succeeded");
+            trackProduct(updateType === 'plus' ? 'add_to_cart' : 'remove_from_cart', cartAnalyticsItem(lineItem, 1), lineItem.cost.totalAmount.currencyCode);
+            if (updateType === 'plus' && optimisticCart?.id) void trackShopifyAddToCart({
+              cartId: optimisticCart.id.split('?')[0]!, productId: lineItem.merchandise.product.id,
+              variantId: merchandiseId, name: lineItem.merchandise.product.title,
+              price: Number(lineItem.cost.totalAmount.amount) / lineItem.quantity, quantity: 1,
+            });
           }
         } else {
           console.error("❌ Line item not found for quantity update");
@@ -406,6 +415,9 @@ export function useCart() {
         throw new Error(result.error || "Failed to add item to cart");
       } else {
         console.log("✅ Server action succeeded");
+        if (result.analyticsCartId) void trackShopifyAddToCart({cartId: result.analyticsCartId,
+          productId: product.id, variantId: variant.id, name: product.title,
+          price: Number(variant.price.amount), quantity});
       }
     } catch (error) {
       console.error("❌ Error calling server action:", error);
