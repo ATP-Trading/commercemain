@@ -161,6 +161,10 @@
     }
   },
   "hero": {
+    "browseSections": "تصفح الأقسام والعضوية",
+    "supplementsAndCosmetics": "المكملات الغذائية ومستحضرات التجميل",
+    "waterAndSoilSolutions": "حلول تكنولوجيا المياه والتربة",
+    "atpMembership": "عضوية ATP",
     "welcomeToATP": "مرحبًا بكم في ATP Trading",
     "authenticThaiWellness": "المنتجات التايلندية الاصلية",
     "transformYourWellbeing": "حوّل عافيتك",
