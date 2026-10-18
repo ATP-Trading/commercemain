@@ -161,6 +161,10 @@
     }
   },
   "hero": {
+    "browseSections": "Explore our collections and membership",
+    "supplementsAndCosmetics": "Supplements & Cosmetics",
+    "waterAndSoilSolutions": "Water & Soil Technology Solutions",
+    "atpMembership": "ATP Membership",
     "welcomeToATP": "Welcome to ATP Trading",
     "authenticThaiWellness": "Authentic Thai Wellness",
     "transformYourWellbeing": "Transform Your Wellbeing",
