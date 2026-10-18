@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ArrowRight, Droplets, Sparkles, Crown } from "lucide-react";
 import { Link } from "@/src/i18n/navigation";
 import { useTranslations } from "next-intl";
 
@@ -28,14 +29,23 @@ export default function ATPWellnessHero({
         <p className="mx-auto mt-5 max-w-3xl text-pretty text-base leading-7 text-[#ededed] sm:text-lg sm:leading-8">
           {t("heroSubtitle")}
         </p>
-        <div className="mx-auto mt-6 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
-          <Link href="/search" className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#e8cd88] px-7 py-3 text-base font-semibold text-black transition-colors hover:bg-[#f5dfaa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-            {t("shopNow")}
-          </Link>
-          <Link href="/atp-membership" className="inline-flex min-h-12 items-center justify-center rounded-md border border-[#e8cd88] px-7 py-3 text-base font-medium text-[#f5dfaa] transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-            {t("exploreAtpMembership")}
-          </Link>
-        </div>
+        <nav aria-label={t("browseSections")} className="mx-auto mt-6 flex w-full max-w-xl flex-col gap-3">
+          {[
+            { href: "/collections/amazing-thai-products", label: "supplementsAndCosmetics", icon: Sparkles },
+            { href: "/collections/water-soil-technology-solutions", label: "waterAndSoilSolutions", icon: Droplets },
+            { href: "/atp-membership", label: "atpMembership", icon: Crown },
+          ].map(({ href, label, icon: Icon }, index) => (
+            <Link
+              key={href}
+              href={href}
+              className={`group flex min-h-16 w-full items-center gap-3 rounded-xl border px-4 py-4 text-start text-base font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:px-5 sm:text-lg ${index === 0 ? "border-[#e8cd88] bg-[#e8cd88] text-black hover:bg-[#f5dfaa]" : "border-[#e8cd88]/50 bg-white/5 text-white hover:bg-white/10"}`}
+            >
+              <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
+              <span className="min-w-0 flex-1 leading-snug">{t(label)}</span>
+              <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 rtl:rotate-180" />
+            </Link>
+          ))}
+        </nav>
       </div>
       {/* Trim only the empty upper backdrop; keep all products visible at every width. */}
       <div className="relative mx-auto aspect-[1672/700] w-full max-w-[1100px]">
