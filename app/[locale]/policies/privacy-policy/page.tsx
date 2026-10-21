@@ -1,7 +1,6 @@
 import { getShopPolicy } from '@/lib/shopify/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { AnalyticsSettingsButton } from '@/components/analytics/google-analytics';
 
 interface PrivacyPolicyPageProps {
   params: Promise<{ locale: string }>;
@@ -93,9 +92,7 @@ export default async function PrivacyPolicyPage({
 
         <section className="mb-8 rounded-xl border border-neutral-700 p-6 text-neutral-300">
           <h2 className="mb-3 text-xl font-semibold text-white">{isArabic ? 'التحليلات والإعلانات' : 'Analytics and advertising'}</h2>
-          <p className="text-base leading-7">{isArabic ? 'بموافقتك، نستخدم Google Analytics وShopify لفهم استخدام الموقع، وGoogle وMeta لقياس الإعلانات وتخصيصها. يمكنك السماح للجميع أو السماح بالتحليلات فقط أو رفض ملفات الارتباط الاختيارية، وتغيير اختيارك من تفضيلات التحليلات.' : 'With your consent, we use Google Analytics and Shopify to understand site usage, and Google and Meta to measure and personalise ads. You can allow all, allow analytics only, or decline optional cookies, and change your choice in Analytics preferences.'}</p>
-          <a className="mt-3 block text-atp-gold underline" href="https://policies.google.com/technologies/partner-sites">{isArabic ? 'كيف تستخدم Google البيانات' : 'How Google uses data'}</a>
-          <AnalyticsSettingsButton />
+          <p className="text-base leading-7">{isArabic ? 'أوقفنا تتبع الزوار الاختياري على واجهة متجرنا، بما فيه تحليلات Google وShopify وتتبع إعلانات Google وMeta. تبقى ملفات الارتباط الضرورية لتشغيل السلة وتسجيل الدخول وإتمام الطلب. تعالج خدمات الدفع الطلبات وفق سياسات الخصوصية الخاصة بها.' : 'Optional visitor tracking is disabled on our storefront, including Google and Shopify analytics and Google and Meta advertising tracking. Essential cookies remain for the cart, sign-in and checkout. Payment services process orders under their own privacy policies.'}</p>
         </section>
 
         <div

@@ -1,4 +1,5 @@
 'use client'
+import { OPTIONAL_TRACKING_ENABLED } from './tracking-policy'
 
 // Shopify Analytics Integration based on latest documentation
 declare global {
@@ -42,7 +43,7 @@ class ShopifyAnalyticsManager {
 
     // Initialize all analytics services
     async initialize() {
-        if (this.initialized) return
+        if (!OPTIONAL_TRACKING_ENABLED || this.initialized) return
 
         try {
             // Initialize Shopify Trekkie Analytics
@@ -196,6 +197,7 @@ class ShopifyAnalyticsManager {
 
     // Track custom events
     track(event: TrackingEvent) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         if (!this.initialized) {
             console.warn('Analytics not initialized')
             return
@@ -231,6 +233,7 @@ class ShopifyAnalyticsManager {
 
     // Track page views
     trackPageView(page: string, properties?: Record<string, any>) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         this.track({
             event: 'Page Viewed',
             properties: {
@@ -242,6 +245,7 @@ class ShopifyAnalyticsManager {
 
     // Track ecommerce events
     trackPurchase(orderId: string, total: number, currency: string, items: any[]) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         this.track({
             event: 'Purchase',
             properties: {
@@ -264,6 +268,7 @@ class ShopifyAnalyticsManager {
     }
 
     trackAddToCart(productId: string, productName: string, price: number, quantity: number) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         this.track({
             event: 'Product Added',
             properties: {
@@ -288,6 +293,7 @@ class ShopifyAnalyticsManager {
     }
 
     trackProductView(productId: string, productName: string, price: number, category?: string) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         this.track({
             event: 'Product Viewed',
             properties: {
@@ -311,6 +317,7 @@ class ShopifyAnalyticsManager {
     }
 
     trackSearch(query: string, results: number) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         this.track({
             event: 'Products Searched',
             properties: {
@@ -330,6 +337,7 @@ class ShopifyAnalyticsManager {
 
     // Identify user
     identify(userId: string, traits?: Record<string, any>) {
+        if (!OPTIONAL_TRACKING_ENABLED) return
         if (window.analytics && window.analytics.identify) {
             window.analytics.identify(userId, traits)
         }

@@ -1,3 +1,4 @@
+import { OPTIONAL_TRACKING_ENABLED } from '@/lib/analytics/tracking-policy';
 /**
  * Cart Customer Utilities
  * 
@@ -207,7 +208,7 @@ export function trackCartEventWithCustomer(
   const isAuthenticated = !!customerId;
   
   // Track event with customer context
-  if (typeof window !== 'undefined' && window.gtag) {
+  if (OPTIONAL_TRACKING_ENABLED && typeof window !== 'undefined' && window.gtag) {
     window.gtag('event', event, {
       ...data,
       customer_id: customerId,

@@ -1,3 +1,4 @@
+import { OPTIONAL_TRACKING_ENABLED } from './tracking-policy';
 import { measurementMode } from './measurement-mode';
 // Public measurement ID of the existing Shopify-connected GA4 stream.
 export const GA4_ID = 'G-N47GG1EVK5';
@@ -202,6 +203,7 @@ function clearCookies(advertising: boolean) {
 }
 
 export function setAnalyticsConsent(granted: boolean, advertising: boolean = false) {
+  granted = granted && OPTIONAL_TRACKING_ENABLED;
   if (typeof window === 'undefined') return;
   captureMeasurementEntry();
   const previouslyAllowed = analyticsAllowed();
