@@ -1,3 +1,4 @@
+import { OPTIONAL_TRACKING_ENABLED } from './tracking-policy';
 import { measurementMode } from './measurement-mode';
 // Same dataset as the Shopify Facebook & Instagram channel.
 export const META_PIXEL_ID = '24439733515663379';
@@ -43,6 +44,7 @@ export function trackMetaPage() {
 }
 
 export function setMarketingConsent(granted: boolean) {
+  granted = granted && OPTIONAL_TRACKING_ENABLED;
   try { localStorage.setItem(MARKETING_CONSENT_KEY, granted ? 'granted' : 'denied'); } catch { return; }
   if (window.fbq) window.fbq('consent', granted ? 'grant' : 'revoke');
   if (!granted) {

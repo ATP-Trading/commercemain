@@ -1,3 +1,4 @@
+import { OPTIONAL_TRACKING_ENABLED } from './tracking-policy';
 /** Narrow, consent-gated Storefront tracking proxy. Never accepts arbitrary GraphQL.
  * See Shopify's custom-headless tracking migration and hydrogen-react useShopifyCookies.
  * This endpoint is independent of cart/checkout; failures must not stop shopping.
@@ -40,7 +41,7 @@ export async function handleShopifyVisitRequest(
   if (request.headers.get('origin') !== config.origin || request.headers.get('x-atp-analytics-consent') !== 'v1') {
     return json({ok: false}, 403);
   }
-  if (request.method === 'DELETE') {
+  if (request.method === 'DELETE' || (request.method === 'POST' && !OPTIONAL_TRACKING_ENABLED)) {
     const headers = new Headers(baseHeaders);
     for (const name of ['_shopify_analytics', '_shopify_marketing']) {
       headers.append('Set-Cookie', `${name}=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax`);

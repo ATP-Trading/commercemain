@@ -1,3 +1,4 @@
+import { OPTIONAL_TRACKING_ENABLED } from '@/lib/analytics/tracking-policy';
 import { type Locale } from '@/lib/i18n/config'
 
 // Cart state with language persistence
@@ -243,7 +244,7 @@ export function trackCartEvent(
   }
 ): void {
   // This would integrate with your analytics service
-  if (typeof window !== 'undefined' && window.gtag) {
+  if (OPTIONAL_TRACKING_ENABLED && typeof window !== 'undefined' && window.gtag) {
     window.gtag('event', event, {
       ...data,
       custom_parameter_locale: data.locale,

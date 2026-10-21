@@ -1,3 +1,5 @@
+// Retain engine regression coverage under an explicitly enabled policy.
+vi.mock('@/lib/analytics/tracking-policy', () => ({ OPTIONAL_TRACKING_ENABLED: true }));
 // @vitest-environment node
 import {beforeEach, afterEach, describe, expect, it, vi} from 'vitest';
 import {handleShopifyVisitRequest, selectShopifyCookies, hostOnlyShopifyCookie} from '../../lib/analytics/shopify-visit-proxy';

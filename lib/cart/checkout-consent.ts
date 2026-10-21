@@ -1,9 +1,10 @@
+import { OPTIONAL_TRACKING_ENABLED } from '../analytics/tracking-policy';
 export type CheckoutConsent = { analytics: boolean | null; marketing: false; preferences: false; saleOfData: false };
 
 // Browser input can express a choice, never an identity or arbitrary API input.
 export function normalizeCheckoutConsent(value: unknown): CheckoutConsent {
   const analytics = value && typeof value === 'object' && 'analytics' in value ? value.analytics : null;
-  return { analytics: typeof analytics === 'boolean' ? analytics : null,
+  return { analytics: OPTIONAL_TRACKING_ENABLED ? (typeof analytics === 'boolean' ? analytics : null) : false,
     marketing: false, preferences: false, saleOfData: false };
 }
 

@@ -9,7 +9,7 @@ vi.mock('next/headers', () => ({cookies: async () => ({get: vi.fn()}), headers: 
 afterEach(() => {vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); vi.resetModules();});
 it('does not grant consent from truthy strings or arbitrary client input', () => {
   expect(normalizeCheckoutConsent({analytics: 'true', marketing: true, saleOfData: true})).toEqual({
-    analytics: null, marketing: false, preferences: false, saleOfData: false,
+    analytics: false, marketing: false, preferences: false, saleOfData: false,
   });
 });
 it.each([true, false, null])('carries consent %s to Shopify without leaking customer or Google cookies', async analytics => {
@@ -23,8 +23,8 @@ it.each([true, false, null])('carries consent %s to Shopify without leaking cust
   const {getConsentedCheckoutUrl} = await import('@/lib/shopify/server');
   expect(await getConsentedCheckoutUrl('session-validated-cart', normalizeCheckoutConsent({analytics}))).toContain('privacy=opaque');
   const options = (fetcher.mock.calls[0] as unknown as [string, RequestInit])[1];
-  expect(JSON.parse(String(options.body)).variables).toMatchObject({cartId: 'session-validated-cart', consent: {analytics}});
+  expect(JSON.parse(String(options.body)).variables).toMatchObject({cartId: 'session-validated-cart', consent: {analytics: false}});
   const cookie = new Headers(options.headers).get('cookie');
-  expect(cookie).toBe(analytics ? '_shopify_analytics=provider' : null);
+  expect(cookie).toBe(null);
   expect(JSON.stringify(options)).not.toContain('private');
 });
