@@ -8,7 +8,7 @@ export function MemberAccountIcon({ className = 'h-5 w-5' }: { className?: strin
   const { isMember, isLoading } = useMembership()
   const ar = useLocale() === 'ar'
   const active = isMember && !isLoading
-  return <span className={active ? 'relative inline-flex rounded-full p-1 text-atp-gold ring-1 ring-atp-gold/70' : 'inline-flex'}>
+  return <span className={active ? 'relative inline-flex rounded-full p-1 text-atp-gold ring-1 ring-atp-gold/70' : 'inline-flex text-neutral-300'}>
     <User aria-hidden="true" className={className} />
     {active && <><Crown aria-hidden="true" className="absolute -end-1 -top-2 h-3 w-3 rounded-sm bg-black text-atp-gold" /><span className="sr-only">{ar ? 'عضو ATP' : 'ATP member'}</span></>}
   </span>
