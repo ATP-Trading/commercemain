@@ -1,3 +1,5 @@
+import { collectionNavigation } from "@/lib/collection-navigation";
+import { Home } from "lucide-react";
 import { ProductAnalytics } from "@/components/analytics/google-analytics";
 import { getProductLanguageLinks } from "@/lib/shopify/product-language-links";
 import { InactiveServicePage, inactiveServiceMetadata } from "@/components/inactive-service-page";
@@ -133,14 +135,16 @@ export default async function ProductPage(props: {
     brand: product.handle === "atp-membership" ? "ATP Trading" : undefined,
   };
 
+  const productCollections = collectionNavigation(product.collections?.edges?.map(({ node }) => node) || [], params.locale);
+  const parentCollection = productCollections[0];
   const breadcrumbItems = [
     {
       name: params.locale === "ar" ? "الرئيسية" : "Home",
       url: `https://www.atpgroupservices.ae/${params.locale}`
     },
     {
-      name: params.locale === "ar" ? "المنتجات" : "Products",
-      url: `https://www.atpgroupservices.ae/${params.locale}/search`
+      name: parentCollection?.title || (params.locale === "ar" ? "المنتجات" : "Products"),
+      url: `https://www.atpgroupservices.ae${parentCollection?.href || `/${params.locale}/search`}`
     },
     {
       name: localizedTitle,
@@ -154,6 +158,19 @@ export default async function ProductPage(props: {
       <ProductStructuredData {...productSchemaData} />
       <BreadcrumbStructuredData items={breadcrumbItems} />
       <div className="mx-auto max-w-(--breakpoint-2xl) px-4" dir="ltr">
+        <nav aria-label={params.locale === "ar" ? "مسار المنتج" : "Product breadcrumb"} dir={params.locale === "ar" ? "rtl" : "ltr"} className="py-3 text-sm text-gray-700">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <li><Link href={`/${params.locale}`} className="inline-flex min-h-11 items-center gap-1 underline-offset-4 hover:underline"><Home className="h-4 w-4" aria-hidden="true" />{params.locale === "ar" ? "الرئيسية" : "Home"}</Link></li>
+            <li aria-hidden="true">/</li>
+            <li><Link href={parentCollection?.href || `/${params.locale}/search`} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">{breadcrumbItems[1].name}</Link></li>
+            <li aria-hidden="true">/</li>
+            <li aria-current="page" className="min-w-0 break-words font-medium text-black">{localizedTitle}</li>
+          </ol>
+          {productCollections.length > 1 && <div className="flex flex-wrap items-center gap-x-3">
+            <span>{params.locale === "ar" ? "ضمن المجموعات:" : "In collections:"}</span>
+            {productCollections.slice(1).map((collection) => <Link key={collection.handle} href={collection.href} className="inline-flex min-h-11 items-center underline underline-offset-4">{collection.title}</Link>)}
+          </div>}
+        </nav>
         <div className="flex flex-col rounded-lg border border-atp-light-gray bg-atp-white p-8 md:p-12 lg:flex-row lg:gap-8">
           <div className="h-full w-full basis-full lg:basis-4/6">
             <Suspense
