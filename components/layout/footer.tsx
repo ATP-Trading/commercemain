@@ -161,45 +161,34 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Copyright */}
+      {/* Policies and final copyright line */}
       <div className="border-t border-neutral-800">
-        <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
-          <div
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-neutral-400"
-          >
-            <p>
-              © {currentYear} {SITE_NAME}. {t('allRightsReserved')}.
-            </p>
-            <div
-              className="flex flex-wrap items-center gap-4"
-            >
-              <Link
-                href={`/${locale}/policies/privacy-policy`}
-                className="hover:text-white transition-colors"
-              >
-                {t('privacyPolicy')}
-              </Link>
-              <AnalyticsSettingsButton />
-              <Link
-                href={`/${locale}/policies/refund-policy`}
-                className="hover:text-white transition-colors"
-              >
-                {t('refundPolicy')}
-              </Link>
-              <Link
-                href={`/${locale}/contact`}
-                className="hover:text-white transition-colors"
-              >
-                {t('contactInformation')}
-              </Link>
-              <Link
-                href={`/${locale}/policies/terms-of-service`}
-                className="hover:text-white transition-colors"
-              >
-                {t('termsOfService')}
-              </Link>
-            </div>
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          <nav aria-label={isRTL ? 'السياسات ومعلومات التواصل' : 'Policies and contact information'}>
+            <ul className="mx-auto grid max-w-2xl grid-cols-2 gap-x-4 gap-y-2 text-center text-sm sm:flex sm:max-w-none sm:flex-wrap sm:justify-center sm:gap-x-8">
+              {[
+                { href: 'policies/privacy-policy', label: t('privacyPolicy') },
+                { href: 'policies/refund-policy', label: t('refundPolicy') },
+                { href: 'policies/terms-of-service', label: t('termsOfService') },
+                { href: 'contact', label: t('contactInformation') },
+              ].map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={`/${locale}/${item.href}`}
+                    className="flex min-h-11 items-center justify-center rounded-md px-2 py-2 leading-relaxed text-neutral-300 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="flex justify-center text-sm text-neutral-400">
+            <AnalyticsSettingsButton />
           </div>
+          <p className="mt-6 border-t border-neutral-800 pt-6 text-center text-xs leading-relaxed text-neutral-400">
+            © {currentYear} {SITE_NAME}. {t('allRightsReserved')}.
+          </p>
         </div>
       </div>
     </footer>
