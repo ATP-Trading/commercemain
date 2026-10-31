@@ -714,6 +714,7 @@ export const getNewestProductsQuery = `
           handle
           title
           description
+          collections(first: 100) { edges { node { id handle title } } }
           tags
           createdAt
           priceRange {
@@ -1397,7 +1398,8 @@ export const getFeaturedProductsQuery = `
             handle
             title
             description
-            tags
+            collections(first: 100) { edges { node { id handle title } } }
+          tags
             priceRange {
               maxVariantPrice {
                 amount
