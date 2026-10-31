@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import Price from "@/components/price";
+import { MemberCardPrice } from "@/components/product/member-card-price";
+import { getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
 import type { Product } from "@/lib/shopify/types";
 import type { Locale } from "@/lib/i18n/config";
 import { getLocalizedProductHandle, getLocalizedProductTitle } from "@/lib/shopify/i18n-queries";
@@ -32,7 +33,7 @@ function ProductCard({ product, locale }: { product: Product; locale: Locale }) 
         </div>
         <div className="flex flex-1 flex-col p-4 sm:p-5">
           <h3 className="mb-3 text-base font-semibold leading-relaxed text-neutral-900 sm:text-lg">{title}</h3>
-          <Price amount={price.amount} currencyCode={price.currencyCode} className="mt-auto text-lg font-semibold text-neutral-900" />
+          <div className="mt-auto text-neutral-900"><MemberCardPrice amount={price.amount} currencyCode={price.currencyCode} rate={getMemberDiscountRate(product)} ar={locale === "ar"} /></div>
           <span className="mt-4 flex min-h-11 items-center border-t border-neutral-200 pt-3 text-sm font-medium text-[#765b19] group-hover:underline">
             {locale === "ar" ? "عرض المنتج" : "View product"}
           </span>
