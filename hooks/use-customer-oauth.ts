@@ -99,7 +99,7 @@ export function useCustomerOAuth(): UseCustomerOAuthReturn {
 
   // Load customer on mount
   useEffect(() => {
-    return watchReturnRefresh(fetchCustomer)
+    return watchReturnRefresh(fetchCustomer, false)
   }, [fetchCustomer])
 
   return {

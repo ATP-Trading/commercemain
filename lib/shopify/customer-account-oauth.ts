@@ -628,7 +628,7 @@ export async function getValidAccessToken(): Promise<string | null> {
   // The browser removes expired access cookies; the persistent refresh cookie
   // must still restore the session when a customer returns later.
   if (!tokens.refreshToken) {
-    await clearTokens()
+    if (tokens.accessToken || tokens.expiresAt) await clearTokens()
     return null
   }
 
