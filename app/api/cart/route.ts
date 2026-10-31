@@ -2,6 +2,7 @@ import { cartForSession } from '@/lib/cart/session-cart'
 import { getValidAccessToken } from '@/lib/shopify/customer-account-oauth'
 import { NextRequest, NextResponse } from 'next/server'
 import { 
+  updateCartBuyerIdentity,
   getCart, 
   createCart, 
   addToCart, 
@@ -31,12 +32,18 @@ const removeFromCartSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const existing = await getCart()
-    const cart = existing ? await cartForSession(existing, await getValidAccessToken()) : undefined
+    const token = await getValidAccessToken()
+    let cart = existing ? await cartForSession(existing, token) : undefined
+    if (cart && token) {
+      const synced = await updateCartBuyerIdentity({ customerAccessToken: token })
+      if (synced.userErrors.length || !synced.cart) throw new Error("Unable to refresh buyer pricing")
+      cart = synced.cart
+    }
     
     return NextResponse.json({
       success: true,
       cart
-    })
+    }, { headers: { "Cache-Control": "private, no-store" } })
     
   } catch (error) {
     console.error('Get cart error:', error)

@@ -19,7 +19,8 @@ import {
   useOptimistic,
   startTransition,
 } from "react";
-import { useRouter } from "next/navigation";
+import { watchReturnRefresh } from "@/lib/browser/return-refresh";
+import { useRouter, usePathname } from "next/navigation";
 import { UAE_DIRHAM_CODE } from "@/lib/constants";
 
 type UpdateType = "plus" | "minus" | "delete";
@@ -221,9 +222,10 @@ export function CartProvider({
 }) {
   const router = useRouter();
   const cartId = initialCart?.id;
-  const hasBuyer = !!initialCart?.buyerIdentity?.customer;
+  const pathname = usePathname();
+  const cartSnapshot = JSON.stringify({ id: initialCart?.id, cost: initialCart?.cost, lines: initialCart?.lines, buyer: initialCart?.buyerIdentity, discounts: initialCart?.discountCodes });
   useEffect(() => {
-    if (!cartId || !hasBuyer) return;
+    if (!cartId) return;
     let cancelled = false;
     let pending = false;
     const reconcile = async () => {
@@ -233,15 +235,16 @@ export function CartProvider({
         const response = await fetch('/api/cart', { cache: 'no-store' });
         if (!response.ok) return;
         const result = await response.json();
-        if (!cancelled && result.success && result.cart?.id !== cartId) router.refresh();
+        const fresh = result.cart;
+        const snapshot = JSON.stringify({ id: fresh?.id, cost: fresh?.cost, lines: fresh?.lines, buyer: fresh?.buyerIdentity, discounts: fresh?.discountCodes });
+        if (!cancelled && result.success && snapshot !== cartSnapshot) router.refresh();
       } catch {
         // Checkout independently verifies the session before returning its URL.
       } finally { pending = false; }
     };
-    void reconcile();
-    window.addEventListener('focus', reconcile);
-    return () => { cancelled = true; window.removeEventListener('focus', reconcile); };
-  }, [cartId, hasBuyer, router]);
+    const stop = watchReturnRefresh(reconcile, pathname.endsWith('/cart'));
+    return () => { cancelled = true; stop(); };
+  }, [cartId, cartSnapshot, pathname, router]);
 
   // Ensure cart data is properly structured
   const safeInitialCart = initialCart

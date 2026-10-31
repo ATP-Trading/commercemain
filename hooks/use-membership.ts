@@ -1,5 +1,7 @@
 "use client"
 
+import { usePathname } from "next/navigation"
+import { watchReturnRefresh } from "@/lib/browser/return-refresh"
 import { useState, useEffect } from "react"
 import { useCustomerOAuth } from "./use-customer-oauth"
 
@@ -18,6 +20,7 @@ interface MembershipData {
 
 // Membership hook integrated with Shopify Customer Account API (OAuth)
 export function useMembership() {
+  const pathname = usePathname()
   const { customer, isLoading: customerLoading, isLoggedIn } = useCustomerOAuth()
   const [membership, setMembership] = useState<MembershipData>({
     tier: null,
@@ -51,7 +54,6 @@ export function useMembership() {
         return
       }
 
-      setIsLoading(true)
       setError(null)
 
       try {
@@ -98,12 +100,13 @@ export function useMembership() {
       }
     }
 
-    loadMembership()
+    const stop = watchReturnRefresh(loadMembership, pathname.endsWith("/cart"))
 
     return () => {
       cancelled = true
+      stop()
     }
-  }, [customer?.id, customerLoading, isLoggedIn])
+  }, [customer?.id, customerLoading, isLoggedIn, pathname])
 
   const applyMemberDiscount = (price: number): number => {
     if (!membership.isActive || !membership.tier) return price
