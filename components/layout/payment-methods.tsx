@@ -5,7 +5,6 @@ import { m, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import {
-  STORE_PAYMENT_METHODS,
   getPaymentMethodsByLocale,
   type PaymentMethodConfig,
 } from "@/lib/shopify/payment-methods-config";
@@ -45,7 +44,14 @@ export default function PaymentMethods({
         }
 
         const data = await response.json();
-        setPaymentMethods(data.paymentMethods || []);
+        // Shopify's card/wallet response omits the store's local BNPL providers.
+        const methods: PaymentMethodConfig[] = data.paymentMethods || [];
+        const localMethods = getPaymentMethodsByLocale(locale).filter(
+          method => method.enabled && ['tabby', 'tamara'].includes(method.iconKey)
+        );
+        setPaymentMethods([...methods, ...localMethods].filter((method, index, all) =>
+          index === all.findIndex(item => item.iconKey === method.iconKey)
+        ));
       } catch (err) {
         console.error("Error fetching payment methods:", err);
         setError("Failed to load payment methods");
