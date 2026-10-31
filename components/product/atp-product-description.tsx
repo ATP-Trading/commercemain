@@ -61,6 +61,9 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
   // Get localized content
   const localizedTitle = getLocalizedProductTitle(product, locale);
+  const titleParts = localizedTitle.match(/^(.*?)\s+[–—-]\s+(.+)$/)?.slice(1) || [localizedTitle];
+  const productName = titleParts[0] || localizedTitle;
+  const productSubtitle = titleParts[1];
   const localizedDescriptionHtml = getLocalizedProductDescriptionHtml(
     product,
     locale
@@ -120,9 +123,16 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             )}
           </div>
 
-          <h1 className="mb-4 text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground leading-tight">
-            {localizedTitle}
-          </h1>
+          <div className="mb-6 space-y-3">
+            <h1 dir="auto" className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground leading-tight break-words">
+              {productName}
+            </h1>
+            {productSubtitle && (
+              <p dir="auto" className="text-base md:text-lg font-normal leading-relaxed text-neutral-600">
+                {productSubtitle}
+              </p>
+            )}
+          </div>
 
             {/* Unit price; membership discounts still apply without promotional cards. */}
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
