@@ -35,7 +35,7 @@ const Label = ({
         )}
       >
         <div className="space-y-2">
-          <h3 dir="auto" className="leading-snug text-sm font-semibold">{name}</h3>
+          <h3 dir="auto" className="text-center leading-snug text-sm font-semibold">{name}</h3>
           {subtitle && <p dir="auto" className="text-xs font-normal leading-relaxed text-neutral-600">{subtitle}</p>}
         </div>
         <Price
