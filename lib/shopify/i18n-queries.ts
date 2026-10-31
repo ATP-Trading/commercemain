@@ -295,7 +295,21 @@ export function getLocalizedProductTitle(product: any, locale: 'en' | 'ar'): str
     console.warn('[i18n] getLocalizedProductTitle called with null/undefined product');
     return '';
   }
-  return getLocalizedProductContent(product, locale, 'title')
+  const displayTitles: Record<string, { en: string; ar: string }> = {
+    'ultimatch-roll-on-deodorant-for-women': {
+      en: 'ULTIMATCH Roll-On Deodorant for Women – Antiperspirant & Underarm Care',
+      ar: 'ULTIMATCH Roll-On Deodorant for Women – مضاد تعرّق رول أون للنساء للعناية بمنطقة الإبط',
+    },
+    'ultimatch-roll-on-deodorant-for-men': {
+      en: 'ULTIMATCH Roll-On Deodorant for Men – Antiperspirant & Underarm Care',
+      ar: 'ULTIMATCH Roll-On Deodorant for Men – مضاد تعرّق رول أون للرجال للعناية بمنطقة الإبط',
+    },
+    'multivitamins-minerals-with-astaxanthin-complete-daily-health-support': {
+      en: 'Multivitamins & Minerals + Astaxanthin – Daily Vitamin & Mineral Supplement',
+      ar: 'Multivitamins & Minerals + Astaxanthin – فيتامينات ومعادن مع أستازانتين للاستخدام اليومي',
+    },
+  };
+  return displayTitles[product.handle]?.[locale] || getLocalizedProductContent(product, locale, 'title')
 }
 
 // Helper function to get localized product description
