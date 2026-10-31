@@ -14,6 +14,7 @@ const Label = ({
   position?: "bottom" | "center";
   isATPMember?: boolean;
 }) => {
+  const [name, subtitle] = title.match(/^(.*?)\s+[–—-]\s+(.+)$/)?.slice(1) || [title];
   return (
     <div
       className={clsx(
@@ -33,9 +34,10 @@ const Label = ({
           }
         )}
       >
-        <h3 className="leading-tight tracking-tight text-sm font-medium line-clamp-2">
-          {title}
-        </h3>
+        <div className="space-y-2">
+          <h3 dir="auto" className="leading-snug text-sm font-semibold">{name}</h3>
+          {subtitle && <p dir="auto" className="text-xs font-normal leading-relaxed text-neutral-600">{subtitle}</p>}
+        </div>
         <Price
           className={clsx(
             "self-start rounded-full px-3 py-1.5 text-white font-semibold text-xs",
