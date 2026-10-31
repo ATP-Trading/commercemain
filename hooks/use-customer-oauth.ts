@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { watchReturnRefresh } from '@/lib/browser/return-refresh'
 
 interface Customer {
   id: string
@@ -20,6 +21,20 @@ interface UseCustomerOAuthReturn {
   refreshCustomer: () => Promise<void>
 }
 
+// Share only concurrent checks, never cache a customer's identity across sessions.
+let pendingStatus: Promise<{ isLoggedIn: boolean; customer: Customer | null; error?: string }> | null = null
+function readCustomerStatus() {
+  if (!pendingStatus) {
+    pendingStatus = fetch('/api/auth/status', { credentials: 'include', cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) throw new Error('Failed to check authentication status')
+        return response.json()
+      })
+      .finally(() => { pendingStatus = null })
+  }
+  return pendingStatus
+}
+
 /**
  * Hook for OAuth-based customer authentication with the new Shopify Customer Accounts
  * 
@@ -37,16 +52,7 @@ export function useCustomerOAuth(): UseCustomerOAuthReturn {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch('/api/auth/status', {
-        credentials: 'include',
-        cache: 'no-store',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to check authentication status')
-      }
-
-      const data = await response.json()
+      const data = await readCustomerStatus()
 
       if (data.error) throw new Error('Unable to load account')
 
@@ -93,7 +99,7 @@ export function useCustomerOAuth(): UseCustomerOAuthReturn {
 
   // Load customer on mount
   useEffect(() => {
-    fetchCustomer()
+    return watchReturnRefresh(fetchCustomer)
   }, [fetchCustomer])
 
   return {
