@@ -1,4 +1,5 @@
 "use client";
+import { MemberPrice } from "./member-price";
 
 import { useRef } from "react";
 import Image from "next/image";
@@ -138,13 +139,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             {/* Unit price; membership discounts still apply without promotional cards. */}
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-semibold text-neutral-900">
-                  <Price
-                    amount={installmentBase.toFixed(2)}
-                    className="text-2xl font-semibold"
-                    currencyCode={price.currencyCode}
-                  />
-                </span>
+                <MemberPrice original={price.amount} amount={installmentBase.toFixed(2)} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === 'ar'} className="text-2xl" />
                 {isMembershipProduct && <span className="text-base text-neutral-600">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
               {isMembershipProduct && <p className="mt-3 text-base leading-relaxed text-neutral-700">{locale === 'ar' ? 'خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة، مع توصيل مجاني داخل الإمارات.' : '15% off eligible supplements and skincare, and 10% off water and soil products, with free delivery within the UAE.'}</p>}
@@ -185,7 +180,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
         {!isMembershipProduct && (
           <div className="mb-4" aria-live="polite" aria-atomic="true">
             <p className="text-sm text-neutral-600">{isRTL ? "إجمالي الكمية المختارة" : "Total for selected quantity"}</p>
-            <Price amount={totalPrice} currencyCode={price.currencyCode} className="text-2xl font-semibold" />
+            <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === "ar"} className="text-2xl" />
           </div>
         )}
 
