@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Image from "next/image";
 import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
 import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
+import { MembershipCheckoutButton } from "@/components/membership/direct-checkout-button";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
 import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
 import Price from "@/components/price";
@@ -190,7 +191,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         {/* Add to Cart Button - with ref for sticky CTA */}
         <div className="mb-4" ref={addToCartRef}>
-          <ATPAddToCart product={product} />
+          {product.handle === "atp-membership" ? <MembershipCheckoutButton /> : <ATPAddToCart product={product} />}
         </div>
 
           {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
@@ -297,7 +298,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
       </div>
 
       {/* Sticky Add to Cart for Mobile */}
-      {selectedVariant && (
+      {selectedVariant && product.handle !== "atp-membership" && (
         <StickyAddToCart
           product={product}
           selectedVariant={selectedVariant}
