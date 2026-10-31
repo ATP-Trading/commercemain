@@ -316,8 +316,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenRes
   const data = await response.json()
 
   if (!response.ok) {
-    console.error('[OAuth] Token refresh failed:', data)
-    throw new Error(data.error_description || data.error || 'Token refresh failed')
+    throw Object.assign(new Error('Token refresh failed'), { oauthError: data.error, status: response.status })
   }
 
   console.log('[OAuth] Token refresh successful')
@@ -616,42 +615,35 @@ export async function clearTokens() {
 }
 
 export async function isLoggedIn(): Promise<boolean> {
-  const tokens = await getTokens()
-  return !!tokens.accessToken
+  return !!(await getValidAccessToken())
 }
 
 export async function getValidAccessToken(): Promise<string | null> {
   const tokens = await getTokens()
-  
-  if (!tokens.accessToken) {
+  const bufferTime = 5 * 60 * 1000
+  if (tokens.accessToken && Number.isFinite(tokens.expiresAt) && tokens.expiresAt! > Date.now() + bufferTime) {
+    return tokens.accessToken
+  }
+
+  // The browser removes expired access cookies; the persistent refresh cookie
+  // must still restore the session when a customer returns later.
+  if (!tokens.refreshToken) {
+    if (tokens.accessToken || tokens.expiresAt) await clearTokens()
     return null
   }
 
-  // Check if token is expired or about to expire (within 5 minutes)
-  const now = Date.now()
-  const bufferTime = 5 * 60 * 1000 // 5 minutes
-  
-  if (tokens.expiresAt && tokens.expiresAt - bufferTime < now) {
-    // Token is expired or about to expire, try to refresh
-    if (tokens.refreshToken) {
-      try {
-        console.log('[OAuth] Access token expired, refreshing...')
-        const newTokens = await refreshAccessToken(tokens.refreshToken)
-        await storeTokens(newTokens)
-        return newTokens.access_token
-      } catch (error) {
-        console.error('[OAuth] Failed to refresh token:', error)
-        await clearTokens()
-        return null
-      }
-    } else {
-      // No refresh token, clear everything
+  try {
+    const newTokens = await refreshAccessToken(tokens.refreshToken)
+    await storeTokens(newTokens)
+    return newTokens.access_token
+  } catch (error) {
+    // A temporary network/provider failure must not destroy a renewable session.
+    if (error && typeof error === 'object' && 'oauthError' in error && error.oauthError === 'invalid_grant') {
       await clearTokens()
       return null
     }
+    throw error
   }
-
-  return tokens.accessToken
 }
 
 // ============================================

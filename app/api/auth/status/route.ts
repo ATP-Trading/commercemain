@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import {
-  isLoggedIn,
   getValidAccessToken,
   queryCustomerAccountApi,
   clearTokens,
@@ -39,15 +38,6 @@ interface CustomerData {
 
 export async function GET() {
   try {
-    const loggedIn = await isLoggedIn()
-
-    if (!loggedIn) {
-      return NextResponse.json({
-        isLoggedIn: false,
-        customer: null,
-      })
-    }
-
     // Get a valid access token (will refresh if needed)
     const accessToken = await getValidAccessToken()
 
@@ -55,7 +45,7 @@ export async function GET() {
       return NextResponse.json({
         isLoggedIn: false,
         customer: null,
-      })
+      }, { headers: { 'Cache-Control': 'private, no-store' } })
     }
 
     // Fetch customer data from Customer Account API
