@@ -7,6 +7,7 @@ import { Home, Search, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { MemberAccountIcon } from '@/components/membership/member-identity';
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -87,14 +88,14 @@ export function MobileBottomNav() {
                                 whileTap={{ scale: 0.9 }}
                                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             >
-                                <Icon
+                                {item.labelKey === "account" ? <MemberAccountIcon className="h-6 w-6" /> : <Icon
                                     className={cn(
                                         "w-6 h-6 transition-colors duration-200",
                                         active
                                             ? "text-atp-gold"
                                             : "text-neutral-300"
                                     )}
-                                />
+                                />}
 
                                 {/* Cart Badge */}
                                 {item.isCart && totalQuantity > 0 && (

@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { MemberAccountIcon } from '@/components/membership/member-identity'
 import { normalizeNavigationUrl, localizeNavigationPath } from "@/lib/navigation-url";
 
 import { Dialog, Transition } from "@headlessui/react"
@@ -349,7 +350,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
                             onClick={closeMobileMenu}
                             className="flex items-center gap-4 p-4 rounded-xl text-white hover:bg-gradient-to-r hover:from-yellow-400/10 hover:to-yellow-500/10 hover:text-yellow-400 transition-all duration-300 group border border-transparent hover:border-yellow-400/20 touch-target"
                           >
-                            <UserIcon className="h-5 w-5 text-gray-400 group-hover:text-yellow-400 transition-colors duration-300" />
+                            <MemberAccountIcon />
                             <span className="text-lg font-medium">{t('account')}</span>
                           </Link>
                           <button
