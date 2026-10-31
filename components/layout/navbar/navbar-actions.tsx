@@ -9,6 +9,7 @@ import { useCustomerOAuth } from "@/hooks/use-customer-oauth";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 
+import { MemberAccountIcon } from '@/components/membership/member-identity';
 import EnhancedSearch from "./enhanced-search";
 
 interface NavbarActionsProps {
@@ -49,7 +50,7 @@ export function NavbarActions({ locale, isRTL }: NavbarActionsProps) {
                             className="p-2 sm:p-3 hover:text-yellow-400 hover:bg-gray-900 rounded-full transition-all duration-300 hidden lg:block"
                             title={t('welcome', { name: customer.firstName || (isRTL ? 'عميلنا' : 'customer') })}
                         >
-                            <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <MemberAccountIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                         </Link>
                         <button
                             onClick={() => logout(`/${locale}`)}
