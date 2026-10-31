@@ -7,8 +7,8 @@ import { NavbarLinks } from "./navbar-links";
 import { NavbarActions } from "./navbar-actions";
 import { getLocale, getTranslations } from 'next-intl/server';
 import { CollectionNavigation } from "./collection-navigation";
-import { collectionNavigation } from "@/lib/collection-navigation";
-import { getCollections, getMenuItems } from "@/lib/shopify/server";
+import { populatedCollectionNavigation } from "@/lib/collection-navigation";
+import { getCollectionProducts, getMenuItems } from "@/lib/shopify/server";
 import type { ShopifyMenuItem } from "@/lib/shopify/types";
 
 export async function Navbar() {
@@ -16,7 +16,10 @@ export async function Navbar() {
   const t = await getTranslations('navbar'); // Fetch translations on server if needed for static parts
   const isRTL = locale === 'ar';
 
-  const collectionsPromise = getCollections({ language: locale });
+  const collectionsPromise = populatedCollectionNavigation([
+    { handle: "amazing-thai-products", title: "Health & Beauty" },
+    { handle: "water-soil-technology-solutions", title: "Water & Soil" },
+  ], locale, (collection) => getCollectionProducts({ collection, locale: { language: locale, country: "AE" } }));
   const menuHandle = process.env.SHOPIFY_NAV_MENU_HANDLE || "atp-menu";
   let menuItems: ShopifyMenuItem[] = [];
 
@@ -27,7 +30,7 @@ export async function Navbar() {
     console.warn('[Navbar] Failed to fetch Shopify menu:', error);
   }
 
-  const collections = collectionNavigation(await collectionsPromise, locale);
+  const collections = await collectionsPromise;
 
   // Define simplified menu structure for MobileMenu
   // Note: MobileMenu might still be client-side and expect full props. 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home } from "lucide-react";
+import { Home, ShoppingCart } from "lucide-react";
 
 type Props = { locale: string; collections: { handle: string; title: string; href: string }[] };
 
@@ -31,6 +31,11 @@ export function CollectionNavigation({ locale, collections }: Props) {
             ))}
           </ul>
         </div>
+        <Link href={`/${locale}/cart`} aria-label={arabic ? "سلة المشتريات" : "Shopping cart"}
+          aria-current={pathname === `/${locale}/cart` ? "page" : undefined} className={`${linkStyle} text-atp-gold`}>
+          <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+          <span className="hidden sm:inline">{arabic ? "السلة" : "Cart"}</span>
+        </Link>
       </div>
     </div>
   );
