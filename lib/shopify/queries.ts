@@ -416,10 +416,11 @@ export const getCollectionProductsQuery = `
             }
             tags
             updatedAt
-            # Collections that include this product (for "View All" button)
-            collections(first: 1) {
+            # Collection IDs determine membership eligibility and the applicable rate.
+            collections(first: 100) {
               edges {
                 node {
+                  id
                   handle
                   title
                 }
