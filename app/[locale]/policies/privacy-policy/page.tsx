@@ -1,6 +1,7 @@
 import { getShopPolicy } from '@/lib/shopify/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import styles from '../policy.module.css';
 
 interface PrivacyPolicyPageProps {
   params: Promise<{ locale: string }>;
@@ -54,9 +55,9 @@ export default async function PrivacyPolicyPage({
 
   if (!policy) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-atp-gold">
+      <div className={`${styles.page} min-h-screen bg-neutral-950 text-white`}>
+        <div className={styles.container}>
+          <h1 className={`${styles.title} font-bold text-atp-gold`}>
             {isArabic ? 'سياسة الخصوصية' : 'Privacy Policy'}
           </h1>
           <p className="text-neutral-400">
@@ -77,10 +78,10 @@ export default async function PrivacyPolicyPage({
 
   return (
     <div
-      className="min-h-screen bg-neutral-950 text-white py-16 px-6"
+      className={`${styles.page} min-h-screen bg-neutral-950 text-white`}
       dir={isArabic ? 'rtl' : 'ltr'}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className={styles.container}>
         <Link
           href={`/${locale}`}
           className="inline-block mb-8 text-atp-gold hover:underline"
@@ -88,20 +89,15 @@ export default async function PrivacyPolicyPage({
           {isArabic ? '→ العودة للرئيسية' : '← Back to Home'}
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8 text-atp-gold">{isArabic ? 'سياسة الخصوصية' : policy.title}</h1>
+        <h1 className={`${styles.title} font-bold text-atp-gold`}>{isArabic ? 'سياسة الخصوصية' : policy.title}</h1>
 
-        <section className="mb-8 rounded-xl border border-neutral-700 p-6 text-neutral-300">
-          <h2 className="mb-3 text-xl font-semibold text-white">{isArabic ? 'التحليلات والإعلانات' : 'Analytics and advertising'}</h2>
-          <p className="text-base leading-7">{isArabic ? 'أوقفنا تتبع الزوار الاختياري على واجهة متجرنا، بما فيه تحليلات Google وShopify وتتبع إعلانات Google وMeta. تبقى ملفات الارتباط الضرورية لتشغيل السلة وتسجيل الدخول وإتمام الطلب. تعالج خدمات الدفع الطلبات وفق سياسات الخصوصية الخاصة بها.' : 'Optional visitor tracking is disabled on our storefront, including Google and Shopify analytics and Google and Meta advertising tracking. Essential cookies remain for the cart, sign-in and checkout. Payment services process orders under their own privacy policies.'}</p>
+        <section className={`${styles.body} ${styles.notice}`}>
+          <h2 >{isArabic ? 'التحليلات والإعلانات' : 'Analytics and advertising'}</h2>
+          <p >{isArabic ? 'أوقفنا تتبع الزوار الاختياري على واجهة متجرنا، بما فيه تحليلات Google وShopify وتتبع إعلانات Google وMeta. تبقى ملفات الارتباط الضرورية لتشغيل السلة وتسجيل الدخول وإتمام الطلب. تعالج خدمات الدفع الطلبات وفق سياسات الخصوصية الخاصة بها.' : 'Optional visitor tracking is disabled on our storefront, including Google and Shopify analytics and Google and Meta advertising tracking. Essential cookies remain for the cart, sign-in and checkout. Payment services process orders under their own privacy policies.'}</p>
         </section>
 
         <div
-          className="prose prose-invert prose-lg max-w-none
-            prose-headings:text-white prose-headings:font-semibold
-            prose-p:text-neutral-300 prose-p:leading-relaxed
-            prose-a:text-atp-gold prose-a:no-underline hover:prose-a:underline
-            prose-li:text-neutral-300
-            prose-strong:text-white"
+          className={styles.body}
           dangerouslySetInnerHTML={{ __html: policy.body }}
         />
       </div>
