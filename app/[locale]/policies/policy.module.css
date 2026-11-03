@@ -1,0 +1,51 @@
+.page {
+  padding: 2.5rem 1.25rem 4rem;
+}
+.container {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+.title {
+  font-size: 1.75rem !important;
+  line-height: 1.5 !important;
+  margin-block: 0 2rem;
+  text-wrap: balance;
+}
+.body {
+  font-size: 1rem;
+  line-height: 1.85;
+  color: #d4d4d4;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.body :is(p, li, div, span, a, strong, em, b, small) {
+  font-size: inherit !important;
+  font-family: inherit !important;
+  line-height: inherit !important;
+}
+.body :is(h1, h2, h3, h4, h5, h6) {
+  font-family: inherit !important;
+  font-size: 1.125rem !important;
+  line-height: 1.65 !important;
+  font-weight: 600 !important;
+  color: #fff;
+  margin-block: 2rem 0.75rem !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+.body p { margin-block: 0 1rem !important; }
+.body :is(ul, ol) { margin-block: 0 1.25rem; padding-inline-start: 1.5rem; }
+.body ul { list-style: disc; }
+.body ol { list-style: decimal; }
+.body li { margin-block: 0.5rem; }
+.body a { color: #d4af37; text-decoration: underline; text-underline-offset: 0.2em; }
+.body :is(strong, b) { color: #fff; font-weight: 600; }
+.notice { margin-block-end: 2rem; padding: 1.25rem; border: 1px solid #404040; border-radius: 0.75rem; }
+.notice h2 { margin-block-start: 0 !important; }
+.notice p:last-child { margin-block-end: 0 !important; }
+@media (min-width: 640px) {
+  .page { padding: 4rem 1.5rem 5rem; }
+  .title { font-size: 2rem !important; }
+  .body { font-size: 1.0625rem; }
+  .body :is(h1, h2, h3, h4, h5, h6) { font-size: 1.25rem !important; }
+}
