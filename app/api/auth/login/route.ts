@@ -49,8 +49,13 @@ export async function GET(request: NextRequest) {
 
     console.log('[Auth/Login] Redirecting to Shopify authorization')
 
-    // Redirect to Shopify's authorization page
-    return NextResponse.redirect(authUrl)
+    // Carry the storefront language into Shopify's hosted sign-in screen.
+    const language = returnTo.match(/^\/(ar|en)(?:\/|\?|#|$)/)?.[1]
+      || (request.cookies.get('NEXT_LOCALE')?.value === 'ar' ? 'ar' : 'en')
+    const localizedAuthUrl = new URL(authUrl)
+    localizedAuthUrl.searchParams.set('locale', language)
+
+    return NextResponse.redirect(localizedAuthUrl)
   } catch (error) {
     console.error('[Auth/Login] Error initiating OAuth flow:', error)
     
