@@ -77,6 +77,11 @@ export function MobileBottomNav() {
                         <Link
                             key={item.labelKey}
                             href={item.href}
+                            onClick={() => {
+                                if (pathname === item.href) {
+                                    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                                }
+                            }}
                             className={cn(
                                 "flex flex-col items-center justify-center flex-1 h-full",
                                 "transition-colors duration-200",
