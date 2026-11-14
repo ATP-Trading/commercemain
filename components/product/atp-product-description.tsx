@@ -85,7 +85,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
     <>
       <div className={isRTL ? "font-arabic" : ""}>
         <div
-          className={`mb-6 flex flex-col border-b border-atp-light-gray pb-6 ${isRTL ? "text-right" : ""
+          className={`mb-4 flex flex-col border-b border-atp-light-gray pb-3 sm:mb-6 sm:pb-6 ${isRTL ? "text-right" : ""
             }`}
         >
           <div
@@ -118,8 +118,8 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             )}
           </div>
 
-          <div className="mb-6 space-y-3">
-            <h1 dir="auto" className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground leading-tight break-words">
+          <div className="mb-4 space-y-2 sm:mb-6 sm:space-y-3">
+            <h1 dir="auto" className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground leading-tight break-words">
               {productName}
             </h1>
             {productSubtitle && (
@@ -132,7 +132,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             {/* Unit price; membership discounts still apply without promotional cards. */}
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <div className="flex items-center gap-2">
-                <MemberPrice original={price.amount} amount={installmentBase.toFixed(2)} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === 'ar'} className="text-2xl" />
+                <MemberPrice original={price.amount} amount={installmentBase.toFixed(2)} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === 'ar'} className="text-xl sm:text-2xl" />
                 {isMembershipProduct && <span className="text-base text-neutral-600">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
               {isMembershipProduct && <p className="mt-3 text-base leading-relaxed text-neutral-700">{locale === 'ar' ? 'خصم ١٥٪ على المكملات والعناية المؤهلة، و١٠٪ على منتجات المياه والتربة، مع توصيل مجاني داخل الإمارات.' : '15% off eligible supplements and skincare, and 10% off water and soil products, with free delivery within the UAE.'}</p>}
@@ -173,7 +173,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
         {!isMembershipProduct && (
           <div className="mb-4" aria-live="polite" aria-atomic="true">
             <p className="text-sm text-neutral-600">{isRTL ? "إجمالي الكمية المختارة" : "Total for selected quantity"}</p>
-            <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === "ar"} className="text-2xl" />
+            <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === "ar"} className="text-xl sm:text-2xl" />
           </div>
         )}
 

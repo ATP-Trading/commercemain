@@ -171,8 +171,8 @@ export default async function ProductPage(props: {
             {productCollections.slice(1).map((collection) => <Link key={collection.handle} href={collection.href} className="inline-flex min-h-11 items-center underline underline-offset-4">{collection.title}</Link>)}
           </div>}
         </nav>
-        <div className="flex flex-col rounded-lg border border-atp-light-gray bg-atp-white p-8 md:p-12 lg:flex-row lg:gap-8">
-          <div className="h-full w-full basis-full lg:basis-4/6">
+        <div className="flex flex-col rounded-lg border border-atp-light-gray bg-atp-white p-3 sm:p-8 md:p-12 lg:flex-row lg:gap-8">
+          <div className="mx-auto h-full w-full max-w-[min(100%,72vw,36svh)] basis-full sm:max-w-none lg:basis-4/6">
             <Suspense
               fallback={
                 <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden" />
