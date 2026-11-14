@@ -141,17 +141,6 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         </div>
 
-        {/* Product Description - Structured Accordion Layout */}
-        {(localizedDescriptionHtml || product.descriptionHtml) && (
-          <div className="mb-6">
-            <ProductDescriptionAccordion
-              descriptionHtml={localizedDescriptionHtml || product.descriptionHtml}
-              isRTL={isRTL}
-              className={isRTL ? "text-right" : ""}
-            />
-          </div>
-        )}
-
         {/* Variant Selector (only show if there are actual variants with options) */}
         {product.options.length > 0 &&
           product.options.some((option) => option.values.length > 1) && (
@@ -162,6 +151,24 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
               />
             </div>
           )}
+
+        {!isMembershipProduct && (
+          <div className="mb-5 space-y-3">
+            <QuantitySelector product={product} />
+            <ATPAddToCart product={product} />
+          </div>
+        )}
+
+        {/* Product Description - Structured Accordion Layout */}
+        {(localizedDescriptionHtml || product.descriptionHtml) && (
+          <div className="mb-6">
+            <ProductDescriptionAccordion
+              descriptionHtml={localizedDescriptionHtml || product.descriptionHtml}
+              isRTL={isRTL}
+              className={isRTL ? "text-right" : ""}
+            />
+          </div>
+        )}
 
         {/* Quantity Selector - hidden for membership/digital products */}
         {!isMembershipProduct && (

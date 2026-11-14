@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Crown } from "lucide-react";
 import clsx from "clsx";
@@ -91,12 +91,10 @@ export function ATPAddToCart({ product }: { product: Product }) {
   const { addCartItem, cart } = useCart();
   const { isRTL } = useRTL();
   const [failed, setFailed] = useState(false);
-  const [pending, setPending] = useState(false);
-  const submitting = useRef(false);
   const { isMember } = useMembership();
   const { calculateServiceDiscount } = useMembershipDiscount();
   const { showNotification } = useCartNotification();
-  const { quantity, inventory } = useQuantity();
+  const { quantity, inventory, pending, setPending, submitting } = useQuantity();
   const { selectedVariant, selectedVariantId, availableForSale } =
     useSelectedVariant(product);
 

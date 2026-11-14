@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react"
 import { Label } from "@/components/ui/label"
 import { Minus, Plus } from "lucide-react"
 import { useCart } from "@/components/cart/cart-context"
@@ -15,6 +15,9 @@ import { remainingStock } from "@/lib/shopify/inventory-limit"
 // Context for sharing quantity state
 interface QuantityContextType {
   quantity: number
+  pending: boolean
+  setPending: (pending: boolean) => void
+  submitting: { current: boolean }
   inventory: ReturnType<typeof useInventoryQuantity>
   setQuantity: (quantity: number) => void
 }
@@ -26,8 +29,11 @@ export function QuantityProvider({ children, product }: { children: ReactNode; p
   const inventory = useInventoryQuantity(selectedVariantId)
   const [quantity, setQuantity] = useState(1)
 
+  const [pending, setPending] = useState(false)
+  const submitting = useRef(false)
+
   return (
-    <QuantityContext.Provider value={{ quantity, setQuantity, inventory }}>
+    <QuantityContext.Provider value={{ quantity, setQuantity, inventory, pending, setPending, submitting }}>
       {children}
     </QuantityContext.Provider>
   )
