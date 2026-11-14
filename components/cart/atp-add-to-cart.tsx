@@ -87,16 +87,18 @@ function SubmitButton({
   );
 }
 
-export function ATPAddToCart({ product }: { product: Product }) {
+export function ATPAddToCart({ product, fixedQuantity }: { product: Product; fixedQuantity?: number }) {
   const { addCartItem, cart } = useCart();
   const { isRTL } = useRTL();
   const [failed, setFailed] = useState(false);
   const { isMember } = useMembership();
   const { calculateServiceDiscount } = useMembershipDiscount();
   const { showNotification } = useCartNotification();
-  const { quantity, inventory, pending, setPending, submitting } = useQuantity();
+  const { quantity: selectedQuantity, inventory, pending, setPending, submitting } = useQuantity();
   const { selectedVariant, selectedVariantId, availableForSale } =
     useSelectedVariant(product);
+
+  const quantity = fixedQuantity ?? selectedQuantity;
 
   // Calculate member savings
   const memberSavings =
@@ -108,7 +110,7 @@ export function ATPAddToCart({ product }: { product: Product }) {
   const remaining = remainingStock(inventory.stock, inCart);
 
   const handleAddToCart = async () => {
-    if (submitting.current) return;
+    if (submitting.current || quantity < 1) return;
     setFailed(false);
     console.log("🛒 Add to cart clicked!", {
       selectedVariant,
@@ -175,7 +177,7 @@ export function ATPAddToCart({ product }: { product: Product }) {
         await handleAddToCart();
       }}
     >
-      <fieldset disabled={pending || inventory.isLoading || !!inventory.error} aria-busy={pending}>
+      <fieldset className="disabled:opacity-60" disabled={quantity < 1 || pending || inventory.isLoading || !!inventory.error} aria-busy={pending}>
       {inventory.isLoading ? (
         <button disabled aria-busy="true" className="w-full rounded-xl bg-neutral-100 p-4 font-semibold text-neutral-700">{isRTL ? "جارٍ التحقق من التوفر…" : "Checking availability…"}</button>
       ) : <SubmitButton

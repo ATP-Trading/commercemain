@@ -52,7 +52,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
     }, [triggerRef]);
 
     const handleAddToCart = async () => {
-        if (!selectedVariant?.id) return;
+        if (quantity < 1 || !selectedVariant?.id) return;
 
         setIsVisible(false); // Hide sticky bar slightly before modal opens
         setIsPending(true);
@@ -96,7 +96,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
                         </div>
                         <Button
                             onClick={handleAddToCart}
-                            disabled={inventory.isLoading || !!inventory.error || isPending || !selectedVariant.availableForSale}
+                            disabled={quantity < 1 || inventory.isLoading || !!inventory.error || isPending || !selectedVariant.availableForSale}
                             className="bg-atp-gold hover:bg-atp-gold/90 text-atp-black font-semibold px-6"
                         >
                             {isPending ? (

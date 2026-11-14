@@ -157,9 +157,9 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         {!isMembershipProduct && (
           <div className="mb-5 space-y-3">
-            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+            <div className="space-y-3">
               <QuantitySelector product={product} />
-              <div className="min-w-0 text-end">
+              <div className="min-w-0 text-start">
                 <p className="text-sm text-neutral-600">{isRTL ? "الإجمالي" : "Total"}</p>
                 {quantityPrice}
               </div>
@@ -195,7 +195,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         {/* Add to Cart Button - with ref for sticky CTA */}
         <div className="mb-4" ref={addToCartRef}>
-          {product.handle === "atp-membership" ? <MembershipCheckoutButton /> : <ATPAddToCart product={product} />}
+          {product.handle === "atp-membership" ? <MembershipCheckoutButton /> : <ATPAddToCart product={product} fixedQuantity={isMembershipProduct ? 1 : undefined} />}
         </div>
 
           {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
