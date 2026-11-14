@@ -27,7 +27,7 @@ const QuantityContext = createContext<QuantityContextType | undefined>(undefined
 export function QuantityProvider({ children, product }: { children: ReactNode; product: Product }) {
   const { selectedVariantId } = useSelectedVariant(product)
   const inventory = useInventoryQuantity(selectedVariantId)
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(0)
 
   const [pending, setPending] = useState(false)
   const submitting = useRef(false)
@@ -59,11 +59,11 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
   const { selectedVariant } = useSelectedVariant(product)
   const cartQuantity = cart?.lines?.filter(line => line.merchandise.id === selectedVariant?.id).reduce((sum, line) => sum + line.quantity, 0) ?? 0
   const remaining = remainingStock(inventory.stock, cartQuantity)
-  const max = remaining === undefined ? undefined : Math.max(1, remaining)
-  useEffect(() => { setQuantity(1) }, [selectedVariant?.id])
+  const max = remaining
+  useEffect(() => { setQuantity(0) }, [selectedVariant?.id])
   useEffect(() => { if (max !== undefined && quantity > max) setQuantity(max) }, [max, quantity, setQuantity])
   const handleQuantityChange = (newQuantity: number) => {
-    if (Number.isSafeInteger(newQuantity) && newQuantity >= 1) setQuantity(Math.min(newQuantity, max ?? newQuantity))
+    if (Number.isSafeInteger(newQuantity) && newQuantity >= 0) setQuantity(Math.min(newQuantity, max ?? newQuantity))
   }
 
   const incrementQuantity = () => {
@@ -75,7 +75,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 1
+    const value = Number(e.target.value)
     handleQuantityChange(value)
   }
 
@@ -110,7 +110,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               type="button"
               aria-label={ar ? "تقليل الكمية" : "Decrease quantity"}
               onClick={decrementQuantity}
-              disabled={quantity <= 1}
+              disabled={quantity <= 0}
               className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
             >
               <Minus className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
@@ -122,7 +122,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
             <input
               aria-label={t("quantity")}
               type="number"
-              min="1"
+              min="0"
               max={max}
               disabled={inventory.isLoading || !!inventory.error || remaining === 0}
               value={quantity}

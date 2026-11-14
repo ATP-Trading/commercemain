@@ -74,6 +74,7 @@ export function AddToCart({ product }: { product: Product }) {
   const remaining = remainingStock(inventory.stock, inCart);
 
   const handleAddToCart = async () => {
+    if (quantity < 1) return;
     console.log("🛒 Add to cart clicked!", {
       selectedVariant,
       product,
@@ -133,7 +134,7 @@ export function AddToCart({ product }: { product: Product }) {
         await handleAddToCart();
       }}
     >
-      <fieldset disabled={inventory.isLoading || !!inventory.error}><SubmitButton
+      <fieldset disabled={quantity < 1 || inventory.isLoading || !!inventory.error}><SubmitButton
         availableForSale={availableForSale && remaining !== 0}
         selectedVariantId={selectedVariantId}
       /></fieldset>
