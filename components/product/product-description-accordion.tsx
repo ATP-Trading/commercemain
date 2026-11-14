@@ -777,11 +777,11 @@ export function ProductDescriptionAccordion({
                     <AccordionItem
                         key={section.id}
                         value={section.id}
-                        className="border border-neutral-200 dark:border-neutral-700 rounded-xl mb-3 overflow-hidden bg-transparent shadow-none"
+                        className="border border-neutral-200 dark:border-neutral-700 rounded-xl mb-2 sm:mb-3 overflow-hidden bg-transparent shadow-none"
                     >
                         <AccordionTrigger
                             className={cn(
-                                "px-5 py-4 hover:no-underline",
+                                "min-h-11 px-3 py-2 sm:px-5 sm:py-4 hover:no-underline",
                                 "text-base font-bold",
                                 isRTL ? "flex-row-reverse text-right" : ""
                             )}
@@ -790,7 +790,7 @@ export function ProductDescriptionAccordion({
                                 "flex items-center gap-3",
                                 isRTL && "flex-row-reverse"
                             )}>
-                                <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                                <div className="p-1.5 sm:p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
                                     {section.icon}
                                 </div>
                                 <span className="text-neutral-900 dark:text-neutral-100">{section.displayTitle}</span>

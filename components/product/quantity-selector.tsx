@@ -105,9 +105,9 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               aria-label={ar ? "تقليل الكمية" : "Decrease quantity"}
               onClick={decrementQuantity}
               disabled={quantity <= 1}
-              className="flex h-14 w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
+              className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
             >
-              <Minus className="h-6 w-6" strokeWidth={2.5} />
+              <Minus className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
             </m.button>
 
             {/* Subtle separator */}
@@ -121,7 +121,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               disabled={inventory.isLoading || !!inventory.error || remaining === 0}
               value={quantity}
               onChange={handleInputChange}
-              className="h-14 w-16 text-center border-0 bg-white text-neutral-950 text-xl font-semibold tabular-nums caret-[#d4af37] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-neutral-900 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none p-0 selection:bg-[#d4af37]/30"
+              className="h-11 w-12 sm:h-14 sm:w-16 text-center border-0 bg-white text-neutral-950 text-base sm:text-xl font-semibold tabular-nums caret-[#d4af37] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-neutral-900 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none p-0 selection:bg-[#d4af37]/30"
             />
 
             {/* Subtle separator */}
@@ -134,9 +134,9 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
               aria-label={ar ? "زيادة الكمية" : "Increase quantity"}
               onClick={incrementQuantity}
               disabled={inventory.isLoading || !!inventory.error || (remaining !== undefined && quantity >= remaining)}
-              className="flex h-14 w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
+              className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center bg-neutral-100 text-neutral-950 transition-colors hover:bg-atp-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
             >
-              <Plus className="h-6 w-6" strokeWidth={2.5} />
+              <Plus className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
             </m.button>
           </div>
         </div>
