@@ -178,12 +178,14 @@ export function ATPAddToCart({ product }: { product: Product }) {
       }}
     >
       <fieldset disabled={pending || inventory.isLoading || !!inventory.error} aria-busy={pending}>
-      <SubmitButton
+      {inventory.isLoading ? (
+        <button disabled aria-busy="true" className="w-full rounded-xl bg-neutral-100 p-4 font-semibold text-neutral-700">{isRTL ? "جارٍ التحقق من التوفر…" : "Checking availability…"}</button>
+      ) : <SubmitButton
         availableForSale={availableForSale && remaining !== 0}
         selectedVariantId={selectedVariantId}
         isMember={isMember}
         memberSavings={memberSavings}
-      />
+      />}
       </fieldset>
       {failed && <p role="alert" className="mt-3 text-sm text-red-600">{isRTL ? "لم تكتمل الإضافة. قد تكون الكمية المطلوبة أكثر من المتوفر؛ راجع سلتك قبل المحاولة مجددًا." : "The addition did not complete. The requested quantity may exceed available stock; check your cart before trying again."}</p>}
     </form>

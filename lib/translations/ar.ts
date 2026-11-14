@@ -3,7 +3,7 @@ export const ar = {
   nav: {
     home: "الرئيسية",
     atpMembership: "عضوية ATP",
-    skincareSupplements: "العناية بالبشرة والمكملات",
+    skincareSupplements: "الصحة والجمال",
     waterSoilTechnology: "حلول تقنية المياه والتربة",
     emsTraining: "تدريب التحفيز الكهربائي للعضلات",
     aboutUs: "من نحن",
@@ -108,7 +108,7 @@ export const ar = {
   // Products
   products: {
     skincare: {
-      title: "العناية بالبشرة والمكملات",
+      title: "الصحة والجمال",
       subtitle: "منتجات عافية متميزة لصحتك وجمالك",
       categories: "الفئات",
       viewAll: "عرض جميع المنتجات",

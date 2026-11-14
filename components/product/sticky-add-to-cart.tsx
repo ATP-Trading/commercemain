@@ -25,7 +25,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
     const [isVisible, setIsVisible] = useState(false);
     const [isPending, setIsPending] = useState(false);
     const { addCartItem } = useCart();
-    const { quantity } = useQuantity();
+    const { quantity, inventory } = useQuantity();
     const t = useTranslations("product");
     const { calculateServiceDiscount } = useMembershipDiscount();
     const isMembershipProduct = product.handle === "atp-membership" || product.tags.some(tag => tag.toLowerCase().includes("membership"));
@@ -96,7 +96,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
                         </div>
                         <Button
                             onClick={handleAddToCart}
-                            disabled={isPending || !selectedVariant.availableForSale}
+                            disabled={inventory.isLoading || !!inventory.error || isPending || !selectedVariant.availableForSale}
                             className="bg-atp-gold hover:bg-atp-gold/90 text-atp-black font-semibold px-6"
                         >
                             {isPending ? (
@@ -104,7 +104,7 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
                             ) : (
                                 <>
                                     <ShoppingCart className="w-4 h-4 mr-2" />
-                                    {selectedVariant.availableForSale ? t("addToCart") : t("outOfStock")}
+                                    {inventory.isLoading ? t("checkingAvailability") : selectedVariant.availableForSale ? t("addToCart") : t("outOfStock")}
                                 </>
                             )}
                         </Button>
