@@ -48,6 +48,9 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
     ? calculateServiceDiscount(Number(price.amount), undefined, getMemberDiscountRate(product)).finalPrice
     : Number(price.amount);
   const totalPrice = (Math.round(installmentBase * 100) * quantity / 100).toFixed(2);
+  const quantityPrice = (
+    <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === "ar"} className="text-xl sm:text-2xl" />
+  );
   const estimatedInstallment = new Intl.NumberFormat(locale === "ar" ? "ar-AE" : "en-AE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -154,7 +157,13 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
 
         {!isMembershipProduct && (
           <div className="mb-5 space-y-3">
-            <QuantitySelector product={product} />
+            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+              <QuantitySelector product={product} />
+              <div className="min-w-0 text-end">
+                <p className="text-sm text-neutral-600">{isRTL ? "الإجمالي" : "Total"}</p>
+                {quantityPrice}
+              </div>
+            </div>
             <ATPAddToCart product={product} />
           </div>
         )}
@@ -180,7 +189,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
         {!isMembershipProduct && (
           <div className="mb-4" aria-live="polite" aria-atomic="true">
             <p className="text-sm text-neutral-600">{isRTL ? "إجمالي الكمية المختارة" : "Total for selected quantity"}</p>
-            <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === "ar"} className="text-xl sm:text-2xl" />
+            {quantityPrice}
           </div>
         )}
 
