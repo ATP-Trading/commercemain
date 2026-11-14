@@ -398,8 +398,8 @@ export const menuCategories: MenuCategory[] = [
   },
   {
     id: "skincare-supplements",
-    title: "Skincare & Supplements",
-    titleAr: "العناية بالبشرة والمكملات",
+    title: "Health & Beauty",
+    titleAr: "الصحة والجمال",
     description: "Premium Thai beauty products",
     descriptionAr: "منتجات تجميل تايلندية فاخرة",
     href: "/collections/skincare-supplements",

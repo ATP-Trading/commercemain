@@ -95,7 +95,7 @@ export function QuantitySelector({ product, className }: QuantitySelectorProps) 
         </div>
 
         {inventory.error && <p role="alert" className="text-sm">{ar ? "تعذر التحقق من المخزون." : "Stock could not be checked."} <button type="button" onClick={inventory.refetch} className="underline">{ar ? "أعد المحاولة" : "Try again"}</button></p>}
-        {remaining !== undefined && <p role="status" className="text-sm text-neutral-600">{remaining === 0 ? (ar ? "الكمية المتوفرة موجودة في سلتك أو نفدت." : "Available stock is already in your cart or sold out.") : (ar ? `يمكنك إضافة ${remaining} قطعة كحد أقصى.` : `You can add up to ${remaining} more.`)}</p>}
+        {!inventory.error && remaining !== undefined && <p role="status" className="text-sm text-neutral-600">{remaining === 0 ? (ar ? "لا توجد كمية إضافية متاحة." : "No more available to add.") : (ar ? `${cartQuantity ? "المتبقي للإضافة" : "المتوفر"}: ${remaining.toLocaleString("ar-AE-u-nu-arab")}` : `${remaining} ${cartQuantity ? "more available to add" : "available"}`)}</p>}
         <div className="w-fit">
           <div className="inline-flex items-center overflow-hidden rounded-xl border-2 border-neutral-300 bg-white shadow-sm">
             <m.button

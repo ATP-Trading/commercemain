@@ -3,7 +3,7 @@ export const en = {
   nav: {
     home: "Home",
     atpMembership: "ATP Membership",
-    skincareSupplements: "Skincare & Supplements",
+    skincareSupplements: "Health & Beauty",
     waterSoilTechnology: "Water & Soil Technology Solutions",
     emsTraining: "EMS Training",
     aboutUs: "About Us",
@@ -104,7 +104,7 @@ export const en = {
   // Products
   products: {
     skincare: {
-      title: "Skincare & Supplements",
+      title: "Health & Beauty",
       subtitle: "Premium wellness products for your health and beauty",
       categories: "Categories",
       viewAll: "View All Products",

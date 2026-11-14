@@ -4,7 +4,6 @@ import { MemberPrice } from "./member-price";
 import { useRef } from "react";
 import Image from "next/image";
 import { useMembershipDiscount } from "@/hooks/use-storefront-membership-pricing";
-import { useInventoryQuantity } from "@/lib/hooks/use-inventory-quantity";
 import { MembershipCheckoutButton } from "@/components/membership/direct-checkout-button";
 import { ATPAddToCart } from "@/components/cart/atp-add-to-cart";
 import { isMemberDiscountEligible, getMemberDiscountRate } from "@/lib/shopify/member-product-eligibility";
@@ -23,7 +22,6 @@ import { Award, Leaf, Star } from "lucide-react";
 import { VariantSelector } from "./variant-selector";
 import { QuantitySelector, QuantityProvider, useQuantity } from "./quantity-selector";
 import { StickyAddToCart } from "./sticky-add-to-cart";
-import { UrgencySignals } from "./urgency-signals";
 import { TabbyPromo } from "./tabby-promo";
 import { TamaraWidget } from "./tamara-widget";
 import { ProductDescriptionAccordion } from "./product-description-accordion";
@@ -55,11 +53,6 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
     maximumFractionDigits: 2,
   }).format(Number(totalPrice) / 4);
   const addToCartRef = useRef<HTMLDivElement>(null);
-
-  // Fetch real inventory quantity from Shopify Admin API
-  const { quantity: inventoryQuantity, isLoading: inventoryLoading } = useInventoryQuantity(
-    selectedVariant?.id
-  );
 
   // Get localized content
   const localizedTitle = getLocalizedProductTitle(product, locale);
@@ -253,23 +246,6 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
               }
             />
           </div>
-
-        {/* Urgency Signals - Stock Indicator (Real inventory from Shopify Admin API) */}
-        {/* Hidden for membership/digital products since they have unlimited inventory */}
-        {selectedVariant && !inventoryLoading && !isMembershipProduct && (
-          <div className="mb-4">
-            <UrgencySignals
-              quantityAvailable={
-                // If not available for sale, show 0
-                // Otherwise, use the real inventory count from Admin API
-                !selectedVariant.availableForSale
-                  ? 0
-                  : inventoryQuantity
-              }
-              lowStockThreshold={5}
-            />
-          </div>
-        )}
 
         <a href="https://wa.me/971569586422" target="_blank" rel="noopener noreferrer"
           className="mb-4 flex min-h-11 items-center justify-center rounded-lg border border-atp-gold px-4 text-base font-medium text-atp-black md:hidden">

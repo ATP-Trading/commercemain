@@ -20,7 +20,7 @@
   },
   "navbar": {
     "atpMembership": "عضوية ATP",
-    "skincareSupplements": "العناية بالبشرة والمكملات",
+    "skincareSupplements": "الصحة والجمال",
     "waterSoilTechnology": "حلول تقنية المياه والتربة",
     "emsTraining": "تدريب EMS",
     "aboutUs": "قصتنا",
@@ -198,6 +198,7 @@
     "scrollToExplore": "مرر للاستكشاف"
   },
   "product": {
+    "checkingAvailability": "جارٍ التحقق من التوفر…",
     "quantity": "الكمية",
     "inCart": "في السلة",
     "outOfStock": "غير متوفر",

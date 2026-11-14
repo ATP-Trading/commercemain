@@ -20,7 +20,7 @@
   },
   "navbar": {
     "atpMembership": "ATP Membership",
-    "skincareSupplements": "Skincare & Supplements",
+    "skincareSupplements": "Health & Beauty",
     "waterSoilTechnology": "Water & Soil Technology Solutions",
     "emsTraining": "EMS Training",
     "aboutUs": "Our Story",
@@ -198,6 +198,7 @@
     "scrollToExplore": "Scroll to explore"
   },
   "product": {
+    "checkingAvailability": "Checking availability…",
     "quantity": "Quantity",
     "inCart": "in cart",
     "outOfStock": "Out of Stock",
