@@ -517,7 +517,7 @@ export function CartPageContent() {
                                         <Separator className="bg-neutral-800 my-3" />
 
                                         <div className="flex justify-between text-xl font-semibold text-white">
-                                            <span>{tCart("page.totalLabel")}
+                                            <span>{isRTL ? "الإجمالي التقديري" : "Estimated total"}
                                             </span>
                                             <Price
                                                 amount={cart.cost.totalAmount.amount}
