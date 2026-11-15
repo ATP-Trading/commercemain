@@ -297,8 +297,8 @@ export function getLocalizedProductTitle(product: any, locale: 'en' | 'ar'): str
   }
   const displayTitles: Record<string, { en: string; ar: string }> = {
     'mores-collagen': {
-      ar: 'MORES COLLAGEN – كولاجين بحري ١٠٬٠٠٠ ملغ لدعم مرونة البشرة',
-      en: 'MORES COLLAGEN – 10,000 mg marine collagen to support skin elasticity',
+      ar: 'MORES COLLAGEN – لبشرة أكثر نضارة ومرونة، مع ١٠٬٠٠٠ ملغ من الكولاجين البحري.',
+      en: 'MORES COLLAGEN – For radiant, supple skin, with 10,000 mg of marine collagen.',
     },
     'ultimatch-roll-on-deodorant-for-women': {
       en: 'ULTIMATCH Roll-On Deodorant for Women – Antiperspirant & Underarm Care',
