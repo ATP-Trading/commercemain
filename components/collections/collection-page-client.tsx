@@ -18,6 +18,7 @@ interface CollectionPageClientProps {
     description: string;
     handle: string;
   };
+  activeCategory?: string;
   categories?: readonly {value: string; en: string; ar: string}[];
   products: Product[];
   locale: "en" | "ar";
@@ -26,6 +27,7 @@ interface CollectionPageClientProps {
 export default function CollectionPageClient({
   collection,
   categories,
+  activeCategory,
   products,
   locale,
 }: CollectionPageClientProps) {
@@ -35,11 +37,14 @@ export default function CollectionPageClient({
     if (window.location.hash === "#collection-products") {
       productsSection.current?.scrollIntoView({block: "start"});
     }
-  }, [collection.handle]);
+  }, [collection.handle, activeCategory]);
   const shouldReduceMotion = useReducedMotion();
   const t = useTranslations("collection");
   const isRTL = locale === "ar";
   
+  const nextCategory = activeCategory === "supplements" ? "skincare" : activeCategory === "skincare" ? "supplements" : undefined;
+  const showCategoryLink = collection.handle === "amazing-thai-products" && nextCategory && categories?.some(category => category.value === nextCategory);
+
   // Fix: Use animate instead of whileInView to trigger on soft navigation
   // This fixes the issue where products don't show on first mobile navigation
   const isVisible = useAnimateOnMount(50);
@@ -99,6 +104,15 @@ export default function CollectionPageClient({
             <Grid variant="collection" mobileColumns={2} isRTL={isRTL}>
               <ProductGridItems products={products || []} locale={locale} />
             </Grid>
+          )}
+          {showCategoryLink && (
+            <div className="mt-8 flex justify-center">
+              <a href={`?category=${nextCategory}#collection-products`} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-atp-gold px-6 py-3 text-center font-semibold text-atp-black hover:bg-atp-gold/10 focus-visible:outline-2">
+                {nextCategory === "skincare"
+                  ? (isRTL ? "تسوّق العناية بالبشرة" : "Shop skincare")
+                  : (isRTL ? "تسوّق المكملات" : "Shop supplements")}
+              </a>
+            </div>
           )}
         </div>
       </section>

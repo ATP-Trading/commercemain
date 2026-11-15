@@ -135,6 +135,7 @@ export default async function CollectionPage(props: {
                     }}
                     products={filtered.products}
                     categories={filtered.categories}
+                    activeCategory={typeof searchParams.category === "string" ? searchParams.category : undefined}
                     locale={params.locale as "en" | "ar"}
                 />
             </Suspense>
