@@ -12,6 +12,8 @@ export function WhatsAppButton() {
   const isAR = locale === 'ar'
   const tooltip = isAR ? 'تواصل معنا' : 'Chat with us'
 
+  if (/\/cart\/?$/.test(pathname || '')) return null
+
   return (
     <a
       href={whatsAppHref}

@@ -32,6 +32,7 @@ import { DEFAULT_OPTION } from "@/lib/constants";
 import { createUrl } from "@/lib/utils";
 import { DeleteItemButton } from "@/components/cart/delete-item-button";
 import { EditItemQuantityButton } from "@/components/cart/edit-item-quantity-button";
+import { useWhatsAppHref } from "@/components/ui/product-whatsapp";
 import { CheckoutForm } from "./checkout-form";
 import { CartAnalytics } from "@/components/analytics/cart-analytics";
 import { useFormStatus } from "react-dom";
@@ -161,6 +162,7 @@ function isValidCartItem(item: CartItem): boolean {
 }
 
 export function CartPageContent() {
+    const whatsAppHref = useWhatsAppHref();
     const { cart, updateCartItem } = useCart();
     const { membership, isMember, isLoading: membershipLoading, error: membershipError } = useMembership();
     const { t: tCart } = useTranslations("cart");
@@ -537,6 +539,10 @@ export function CartPageContent() {
                                         <CartAnalytics cart={cart} />
                                         <CheckoutButton isMember={isMember} t={tCart} />
                                     </CheckoutForm>
+
+                                    <a href={whatsAppHref} target="_blank" rel="noopener noreferrer" className="block py-2 text-center text-sm text-neutral-200 underline underline-offset-4">
+                                        {isRTL ? "تحتاج مساعدة؟ تواصل عبر واتساب" : "Need help? Chat on WhatsApp"}
+                                    </a>
 
                                     {/* Continue Shopping */}
                                     <Button 

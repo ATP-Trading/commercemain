@@ -20,11 +20,8 @@ export default function ATPWellnessHero({
     <section className="relative isolate overflow-hidden bg-[#080808] text-white" aria-label={t("heroAriaLabel")}>
       {/* Copy stays in normal flow so long translations never overlap products. */}
       <div className="relative z-10 mx-auto max-w-4xl px-5 pb-4 pt-10 text-center sm:px-8 sm:pt-14 lg:pt-16">
-        <p className="mb-3 text-sm font-medium tracking-wide text-[#e8cd88] sm:text-base">
-          {t("authenticThaiWellness")}
-        </p>
         <h1 className="text-balance font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-6xl">
-          {t("welcomeToATP")}
+          {t("healthBeautyTitle")}
         </h1>
         <p className="mx-auto mt-5 max-w-3xl text-pretty text-base leading-7 text-[#ededed] sm:text-lg sm:leading-8">
           {t("heroSubtitle")}

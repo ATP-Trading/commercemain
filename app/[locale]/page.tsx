@@ -96,11 +96,10 @@ export default async function HomePage({ params }: HomePageProps) {
       {/* Enhanced ATP Wellness Hero Section */}
       <ATPWellnessHero />
 
+      <ServiceHighlights />
+
       {/* New Arrivals and Products */}
       <Suspense fallback={<div className="min-h-96 bg-[#faf9f6]" aria-busy="true" />}><NewArrivalsWrapper locale={locale} /></Suspense>
-
-      {/* Interactive Service Highlights */}
-      <ServiceHighlights />
 
       {/* Instagram Feed */}
       <InstagramFeed limit={8} />
