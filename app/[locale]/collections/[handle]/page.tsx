@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 
 function healthBeautyTitle(handle: string, locale: string) {
     if (handle === 'amazing-thai-products') return locale === 'ar' ? 'الصحة والجمال' : 'Health & Beauty';
+    return undefined;
 }
 
 export async function generateMetadata(props: {
