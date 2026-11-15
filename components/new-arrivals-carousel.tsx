@@ -10,7 +10,6 @@ import { getLocalizedProductHandle, getLocalizedProductTitle } from "@/lib/shopi
 
 interface NewArrivalsCarouselProps {
   products: Product[];
-  carouselProducts: Product[];
   locale: Locale;
 }
 
@@ -44,31 +43,22 @@ function ProductCard({ product, locale }: { product: Product; locale: Locale }) 
   );
 }
 
-export async function NewArrivalsCarousel({ products, carouselProducts, locale }: NewArrivalsCarouselProps) {
+export async function NewArrivalsCarousel({ products, locale }: NewArrivalsCarouselProps) {
   const [t, tProduct] = await Promise.all([
     getTranslations({ locale, namespace: "homepage" }),
     getTranslations({ locale, namespace: "product" }),
   ]);
-  const sections = [
-    { id: "new-arrivals", title: locale === "ar" ? "منتجاتنا الجديدة" : "New arrivals", items: carouselProducts.slice(0, 4) },
-    { id: "featured-products", title: t("featuredProductsTitle"), items: products.slice(0, 5) },
-  ].filter((section) => section.items.length > 0);
-
-  if (!sections.length) return null;
-
   return (
     <div className="bg-[#faf9f6] py-12 sm:py-16">
       <div className="container-premium space-y-14 px-4 sm:space-y-20 sm:px-6 lg:px-8">
-        {sections.map((section) => (
-          <section key={section.id} aria-labelledby={`${section.id}-title`}>
-            <h2 id={`${section.id}-title`} className="mb-7 text-2xl font-semibold leading-snug text-neutral-900 sm:mb-9 sm:text-3xl lg:text-4xl">
-              {section.title}
+          <section aria-labelledby="featured-products-title">
+            <h2 id="featured-products-title" className="mb-7 text-2xl font-semibold leading-snug text-neutral-900 sm:mb-9 sm:text-3xl lg:text-4xl">
+              {t("featuredProductsTitle")}
             </h2>
             <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
-              {section.items.map((product) => <ProductCard key={product.id} product={product} locale={locale} />)}
+              {products.map((product) => <ProductCard key={product.id} product={product} locale={locale} />)}
             </div>
           </section>
-        ))}
         <div className="text-center">
           <Link href={`/${locale}/collections/amazing-thai-products`} className="inline-flex min-h-12 items-center justify-center rounded-full bg-neutral-950 px-8 py-3 text-base font-medium text-white transition-colors hover:bg-neutral-800">
             {tProduct("viewAllProducts")}

@@ -1,4 +1,4 @@
-import { getCollectionProducts, getFeaturedProducts, getNewestProducts } from "@/lib/shopify/server"
+import { getCollectionProducts, getFeaturedProducts } from "@/lib/shopify/server"
 import { NewArrivalsCarousel } from "./new-arrivals-carousel"
 import { type Locale } from "@/lib/i18n/config"
 
@@ -13,17 +13,11 @@ export async function NewArrivalsWrapper({ locale }: NewArrivalsWrapperProps) {
     ? { language: 'AR', country: 'AE' }
     : { language: 'EN', country: 'AE' };
 
-  // Fetch featured products from the dedicated collection (limit: 5)
-  // To customize: Go to Shopify Admin → Products → Collections → "Featured Products"
-  // Add exactly 5 products you want to feature in your preferred order
-  const [featuredProducts, carouselProducts] = await Promise.all([getFeaturedProducts({
+  const featuredProducts = await getFeaturedProducts({
     collection: "featured-products",
-    limit: 5,
+    limit: 6,
     locale: localeForApi,
-  }), getNewestProducts({
-    limit: 4,
-    locale: localeForApi,
-  })]);
+  });
 
   // Fallback to amazing-thai-products if featured-products collection is empty
   const products = featuredProducts?.length 
@@ -32,5 +26,5 @@ export async function NewArrivalsWrapper({ locale }: NewArrivalsWrapperProps) {
 
   if (!products?.length) return null
 
-  return <NewArrivalsCarousel products={products} carouselProducts={carouselProducts || []} locale={locale} />
+  return <NewArrivalsCarousel products={products.slice(0, 6)} locale={locale} />
 }
