@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ATPProductDescription } from '@/components/product/atp-product-description';
 import type { Product } from '@/lib/shopify/types';
 
+vi.mock('@/components/membership/direct-checkout-button', () => ({ MembershipCheckoutButton: () => null }));
 const state = vi.hoisted(() => ({ member: false }));
 vi.mock('next/image', () => ({ default: (props: any) => <img {...props} /> }));
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key, useLocale: () => 'en' }));
@@ -17,7 +18,7 @@ vi.mock('@/components/product/quantity-selector', async () => {
   const React = await import('react');
   const Context = React.createContext<any>(null);
   return {
-    QuantityProvider: ({ children }: any) => { const [quantity, setQuantity] = React.useState(1); return <Context.Provider value={{quantity, setQuantity}}>{children}</Context.Provider>; },
+    QuantityProvider: ({ children }: any) => { const [quantity, setQuantity] = React.useState(0); return <Context.Provider value={{quantity, setQuantity}}>{children}</Context.Provider>; },
     useQuantity: () => React.useContext(Context),
     QuantitySelector: () => { const {quantity, setQuantity} = React.useContext(Context); return <input aria-label="Quantity" type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />; },
   };
@@ -33,24 +34,34 @@ vi.mock('@/components/reviews/product-reviews', () => ({ ProductReviews: () => n
 const product = { id: 'p1', title: 'Test Product', handle: 'test-product', tags: [], options: [], descriptionHtml: '<p>Product details</p>', variants: [{ id: 'v1', availableForSale: true, price: { amount: '180.00', currencyCode: 'AED' } }] } as unknown as Product;
 afterEach(() => { cleanup(); state.member = false; });
 describe('product purchase order and quantity pricing', () => {
+  it.each(['ar', 'en'] as const)('prepares a product question in %s', locale => {
+    render(<ATPProductDescription product={product} locale={locale} />);
+    const link = document.querySelector<HTMLAnchorElement>('a[href^="https://wa.me/"]')!;
+    const message = new URL(link.href).searchParams.get('text');
+    expect(message).toContain(locale === 'ar' ? 'عندي سؤال عن Test Product' : 'question about Test Product');
+    expect(message).toContain('https://www.atpgroupservices.ae/' + locale + '/product/test-product');
+  });
   it('puts information before quantity and updates total and both installments', () => {
     render(<ATPProductDescription product={product} locale="en" />);
-    expect(screen.getByRole('region', {name: 'Product information'}).compareDocumentPosition(screen.getByLabelText('Quantity')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('region', {name: 'Product information'}).compareDocumentPosition(screen.getAllByLabelText('Quantity')[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('complementary', {name: 'Flexible payment options'})).toBeNull();
+    fireEvent.change(screen.getAllByLabelText('Quantity')[0]!, {target: {value: '1'}});
     const payments = screen.getByRole('complementary', {name: 'Flexible payment options'});
     expect(within(payments).getAllByText('45.00 AED')).toHaveLength(2);
-    fireEvent.change(screen.getByLabelText('Quantity'), {target: {value: '2'}});
-    expect(screen.getByText('360.00')).toBeTruthy();
+    fireEvent.change(screen.getAllByLabelText('Quantity')[1]!, {target: {value: '2'}});
+    expect(screen.getAllByText('360.00')[0]).toBeTruthy();
     expect(within(payments).getAllByText('90.00 AED')).toHaveLength(2);
-    fireEvent.change(screen.getByLabelText('Quantity'), {target: {value: '1'}});
+    fireEvent.change(screen.getAllByLabelText('Quantity')[1]!, {target: {value: '1'}});
     expect(within(payments).getAllByText('45.00 AED')).toHaveLength(2);
+    expect(screen.getByText(/Free shipping.*250/i)).toBeTruthy();
     expect(screen.queryByText('Secure Payment')).toBeNull();
-    expect(screen.getByText('Free shipping on orders from AED 250.')).toBeTruthy();
+
   });
   it('preserves active member pricing without a membership promotion', () => {
     state.member = true;
     render(<ATPProductDescription product={product} locale="en" />);
-    fireEvent.change(screen.getByLabelText('Quantity'), {target: {value: '2'}});
-    expect(screen.getByText('306.00')).toBeTruthy();
+    fireEvent.change(screen.getAllByLabelText('Quantity')[1]!, {target: {value: '2'}});
+    expect(screen.getAllByText('306.00')[0]).toBeTruthy();
     expect(screen.getAllByText('76.50 AED')).toHaveLength(2);
     expect(screen.queryByText('Join Membership')).toBeNull();
   });
