@@ -11,6 +11,10 @@ import CollectionPageClient from "@/components/collections/collection-page-clien
 import { CollectionPageSkeleton } from "@/components/product/product-card-skeleton";
 import type { Metadata } from "next";
 
+function healthBeautyTitle(handle: string, locale: string) {
+    if (handle === 'amazing-thai-products') return locale === 'ar' ? 'الصحة والجمال' : 'Health & Beauty';
+}
+
 export async function generateMetadata(props: {
     params: Promise<{ handle: string; locale: string }>;
 }): Promise<Metadata> {
@@ -28,9 +32,10 @@ export async function generateMetadata(props: {
     }
 
     const seoTitle = collection.seo?.title;
-    const title = params.locale === 'ar' && !/\p{Script=Arabic}/u.test(seoTitle || '')
+    const displayTitle = healthBeautyTitle(canonicalHandle, params.locale);
+    const title = displayTitle ?? (params.locale === 'ar' && !/\p{Script=Arabic}/u.test(seoTitle || '')
         ? collection.title
-        : seoTitle || collection.title;
+        : seoTitle || collection.title);
     const description = collection.description || (params.locale === 'ar'
         ? `تسوّق ${collection.title} لدى ATP Trading`
         : `Shop ${collection.title} at ATP Trading`);
@@ -40,7 +45,7 @@ export async function generateMetadata(props: {
         title,
         description,
         openGraph: {
-            title: collection.title,
+            title: displayTitle ?? collection.title,
             description,
             images: collection.image ? [{ url: collection.image.url }] : [],
         },
@@ -91,18 +96,19 @@ export default async function CollectionPage(props: {
 
     const isRTL = params.locale === 'ar';
 
+    const displayTitle = healthBeautyTitle(canonicalHandle, params.locale) ?? collection.title;
     const collectionArt: Record<string, string> = {
         'amazing-thai-products': '/images/collection-supplements-care-coffee.jpg',
         'water-soil-technology-solutions': '/images/collection-water-soil.jpg',
     };
     const editorialImage = collectionArt[canonicalHandle];
-    const heroImage = editorialImage ? { src: editorialImage, alt: collection.title } : collection.image ? {
+    const heroImage = editorialImage ? { src: editorialImage, alt: displayTitle } : collection.image ? {
         src: collection.image.url,
         alt: collection.image.altText || collection.title,
         mobileSrc: collection.image.url,
     } : {
         src: "/skincare-hero-banner.jpg",
-        alt: collection.title,
+        alt: displayTitle,
         mobileSrc: "/skincare-hero-banner.jpg",
     };
 
@@ -110,7 +116,7 @@ export default async function CollectionPage(props: {
         <>
             {/* Collection Hero - uses Shopify collection image */}
             <CollectionHero
-                title={collection.title}
+                title={displayTitle}
                 subtitle={isRTL ? "مجموعة متميزة" : "Premium Collection"}
                 description={collection.description}
                 image={heroImage}
@@ -122,7 +128,7 @@ export default async function CollectionPage(props: {
             <Suspense fallback={<CollectionPageSkeleton isRTL={isRTL} />}>
                 <CollectionPageClient
                     collection={{
-                        title: collection.title,
+                        title: displayTitle,
                         description: collection.description,
                         handle: collection.handle,
                     }}

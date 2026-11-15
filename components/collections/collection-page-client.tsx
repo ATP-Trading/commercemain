@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import CollectionSort from "@/components/collections/collection-sort";
 
 import { m, useReducedMotion } from "framer-motion";
@@ -29,6 +29,13 @@ export default function CollectionPageClient({
   products,
   locale,
 }: CollectionPageClientProps) {
+  const productsSection = useRef<HTMLElement>(null);
+  useEffect(() => {
+    // The section may arrive after the router first tries to follow the fragment.
+    if (window.location.hash === "#collection-products") {
+      productsSection.current?.scrollIntoView({block: "start"});
+    }
+  }, [collection.handle]);
   const shouldReduceMotion = useReducedMotion();
   const t = useTranslations("collection");
   const isRTL = locale === "ar";
@@ -55,7 +62,7 @@ export default function CollectionPageClient({
       </p>
 
       {/* Products Section */}
-      <section id="collection-products" className="scroll-mt-24 bg-atp-white py-8 md:py-12">
+      <section ref={productsSection} id="collection-products" className="scroll-mt-24 bg-atp-white py-8 md:py-12">
         <div className="container mx-auto px-4">
           <m.div
             initial="hidden"
