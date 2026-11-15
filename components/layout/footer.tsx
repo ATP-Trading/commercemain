@@ -1,5 +1,6 @@
 "use client";
 
+import { useWhatsAppHref } from "@/components/ui/product-whatsapp";
 import { AnalyticsSettingsButton } from "@/components/analytics/google-analytics";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,6 +22,7 @@ export default function Footer() {
   const isRTL = locale === 'ar';
   const t = useTranslations('common');
   
+  const whatsAppHref = useWhatsAppHref();
   const currentYear = new Date().getFullYear();
 
   // Social media links
@@ -106,7 +108,7 @@ export default function Footer() {
                   {t('whatsapp')}
                 </p>
                 <a
-                  href="https://wa.me/971569586422"
+                  href={whatsAppHref}
                   className="text-neutral-300 hover:text-white transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"

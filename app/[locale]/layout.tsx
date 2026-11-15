@@ -20,6 +20,7 @@ import { PageTransitionProvider } from "@/components/ui/page-transition-provider
 import { DirectionProvider } from "@/components/ui/direction";
 import { baseUrl } from "@/lib/utils";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
+import { ProductContactProvider } from "@/components/ui/product-whatsapp";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 
 // Luxury display font for headings - elegant serif with refined character
@@ -122,6 +123,7 @@ export default async function LocaleLayout({
         <DirectionProvider direction={isRTL ? 'rtl' : 'ltr'}>
           <NextIntlClientProvider messages={messages}>
             <CartProvider initialCart={cart}>
+              <ProductContactProvider>
               <CartNotificationProvider>
                   <SkipToContentSimple label={isRTL ? 'انتقل إلى المحتوى الرئيسي' : 'Skip to main content'} />
                   <PromotionBanner expiresAt="2026-09-21T23:59:00+04:00" deadlineLabelAr="حتى الاثنين ٢١ سبتمبر، ١١:٥٩ مساءً بتوقيت الإمارات" deadlineLabelEn="Until Mon 21 Sep, 11:59 PM UAE time" />
@@ -150,6 +152,7 @@ export default async function LocaleLayout({
                   <MobileBottomNav />
                   <WhatsAppButton />
               </CartNotificationProvider>
+              </ProductContactProvider>
             </CartProvider>
           </NextIntlClientProvider>
         </DirectionProvider>

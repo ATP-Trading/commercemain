@@ -242,7 +242,7 @@ export function CartPageContent() {
                                     asChild
                                     className="bg-gradient-to-r from-[#d4af37] to-[#c9a432] hover:from-[#e5c354] hover:to-[#d4af37] text-black font-semibold px-8 py-3 rounded-xl shadow-lg shadow-[#d4af37]/20 transition-all hover:shadow-[#d4af37]/30 hover:scale-[1.02]"
                                 >
-                                    <Link href="/">
+                                    <Link href="/collections/amazing-thai-products">
                                         <Sparkles className="w-4 h-4 me-2" />
                                         {tCart("page.startShopping")}
                                     </Link>

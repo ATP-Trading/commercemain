@@ -1,9 +1,11 @@
 'use client'
 
+import { useWhatsAppHref } from "@/components/ui/product-whatsapp";
 import { useLocale } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
 export function WhatsAppButton() {
+  const whatsAppHref = useWhatsAppHref();
   const pathname = usePathname()
   const isProductPage = /\/product\//.test(pathname || '')
   const locale = useLocale()
@@ -12,7 +14,7 @@ export function WhatsAppButton() {
 
   return (
     <a
-      href="https://wa.me/971569586422"
+      href={whatsAppHref}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={tooltip}

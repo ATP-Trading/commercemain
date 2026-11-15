@@ -1,4 +1,5 @@
 "use client";
+import { useProductWhatsApp } from "@/components/ui/product-whatsapp";
 import { MemberPrice } from "./member-price";
 
 import { useRef } from "react";
@@ -61,6 +62,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
   const localizedTitle = getLocalizedProductTitle(product, locale);
   const titleParts = localizedTitle.match(/^(.*?)\s+[–—-]\s+(.+)$/)?.slice(1) || [localizedTitle];
   const productName = titleParts[0] || localizedTitle;
+  const whatsAppHref = useProductWhatsApp(productName, product.handle, locale);
   const productSubtitle = titleParts[1];
   const localizedDescriptionHtml = getLocalizedProductDescriptionHtml(
     product,
@@ -198,7 +200,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
           {product.handle === "atp-membership" ? <MembershipCheckoutButton /> : <ATPAddToCart product={product} fixedQuantity={isMembershipProduct ? 1 : undefined} />}
         </div>
 
-          {!isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
+          {quantity > 0 && !isMembershipProduct && Number.isFinite(installmentBase) && installmentBase > 0 && (
             <aside
               aria-label={locale === "ar" ? "خيارات الدفع المرن" : "Flexible payment options"}
               className="mb-4 rounded-xl border border-atp-gold/25 bg-atp-gold/5 p-4"
@@ -227,6 +229,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             </aside>
           )}
 
+          {quantity > 0 && <>
           {/* Tabby Promo - Buy Now, Pay Later */}
           <div className={`mb-4 ${isRTL ? "text-right" : ""}`}>
             <TabbyPromo
@@ -263,7 +266,8 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             />
           </div>
 
-        <a href="https://wa.me/971569586422" target="_blank" rel="noopener noreferrer"
+          </>}
+        <a href={whatsAppHref} target="_blank" rel="noopener noreferrer"
           className="mb-4 flex min-h-11 items-center justify-center rounded-lg border border-atp-gold px-4 text-base font-medium text-atp-black md:hidden">
           {isRTL ? 'سؤال عن المنتج؟ تواصل عبر واتساب' : 'Questions? Chat with us on WhatsApp'}
         </a>
