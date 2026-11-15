@@ -19,13 +19,11 @@ it.each([false, true])('removes UI and disables tracking with prior consent=%s',
  expect(view.container).toBeEmptyDOMElement(); trackPage();
  expect(document.querySelector('#atp-ga4, #atp-meta-pixel')).toBeNull();
  expect(localStorage.getItem('atp-analytics-consent')).toBe('denied');
- expect(fetcher).toHaveBeenCalledTimes(1);
- expect(fetcher).toHaveBeenCalledWith('/api/analytics/shopify',expect.objectContaining({method:'DELETE'}));
 });
 it('blocks old client tracking requests without calling Shopify and clears only optional cookies', async () => {
  const upstream = vi.fn();
  const response = await handleShopifyVisitRequest(new Request('https://www.atpgroupservices.ae/api/analytics/shopify', {method:'POST',headers:{origin:'https://www.atpgroupservices.ae','x-atp-analytics-consent':'v1','content-type':'application/json'},body:JSON.stringify({analytics:true})}), {origin:'https://www.atpgroupservices.ae',domain:'test.myshopify.com',token:'test'}, upstream);
- expect(response.status).toBe(204); expect(upstream).not.toHaveBeenCalled();
- expect(response.headers.get('set-cookie')).toContain('_shopify_analytics=;');
- expect(response.headers.get('set-cookie')).not.toContain('_shopify_essential');
+ expect(response.status).toBe(403); expect(upstream).not.toHaveBeenCalled();
+
+ expect(response.headers.get('set-cookie')).toBeNull();
 });

@@ -93,7 +93,7 @@ export default async function PrivacyPolicyPage({
 
         <section className={`${styles.body} ${styles.notice}`}>
           <h2 >{isArabic ? 'التحليلات والإعلانات' : 'Analytics and advertising'}</h2>
-          <p >{isArabic ? 'أوقفنا تتبع الزوار الاختياري على واجهة متجرنا، بما فيه تحليلات Google وShopify وتتبع إعلانات Google وMeta. تبقى ملفات الارتباط الضرورية لتشغيل السلة وتسجيل الدخول وإتمام الطلب. تعالج خدمات الدفع الطلبات وفق سياسات الخصوصية الخاصة بها.' : 'Optional visitor tracking is disabled on our storefront, including Google and Shopify analytics and Google and Meta advertising tracking. Essential cookies remain for the cart, sign-in and checkout. Payment services process orders under their own privacy policies.'}</p>
+          <p >{isArabic ? 'نقيس زيارات الصفحات العامة عبر Shopify عندما تسمح إعدادات الخصوصية بذلك. تحليلات Google وتتبع إعلانات Google وMeta متوقفة. تبقى ملفات الارتباط الضرورية لتشغيل السلة وتسجيل الدخول وإتمام الطلب. تعالج خدمات الدفع الطلبات وفق سياسات الخصوصية الخاصة بها.' : 'Shopify measures public page visits when privacy settings allow it. Google Analytics and Google and Meta advertising tracking are disabled. Essential cookies remain for the cart, sign-in and checkout. Payment services process orders under their own privacy policies.'}</p>
         </section>
 
         <div
