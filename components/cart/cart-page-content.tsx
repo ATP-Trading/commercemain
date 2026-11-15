@@ -624,7 +624,7 @@ export function CartPageContent() {
                                 {[
                                     { icon: Shield, labelKey: "page.trustBadges.securePayment", descKey: "page.trustBadges.sslDesc" },
                                     { icon: Truck, labelKey: "page.trustBadges.fastDelivery", descKey: "page.trustBadges.deliveryTime" },
-                                    { icon: Gift, labelKey: "page.trustBadges.easyReturns", descKey: "page.trustBadges.returnPolicy" },
+                                    { icon: Gift, labelKey: "page.trustBadges.returnPolicy", href: "/policies/refund-policy" },
                                 ].map((badge, i) => (
                                     <div
                                         key={i}
@@ -632,8 +632,8 @@ export function CartPageContent() {
                                     >
                                         <badge.icon className="w-5 h-5 text-[#d4af37]" />
                                         <div>
-                                            <p className="text-sm font-medium text-white">{tCart(badge.labelKey)}</p>
-                                            <p className="text-sm leading-relaxed text-neutral-400">{tCart(badge.descKey)}</p>
+                                            {badge.href ? <Link href={badge.href} className="inline-flex min-h-11 items-center text-sm font-medium text-white underline underline-offset-4">{tCart(badge.labelKey)}</Link> : <p className="text-sm font-medium text-white">{tCart(badge.labelKey)}</p>}
+                                            {badge.descKey && <p className="text-sm leading-relaxed text-neutral-400">{tCart(badge.descKey)}</p>}
                                         </div>
                                     </div>
                                 ))}

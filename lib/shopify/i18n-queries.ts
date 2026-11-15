@@ -309,7 +309,8 @@ export function getLocalizedProductTitle(product: any, locale: 'en' | 'ar'): str
       ar: 'Multivitamins & Minerals + Astaxanthin – فيتامينات ومعادن مع أستازانتين للاستخدام اليومي',
     },
   };
-  return displayTitles[product.handle]?.[locale] || getLocalizedProductContent(product, locale, 'title')
+  const title = displayTitles[product.handle]?.[locale] || getLocalizedProductContent(product, locale, 'title')
+  return product.handle === 'smone-brightening-cream' ? title.replace(/^S[’'`]?MONE\s+(?=Brightening Cream)/i, '') : title
 }
 
 // Helper function to get localized product description
