@@ -1,7 +1,7 @@
-import {measurementMode} from './measurement-mode';
+import {measurementMode, staffMeasurementMode} from './measurement-mode';
 import {getClientBrowserParameters, sendShopifyAnalytics} from '@shopify/hydrogen-react/analytics';
 import {getTrackingValues} from '@shopify/hydrogen-react/tracking-utils';
-import {analyticsAllowed, measurementPageUrl, safePageUrl} from './ga4';
+import {safePageUrl} from './ga4';
 import {normalizeCheckoutConsent} from '@/lib/cart/checkout-consent';
 
 export const SHOPIFY_VISIT_CONSENT_KEY = 'atp-shopify-analytics-consent-v1';
@@ -18,8 +18,8 @@ export function hasShopifyVisitChoice() {
   catch { return false; }
 }
 export function shopifyVisitsAllowed() {
-  if (storageBlocked || measurementMode() !== 'normal' || !analyticsAllowed()) return false;
-  try { return localStorage.getItem(SHOPIFY_VISIT_CONSENT_KEY) === 'granted'; }
+  if (storageBlocked || typeof window === 'undefined' || location.origin !== 'https://www.atpgroupservices.ae' || staffMeasurementMode() !== 'normal' || navigator.doNotTrack === '1' || (navigator as Navigator & {globalPrivacyControl?: boolean}).globalPrivacyControl) return false;
+  try { return localStorage.getItem(SHOPIFY_VISIT_CONSENT_KEY) !== 'denied'; }
   catch { return false; }
 }
 export function shopifyCheckoutConsent() {
@@ -44,7 +44,7 @@ export function setShopifyVisitConsent(granted: boolean) {
     cancel(); lastPage = ''; lastPageKey = '';
     if (wasAllowed) void fetch(ENDPOINT, {
       method: 'DELETE', credentials: 'same-origin', cache: 'no-store',
-      headers: {'X-ATP-Analytics-Consent': 'v1'},
+      headers: {'X-ATP-Analytics-Consent': 'v2'},
     }).catch(() => {});
   }
 }
@@ -52,7 +52,28 @@ export function shopifyPageUrl() {
   if (typeof window === 'undefined' || !shopifyVisitsAllowed()) return '';
   // Never send account details, search inputs, payment tokens, or private page titles.
   if (!/^\/(en|ar)(\/|$)/.test(location.pathname) || /\/(account|auth|checkout|checkouts|login|signup|search|api)(\/|$)/i.test(location.pathname)) return '';
-  return measurementPageUrl();
+  return safePageUrl(location.href);
+}
+type Privacy = {cachedConsent?: string; backendConsentEnabled?: boolean; analyticsProcessingAllowed?: () => boolean; getRegion?: () => string};
+let privacyScript: Promise<boolean> | undefined;
+async function permittedByShopify(consent: string) {
+  const host = window as unknown as {Shopify?: {customerPrivacy?: Privacy}};
+  const shop = host.Shopify ??= {};
+  const privacy = shop.customerPrivacy ??= {};
+  privacy.cachedConsent = consent;
+  privacy.backendConsentEnabled = true;
+  if (!privacy.analyticsProcessingAllowed) {
+    privacyScript ??= new Promise(resolve => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.shopify.com/shopifycloud/consent-tracking-api/v0.2/consent-tracking-api.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
+    if (!await privacyScript) return false;
+  }
+  const api = shop.customerPrivacy;
+  return Boolean(api?.getRegion?.()) && api?.analyticsProcessingAllowed?.() === true;
 }
 export function trackShopifyPageView(): Promise<void> {
   const pageUrl = shopifyPageUrl();
@@ -65,24 +86,33 @@ export function trackShopifyPageView(): Promise<void> {
   const controller = new AbortController();
   const promise = (async () => {
     try {
-      const response = await fetch(ENDPOINT, {
-        method: 'POST', credentials: 'same-origin', cache: 'no-store',
-        headers: {'Content-Type': 'application/json', 'X-ATP-Analytics-Consent': 'v1'},
-        body: JSON.stringify({analytics: true}), signal: controller.signal,
-      });
-      if (!response.ok) return;
-      const result = await response.json(); // Finish resource timing before asking the SDK for tokens.
-      if (!result.ok || result.shopId !== 'gid://shopify/Shop/72307441902') return;
+      async function readState(purpose: 'bootstrap' | 'page') {
+        const response = await fetch(ENDPOINT, {
+          method: 'POST', credentials: 'same-origin', cache: 'no-store',
+          headers: {'Content-Type': 'application/json', 'X-ATP-Analytics-Consent': 'v2'},
+          body: JSON.stringify({purpose}), signal: controller.signal,
+        });
+        if (!response.ok) return null;
+        const result = await response.json();
+        if (!result.ok || result.shopId !== 'gid://shopify/Shop/72307441902') return null;
+        return getTrackingValues();
+      }
+      const initial = await readState('bootstrap');
+      if (!initial?.consent || !await permittedByShopify(initial.consent)) return;
+      if (ticket !== sequence || !shopifyPageUrl()) return;
+      const values = await readState('page');
+      if (!values) return;
       const latestPage = shopifyPageUrl();
       if (ticket !== sequence || controller.signal.aborted || !latestPage || key !== safePageUrl(latestPage, {campaign: true})) return;
-      const values = getTrackingValues();
       if (!values.uniqueToken || !values.visitToken || [values.uniqueToken, values.visitToken].some(v => v.startsWith('00000000-'))) return;
+      if (!values.consent || !await permittedByShopify(values.consent)) return;
+      if (ticket !== sequence || controller.signal.aborted || shopifyPageUrl() !== latestPage) return;
       const url = new URL(latestPage);
       const referrer = safePageUrl(lastPage || document.referrer);
       lastPage = latestPage; lastPageKey = key; // Changing only ad consent is not a new page view.
       await sendShopifyAnalytics({eventName: 'PAGE_VIEW', payload: {
         ...getClientBrowserParameters(),
-        shopId: result.shopId, shopifySalesChannel: 'headless',
+        shopId: 'gid://shopify/Shop/72307441902', shopifySalesChannel: 'headless',
         hasUserConsent: true, analyticsAllowed: true, marketingAllowed: false, saleOfDataAllowed: false,
         uniqueToken: values.uniqueToken, visitToken: values.visitToken,
         currency: 'AED', acceptedLanguage: url.pathname.startsWith('/ar') ? 'AR' : 'EN',
@@ -101,7 +131,7 @@ export function stopPendingShopifyPageView() { cancel(); }
 export async function trackShopifyAddToCart(input: {
   cartId: string; productId: string; variantId: string; name: string; price: number; quantity: number;
 }) {
-  if (!shopifyVisitsAllowed() || !/^gid:\/\/shopify\/Cart\/[^?]+$/.test(input.cartId)) return;
+  if (measurementMode() !== 'normal' || !shopifyVisitsAllowed() || !/^gid:\/\/shopify\/Cart\/[^?]+$/.test(input.cartId)) return;
   const page = shopifyPageUrl();
   try {
     await trackShopifyPageView();

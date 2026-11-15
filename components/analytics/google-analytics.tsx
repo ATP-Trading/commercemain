@@ -9,14 +9,6 @@ export function GoogleAnalytics() {
   useEffect(() => {
     setAnalyticsConsent(false, false);
     setMarketingConsent(false);
-    try { localStorage.setItem('atp-shopify-analytics-consent-v1', 'denied'); } catch {}
-    for (const name of ['_shopify_y', '_shopify_s', '_shopify_sa_t', '_shopify_sa_p']) {
-      for (const domain of ['', '; domain=atpgroupservices.ae', '; domain=www.atpgroupservices.ae']) {
-        document.cookie = `${name}=; Max-Age=0; path=/${domain}`;
-      }
-    }
-    // First-party cleanup only: clears HttpOnly analytics cookies, preserves cart/login cookies.
-    void fetch('/api/analytics/shopify', { method: 'DELETE', headers: { 'x-atp-analytics-consent': 'v1' } }).catch(() => {});
   }, []);
   return null;
 }

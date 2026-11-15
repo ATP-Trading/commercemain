@@ -1,4 +1,4 @@
-import { OPTIONAL_TRACKING_ENABLED } from './tracking-policy';
+import {isIP} from 'node:net';
 /** Narrow, consent-gated Storefront tracking proxy. Never accepts arbitrary GraphQL.
  * See Shopify's custom-headless tracking migration and hydrogen-react useShopifyCookies.
  * This endpoint is independent of cart/checkout; failures must not stop shopping.
@@ -6,7 +6,7 @@ import { OPTIONAL_TRACKING_ENABLED } from './tracking-policy';
 export const SHOPIFY_ANALYTICS_SHOP_ID = 'gid://shopify/Shop/72307441902';
 export const SHOPIFY_VISIT_QUERY = `query ensureCookies {
   consentManagement {
-    cookies(visitorConsent: {analytics: true, marketing: false, preferences: false, saleOfData: false}) { cookieDomain }
+    cookies(visitorConsent: {marketing: false, preferences: false, saleOfData: false}) { cookieDomain }
   }
 }`;
 const cookieNames = new Set(['_shopify_essential', '_shopify_analytics', '_shopify_marketing']);
@@ -38,10 +38,10 @@ function json(value: object, status = 200, extra?: Headers): Response {
 export async function handleShopifyVisitRequest(
   request: Request, config: VisitProxyConfig, fetcher: typeof fetch = fetch,
 ): Promise<Response> {
-  if (request.headers.get('origin') !== config.origin || request.headers.get('x-atp-analytics-consent') !== 'v1') {
+  if (request.headers.get('origin') !== config.origin || request.headers.get('x-atp-analytics-consent') !== 'v2') {
     return json({ok: false}, 403);
   }
-  if (request.method === 'DELETE' || (request.method === 'POST' && !OPTIONAL_TRACKING_ENABLED)) {
+  if (request.method === 'DELETE') {
     const headers = new Headers(baseHeaders);
     for (const name of ['_shopify_analytics', '_shopify_marketing']) {
       headers.append('Set-Cookie', `${name}=; Max-Age=0; Path=/; Secure; HttpOnly; SameSite=Lax`);
@@ -51,11 +51,13 @@ export async function handleShopifyVisitRequest(
   if (request.method !== 'POST') return json({ok: false}, 405);
   if (!request.headers.get('content-type')?.startsWith('application/json')) return json({ok: false}, 415);
   if (Number(request.headers.get('content-length') || 0) > 256) return json({ok: false}, 413);
+  let persistSession = false;
   try {
     const text = await request.text();
     if (text.length > 256) return json({ok: false}, 413);
     const body = JSON.parse(text);
-    if (!body || body.analytics !== true || Object.keys(body).length !== 1) return json({ok: false}, 400);
+    if (!body || !['bootstrap', 'page'].includes(body.purpose) || Object.keys(body).length !== 1) return json({ok: false}, 400);
+    persistSession = body.purpose === 'page';
   } catch { return json({ok: false}, 400); }
   if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(config.domain) || !config.token) return json({ok: false}, 503);
   const upstreamHeaders = new Headers({
@@ -63,6 +65,9 @@ export async function handleShopifyVisitRequest(
     'X-Shopify-Storefront-Access-Token': config.token,
     'Origin': config.origin,
   });
+  const buyerIp = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim();
+  if (!buyerIp || !isIP(buyerIp)) return json({ok: false}, 503);
+  upstreamHeaders.set('Shopify-Storefront-Buyer-IP', buyerIp);
   const cookies = selectShopifyCookies(request.headers.get('cookie') || '');
   if (cookies) upstreamHeaders.set('Cookie', cookies);
   const agent = request.headers.get('user-agent');
@@ -83,7 +88,7 @@ export async function handleShopifyVisitRequest(
     const headers = new Headers({'Server-Timing': timing});
     for (const value of upstream.headers.getSetCookie()) {
       const cookie = hostOnlyShopifyCookie(value);
-      if (cookie) headers.append('Set-Cookie', cookie);
+      if (cookie && (cookie.startsWith('_shopify_essential=') || (persistSession && cookie.startsWith('_shopify_analytics=')))) headers.append('Set-Cookie', cookie);
     }
     return json({ok: true, shopId: SHOPIFY_ANALYTICS_SHOP_ID}, 200, headers);
   } catch {
