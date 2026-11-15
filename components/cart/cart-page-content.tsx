@@ -548,7 +548,7 @@ export function CartPageContent() {
                                     <Button 
                                         variant="outline" 
                                         asChild 
-                                        className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white hover:border-neutral-600 rounded-xl"
+                                        className="h-11 w-full rounded-xl border-neutral-500 bg-neutral-900 text-neutral-100 hover:border-neutral-400 hover:bg-neutral-800 hover:text-white focus-visible:ring-[#d4af37] dark:border-neutral-500 dark:bg-neutral-900 dark:hover:bg-neutral-800"
                                     >
                                         <Link href="/">{tCart("continueShopping")}</Link>
                                     </Button>
