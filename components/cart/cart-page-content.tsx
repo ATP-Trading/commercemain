@@ -363,12 +363,12 @@ export function CartPageContent() {
                                                     key={item.id || i}
                                                     variants={cartItemVariants}
                                                     layout
-                                                    className="p-6 hover:bg-neutral-800/20 transition-colors"
+                                                    className="p-4 sm:p-6 hover:bg-neutral-800/20 transition-colors"
                                                 >
-                                                    <div className="flex gap-5">
+                                                    <div className="flex gap-3 sm:gap-5">
                                                         {/* Product Image */}
                                                         <div className="relative flex-shrink-0 group">
-                                                            <div className="relative h-28 w-28 overflow-hidden rounded-xl bg-neutral-800 border border-neutral-700/50">
+                                                            <div className="relative h-20 w-20 sm:h-28 sm:w-28 overflow-hidden rounded-xl bg-neutral-800 border border-neutral-700/50">
                                                                 <Image
                                                                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                                     width={112}
@@ -414,7 +414,7 @@ export function CartPageContent() {
                                                                 tProduct={tProduct}
                                                             />
 
-                                                            <div className="flex items-center justify-between mt-4">
+                                                            <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                                                                 {/* Quantity Controls */}
                                                                 <div className="flex items-center gap-3">
                                                                     <span className="text-sm text-neutral-500">{tCart("page.qtyLabel")}</span>
