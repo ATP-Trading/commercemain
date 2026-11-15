@@ -95,13 +95,13 @@ export default function CollectionPageClient({
           </m.div>
 
           {useCategoryTiles ? (
-            <nav id="collection-categories" tabIndex={-1} aria-label={isRTL ? "الفئات" : "Categories"} className="mb-8 grid scroll-mt-40 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <nav id="collection-categories" tabIndex={-1} aria-label={isRTL ? "الفئات" : "Categories"} className="mx-auto mb-8 grid max-w-2xl scroll-mt-40 grid-cols-2 gap-3">
               {[{ value: "", ar: "الكل", en: "All" }, ...categoryOptions].map(option => {
                 const selected = selectedCategory === option.value;
                 return (
                   <a key={option.value} href={`/${locale}/collections/${collection.handle}${option.value ? "?category=" + option.value : ""}#collection-categories`}
                     aria-current={selected ? "true" : undefined}
-                    className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2 text-center focus-visible:outline-2 ${selected ? "border-atp-gold bg-atp-gold/10 font-semibold" : "border-neutral-300 hover:border-atp-gold"}`}>
+                    className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2 text-center focus-visible:outline-2 ${option.value === "" ? "col-span-2 w-[calc(50%_-_0.375rem)] justify-self-center" : ""} ${selected ? "border-atp-gold bg-atp-gold/10 font-semibold" : "border-neutral-300 hover:border-atp-gold"}`}>
                     {option[locale]}
                   </a>
                 );
