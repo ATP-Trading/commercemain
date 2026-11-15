@@ -42,8 +42,9 @@ export default function CollectionPageClient({
   const t = useTranslations("collection");
   const isRTL = locale === "ar";
   
-  const nextCategory = activeCategory === "supplements" ? "skincare" : activeCategory === "skincare" ? "supplements" : undefined;
-  const showCategoryLink = collection.handle === "amazing-thai-products" && nextCategory && categories?.some(category => category.value === nextCategory);
+  const useCategoryTiles = collection.handle === "amazing-thai-products";
+  const categoryOptions = categories ?? [];
+  const selectedCategory = categoryOptions.find(option => option.value === activeCategory)?.value ?? "";
 
   // Fix: Use animate instead of whileInView to trigger on soft navigation
   // This fixes the issue where products don't show on first mobile navigation
@@ -93,7 +94,20 @@ export default function CollectionPageClient({
             </m.p>
           </m.div>
 
-          <Suspense fallback={null}><CollectionSort locale={locale} categories={categories} /></Suspense>
+          {useCategoryTiles ? (
+            <nav id="collection-categories" tabIndex={-1} aria-label={isRTL ? "الفئات" : "Categories"} className="mb-8 grid scroll-mt-40 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {[{ value: "", ar: "الكل", en: "All" }, ...categoryOptions].map(option => {
+                const selected = selectedCategory === option.value;
+                return (
+                  <a key={option.value} href={`/${locale}/collections/${collection.handle}${option.value ? "?category=" + option.value : ""}#collection-categories`}
+                    aria-current={selected ? "true" : undefined}
+                    className={`flex min-h-12 items-center justify-center rounded-xl border px-3 py-2 text-center focus-visible:outline-2 ${selected ? "border-atp-gold bg-atp-gold/10 font-semibold" : "border-neutral-300 hover:border-atp-gold"}`}>
+                    {option[locale]}
+                  </a>
+                );
+              })}
+            </nav>
+          ) : <Suspense fallback={null}><CollectionSort locale={locale} categories={categories} /></Suspense>}
 
           {/* Products Grid */}
           {products.length === 0 ? (
@@ -105,12 +119,10 @@ export default function CollectionPageClient({
               <ProductGridItems products={products || []} locale={locale} />
             </Grid>
           )}
-          {showCategoryLink && (
+          {useCategoryTiles && categoryOptions.length > 0 && (
             <div className="mt-8 flex justify-center">
-              <a href={`?category=${nextCategory}#collection-products`} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-atp-gold px-6 py-3 text-center font-semibold text-atp-black hover:bg-atp-gold/10 focus-visible:outline-2">
-                {nextCategory === "skincare"
-                  ? (isRTL ? "تسوّق العناية بالبشرة" : "Shop skincare")
-                  : (isRTL ? "تسوّق المكملات" : "Shop supplements")}
+              <a href="#collection-categories" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-atp-gold px-6 py-3 text-center font-semibold text-atp-black hover:bg-atp-gold/10 focus-visible:outline-2">
+                {isRTL ? "تصفّح الفئات" : "Browse categories"}
               </a>
             </div>
           )}

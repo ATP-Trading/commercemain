@@ -5,7 +5,7 @@ export const collectionCategories = [
   { value: "skincare", en: "Skincare", ar: "العناية بالبشرة" },
   { value: "body", en: "Body care", ar: "العناية بالجسم" },
   { value: "hair", en: "Hair care", ar: "العناية بالشعر" },
-  { value: "oral", en: "Oral care", ar: "العناية بالفم والأسنان" },
+  { value: "oral", en: "Dental Care", ar: "العناية بالأسنان" },
   { value: "drinks", en: "Coffee & drinks", ar: "قهوة ومشروبات" },
   { value: "water", en: "Water filters", ar: "فلاتر المياه" },
   { value: "soil", en: "Soil & plant care", ar: "العناية بالتربة والنباتات" },

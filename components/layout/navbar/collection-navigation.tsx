@@ -23,9 +23,9 @@ export function CollectionNavigation({ locale, collections }: Props) {
 
         </Link>
         <div dir={arabic ? "rtl" : "ltr"} className="min-w-0" role="region" aria-label={arabic ? "مجموعات المنتجات" : "Product collections"}>
-          <ul className="grid grid-cols-2 items-center gap-2 sm:gap-3">
+          <ul className="grid grid-cols-1 lg:grid-cols-2 items-center gap-2 sm:gap-3">
             {collections.map((collection) => (
-              <li key={collection.handle} className="min-w-0">
+              <li key={collection.handle} className={collection.handle === "water-soil-technology-solutions" ? "hidden min-w-0 lg:block" : "min-w-0"}>
                 <Link href={collection.href} aria-current={pathname === collection.href ? "page" : undefined}
                   className={`${linkStyle} w-full border border-atp-gold/50 bg-white/[0.03] text-center leading-snug ${pathname === collection.href ? "bg-white/10 text-atp-gold" : "text-white"}`}>
                   {collection.title}

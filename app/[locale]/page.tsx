@@ -5,7 +5,6 @@ import { getTranslations } from 'next-intl/server';
 import { NewArrivalsWrapper } from "@/components/new-arrivals-wrapper";
 import { StructuredData } from "@/components/structured-data";
 import ATPWellnessHero from "@/components/hero/atp-wellness-hero";
-import ServiceHighlights from "@/components/sections/service-highlights";
 import TrustIndicators from "@/components/sections/trust-indicators";
 import { InstagramFeed } from "@/components/sections/instagram-feed";
 
@@ -95,8 +94,6 @@ export default async function HomePage({ params }: HomePageProps) {
 
       {/* Enhanced ATP Wellness Hero Section */}
       <ATPWellnessHero />
-
-      <ServiceHighlights />
 
       {/* New Arrivals and Products */}
       <Suspense fallback={<div className="min-h-96 bg-[#faf9f6]" aria-busy="true" />}><NewArrivalsWrapper locale={locale} /></Suspense>
