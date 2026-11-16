@@ -224,7 +224,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
     {
       name: "TikTok",
       icon: FaTiktok,
-      href: "https://www.tiktok.com/@amazing_tai_products?_t=ZS-8wTwKXjrHW8&_r=1",
+      href: "https://www.tiktok.com/@atp_trading_uae",
       label: "TikTok",
     },
     {
