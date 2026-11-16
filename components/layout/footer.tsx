@@ -48,7 +48,7 @@ export default function Footer() {
     {
       name: "Snapchat",
       icon: FaSnapchatGhost,
-      href: "https://snapchat.com/t/BadLbnDX",
+      href: "https://www.snapchat.com/@atp_trading",
       label: "Snapchat",
     },
   ];
