@@ -1,7 +1,7 @@
 import type { Product } from "@/lib/shopify/types";
 
 export const collectionCategories = [
-  { value: "supplements", en: "Supplements", ar: "مكملات غذائية" },
+  { value: "supplements", en: "Wellness", ar: "الصحة العامة" },
   { value: "skincare", en: "Skincare", ar: "العناية بالبشرة" },
   { value: "body", en: "Body care", ar: "العناية بالجسم" },
   { value: "hair", en: "Hair care", ar: "العناية بالشعر" },
@@ -14,8 +14,8 @@ export type CollectionCategory = typeof collectionCategories[number]["value"];
 // Verified catalog IDs: classifications are independent of translated titles/handles.
 // New products can be assigned in Shopify using category:<value> tags.
 const catalog: Record<CollectionCategory, string[]> = {
- supplements: ["8757286961390","8757287583982","8757288206574","8877054492910","8906627154158","8942547402990","8956847718638","8958618370286","9130449305838"],
- skincare: ["8757286273262","8757288796398","8798540562670","8798542561518","8853470183662","9155861643502"],
+ supplements: ["8757287583982","8757288206574","8877054492910","8906627154158","8942547402990","8956847718638","8958618370286","9130449305838"],
+ skincare: ["8757286961390","8757286273262","8757288796398","8798540562670","8798542561518","8853470183662","9155861643502"],
  body: ["9155861643502","8798539579630","9155514761454","9155624829166","9509231755502","9509255545070"],
  hair: ["8877077463278","8877077856494"],
  oral: ["9155897852142","9617047159022"],
