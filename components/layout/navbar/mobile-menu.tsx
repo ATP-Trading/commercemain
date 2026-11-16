@@ -230,7 +230,7 @@ export default function MobileMenu({ menuItems, fallbackMenu }: MobileMenuProps)
     {
       name: "Snapchat",
       icon: FaSnapchatGhost,
-      href: "https://snapchat.com/t/BadLbnDX",
+      href: "https://www.snapchat.com/@atp_trading",
       label: "Snapchat",
     },
   ]
