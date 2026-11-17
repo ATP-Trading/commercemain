@@ -3,7 +3,7 @@
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
 import {usePathname} from 'next/navigation';
 
-const contactUrl = 'https://wa.me/971569586422';
+const contactUrl = 'https://wa.me/971506666018';
 const ContactContext = createContext(contactUrl);
 type ProductContact = {path: string; href: string};
 const RegisterContext = createContext<(contact: ProductContact | null) => void>(() => {});

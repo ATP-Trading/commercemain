@@ -114,7 +114,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   dir="ltr"
                 >
-                  +971569586422
+                  +971506666018
                 </a>
               </div>
             </div>

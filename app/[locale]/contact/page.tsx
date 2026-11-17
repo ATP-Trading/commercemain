@@ -22,7 +22,7 @@ export default async function ContactPage({ params }: Props) {
         <p className="mb-6">{isAr ? 'تواصل معنا للاستفسار عن المنتجات أو طلبك. نخدم العملاء داخل دولة الإمارات العربية المتحدة.' : 'Contact us with questions about our products or your order. We serve customers within the United Arab Emirates.'}</p>
         <div className="space-y-4">
           <div><h3 className="font-semibold mb-2">{isAr ? 'البريد الإلكتروني' : 'Email'}</h3><a href="mailto:info@atpgroupservices.ae" className="underline" dir="ltr">info@atpgroupservices.ae</a></div>
-          <div><h3 className="font-semibold mb-2">{isAr ? 'الهاتف' : 'Phone'}</h3><a href="tel:+971569586422" className="underline" dir="ltr">+971 56 958 6422</a></div>
+          <div><h3 className="font-semibold mb-2">{isAr ? 'الهاتف' : 'Phone'}</h3><a href="tel:+971506666018" className="underline" dir="ltr">+971 50 666 6018</a></div>
         </div>
       </div>
       <div>

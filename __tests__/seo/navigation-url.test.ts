@@ -6,7 +6,7 @@ describe('store navigation destinations', () => {
     'https://www.instagram.com/atp_trading/?hl=ar#profile',
     'https://example.com/collections/skincare?source=menu',
     'mailto:info@atpgroupservices.ae',
-    'tel:+971569586422',
+    'tel:+971506666018',
     '//example.com/store',
     '#products',
   ])('preserves an external or special destination: %s', (url) => {
