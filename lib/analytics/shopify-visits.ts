@@ -31,9 +31,19 @@ export function hasShopifyVisitChoice() {
   catch { return false; }
 }
 export function shopifyVisitsAllowed() {
-  if (storageBlocked || typeof window === 'undefined' || location.origin !== 'https://www.atpgroupservices.ae' || staffMeasurementMode() !== 'normal' || navigator.doNotTrack === '1' || (navigator as Navigator & {globalPrivacyControl?: boolean}).globalPrivacyControl) return false;
-  try { return localStorage.getItem(SHOPIFY_VISIT_CONSENT_KEY) !== 'denied'; }
-  catch { return false; }
+  if (typeof window === 'undefined') return false;
+  let reason = '';
+  if (storageBlocked) reason = 'storage unavailable';
+  else if (location.origin !== 'https://www.atpgroupservices.ae') reason = 'non-production origin';
+  else if (staffMeasurementMode() !== 'normal') reason = 'staff exclusion';
+  else if (navigator.doNotTrack === '1') reason = 'browser do-not-track';
+  else if ((navigator as Navigator & {globalPrivacyControl?: boolean}).globalPrivacyControl) reason = 'browser privacy control';
+  else {
+    try { if (localStorage.getItem(SHOPIFY_VISIT_CONSENT_KEY) === 'denied') reason = 'visitor declined'; }
+    catch { reason = 'storage unavailable'; }
+  }
+  if (reason) diagnostic(reason);
+  return !reason;
 }
 export function shopifyCheckoutConsent() {
   // Shopify's regional permission is independent of Google/Meta tracking.
