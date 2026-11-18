@@ -1,4 +1,4 @@
-import {measurementMode, staffMeasurementMode} from './measurement-mode';
+import {staffMeasurementMode} from './measurement-mode';
 import {getClientBrowserParameters, sendShopifyAnalytics} from '@shopify/hydrogen-react/analytics';
 import {getTrackingValues} from '@shopify/hydrogen-react/tracking-utils';
 import {safePageUrl} from './ga4';
@@ -23,10 +23,15 @@ export function shopifyVisitsAllowed() {
   catch { return false; }
 }
 export function shopifyCheckoutConsent() {
-  // Never turn a Google-only analytics choice into consent for Shopify.
-  // Checkout tests must not create ordinary Shopify marketing/analytics events.
-  return normalizeCheckoutConsent({analytics: measurementMode() !== 'normal' ? false
-    : hasShopifyVisitChoice() ? shopifyVisitsAllowed() : null});
+  // Shopify's regional permission is independent of Google/Meta tracking.
+  // Fail closed if its permission check has not completed; checkout still works.
+  let analytics = false;
+  try {
+    const privacy = (window as unknown as {Shopify?: {customerPrivacy?: Privacy}}).Shopify?.customerPrivacy;
+    analytics = shopifyVisitsAllowed() && Boolean(privacy?.getRegion?.())
+      && privacy?.analyticsProcessingAllowed?.() === true;
+  } catch { /* Missing browser/provider state must not prevent checkout. */ }
+  return normalizeCheckoutConsent({analytics});
 }
 function cancel() {
   sequence++;
@@ -131,13 +136,14 @@ export function stopPendingShopifyPageView() { cancel(); }
 export async function trackShopifyAddToCart(input: {
   cartId: string; productId: string; variantId: string; name: string; price: number; quantity: number;
 }) {
-  if (measurementMode() !== 'normal' || !shopifyVisitsAllowed() || !/^gid:\/\/shopify\/Cart\/[^?]+$/.test(input.cartId)) return;
+  if (!shopifyVisitsAllowed() || !/^gid:\/\/shopify\/Cart\/[^?]+$/.test(input.cartId)) return;
   const page = shopifyPageUrl();
   try {
     await trackShopifyPageView();
     if (!shopifyVisitsAllowed() || !page || lastPageKey !== safePageUrl(page, {campaign: true})) return;
     const values = getTrackingValues();
     if (!values.uniqueToken || !values.visitToken || [values.uniqueToken, values.visitToken].some(v => v.startsWith('00000000-'))) return;
+    if (!values.consent || !await permittedByShopify(values.consent) || !shopifyVisitsAllowed()) return;
     const url = new URL(page);
     await sendShopifyAnalytics({eventName: 'ADD_TO_CART', payload: {
       ...getClientBrowserParameters(), shopId: 'gid://shopify/Shop/72307441902',
