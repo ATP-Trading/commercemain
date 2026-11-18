@@ -67,7 +67,7 @@ describe('consent-aware storefront visits',()=>{
   Object.assign(browser,{Shopify:{customerPrivacy:{getRegion:()=> 'AE',analyticsProcessingAllowed:()=>true}}});vi.stubGlobal('window',browser);vi.stubGlobal('location',browser.location);
   vi.stubGlobal('localStorage',{getItem:(k:string)=>data.get(k)||null,setItem:(k:string,v:string)=>data.set(k,v)});
   vi.stubGlobal('document',{title:'Collagen',referrer:'https://www.google.com/?q=private'});
-  fetcher=vi.fn(async()=>new Response(JSON.stringify({ok:true,shopId:SHOP})));vi.stubGlobal('fetch',fetcher);
+  fetcher=vi.fn(async()=>new Response(JSON.stringify({ok:true,shopId:SHOP}),{headers:{'server-timing':`_y;desc="${mocked.values().uniqueToken}", _s;desc="${mocked.values().visitToken}", _cmp;desc="${mocked.values().consent}"`}}));vi.stubGlobal('fetch',fetcher);
  });
  const load=()=>import('../../lib/analytics/shopify-visits');
  const accept=async()=>{const m=await load();m.setShopifyVisitConsent(true);return m;};
@@ -125,6 +125,18 @@ describe('consent-aware storefront visits',()=>{
  });
  it('does not send mock identifiers or invent a session',async()=>{
   mocked.values.mockReturnValue({uniqueToken:'00000000-no-consent',visitToken:'visit',consent:'denied'});await (await accept()).trackShopifyPageView();expect(mocked.send).not.toHaveBeenCalled();
+ });
+ it('reads Shopify headers without browser performance entries or legacy cookies',async()=>{
+  vi.stubGlobal('performance',{getEntriesByType:()=>[]});
+  const m=await load();
+  await m.trackShopifyAddToCart({cartId:'gid://shopify/Cart/test',productId:'1',variantId:'2',name:'DNA',price:120,quantity:1});
+  expect(mocked.send).toHaveBeenCalledTimes(2);
+  expect(m.readShopifyTrackingHeader('_y;desc="u", _s;desc="s", _cmp;desc="c"')).toEqual({uniqueToken:'u',visitToken:'s',consent:'c'});
+  expect(m.readShopifyTrackingHeader('_y;desc="u"')).toBeNull();
+ });
+ it('never substitutes stale SDK values when the response has no session',async()=>{
+  fetcher.mockImplementation(async()=>new Response(JSON.stringify({ok:true,shopId:SHOP})));
+  await (await load()).trackShopifyPageView();expect(mocked.send).not.toHaveBeenCalled();
  });
  it('does not interrupt shopping when measurement fails',async()=>{
   fetcher.mockRejectedValue(new Error('offline'));await expect((await accept()).trackShopifyPageView()).resolves.toBeUndefined();expect(mocked.send).not.toHaveBeenCalled();
