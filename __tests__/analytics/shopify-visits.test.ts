@@ -1,5 +1,3 @@
-// Retain engine regression coverage under an explicitly enabled policy.
-vi.mock('@/lib/analytics/tracking-policy', () => ({ OPTIONAL_TRACKING_ENABLED: true }));
 // @vitest-environment node
 import {beforeEach, afterEach, describe, expect, it, vi} from 'vitest';
 import {handleShopifyVisitRequest, selectShopifyCookies, hostOnlyShopifyCookie} from '../../lib/analytics/shopify-visit-proxy';
@@ -73,8 +71,31 @@ describe('consent-aware storefront visits',()=>{
  });
  const load=()=>import('../../lib/analytics/shopify-visits');
  const accept=async()=>{const m=await load();m.setShopifyVisitConsent(true);return m;};
- it('does not assume checkout consent from Google-only consent',async()=>{
-  const m=await load(); expect(m.shopifyCheckoutConsent().analytics).toBeNull();
+ it.each(['ar','en'])('records %s cart events without enabling Google or Meta',async locale=>{
+  browser.location=new URL(ORIGIN+'/'+locale+'/product/dna-hya-facial-cleanser');vi.stubGlobal('location',browser.location);
+  const m=await load();
+  await m.trackShopifyAddToCart({cartId:'gid://shopify/Cart/test',productId:'1',variantId:'2',name:'DNA HYA',price:120,quantity:1});
+  expect(mocked.send.mock.calls.map((call:any)=>call[0].eventName)).toEqual(['PAGE_VIEW','ADD_TO_CART']);
+  expect((mocked.send.mock.calls[1]?.[0] as any).payload).toMatchObject({acceptedLanguage:locale.toUpperCase(),marketingAllowed:false,saleOfDataAllowed:false});
+  expect(m.shopifyCheckoutConsent()).toEqual({analytics:true,marketing:false,preferences:false,saleOfData:false});
+  const ga=await import('@/lib/analytics/ga4');const meta=await import('@/lib/analytics/meta');
+  expect(ga.analyticsAllowed()).toBe(false);expect(ga.googleAdsAllowed()).toBe(false);expect(meta.marketingAllowed()).toBe(false);
+ });
+ it.each(['denied','region-required','missing-provider','dnt','gpc','staff'])('suppresses cart and checkout analytics for %s',async reason=>{
+  if(reason==='denied')data.set('atp-shopify-analytics-consent-v1','denied');
+  if(reason==='region-required')Object.assign(browser,{Shopify:{customerPrivacy:{getRegion:()=> 'DE',analyticsProcessingAllowed:()=>false}}});
+  if(reason==='missing-provider')Object.assign(browser,{Shopify:{customerPrivacy:{getRegion:()=> '',analyticsProcessingAllowed:()=>false}}});
+  if(reason==='dnt')vi.stubGlobal('navigator',{doNotTrack:'1'});
+  if(reason==='gpc')vi.stubGlobal('navigator',{globalPrivacyControl:true});
+  if(reason==='staff')vi.stubGlobal('sessionStorage',{getItem:()=> 'off'});
+  const m=await load();
+  await m.trackShopifyAddToCart({cartId:'gid://shopify/Cart/test',productId:'1',variantId:'2',name:'DNA HYA',price:120,quantity:1});
+  expect(mocked.send).not.toHaveBeenCalled();expect(m.shopifyCheckoutConsent().analytics).toBe(false);
+ });
+ it('uses Shopify regional permission with advertising disabled and no banner choice',async()=>{
+  const {measurementMode}=await import('@/lib/analytics/measurement-mode');
+  expect(measurementMode()).toBe('off');
+  const m=await load(); expect(m.shopifyCheckoutConsent().analytics).toBe(true);
   m.setShopifyVisitConsent(true); expect(m.shopifyCheckoutConsent().analytics).toBe(true);
   m.setShopifyVisitConsent(false); expect(m.shopifyCheckoutConsent().analytics).toBe(false);
  });
