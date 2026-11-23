@@ -516,6 +516,9 @@ export function CartPageContent() {
                                             </span>
                                         </div>
 
+                                        {cart.discountAllocations?.some(discount => /staff/i.test(discount.title || '') && Number(discount.discountedAmount.amount) > 0) && (
+                                            <p className="text-sm font-medium text-[#d4af37]">Staff discount</p>
+                                        )}
                                         <Separator className="bg-neutral-800 my-3" />
 
                                         <div className="flex justify-between text-xl font-semibold text-white">

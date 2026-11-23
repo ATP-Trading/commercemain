@@ -27,6 +27,7 @@ export function useMembership() {
     isActive: false,
     discountRate: 0,
   })
+  const [staffDiscountRate, setStaffDiscountRate] = useState({customerId: '', rate: 0})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,6 +35,7 @@ export function useMembership() {
     let cancelled = false
 
     const resetMembership = () => {
+      setStaffDiscountRate({customerId: '', rate: 0})
       setMembership({
         tier: null,
         isActive: false,
@@ -87,6 +89,7 @@ export function useMembership() {
         } else {
           resetMembership()
         }
+        setStaffDiscountRate({customerId: customer.id, rate: data.staffDiscountRate === 0.2 ? 0.2 : 0})
       } catch (error) {
         console.warn('[useMembership] Failed to load membership status:', error)
         if (!cancelled) {
@@ -131,6 +134,7 @@ export function useMembership() {
 
   return {
     membership,
+    staffDiscountRate: isLoggedIn && customer?.id === staffDiscountRate.customerId ? staffDiscountRate.rate : 0,
     isLoading,
     error,
     applyMemberDiscount,

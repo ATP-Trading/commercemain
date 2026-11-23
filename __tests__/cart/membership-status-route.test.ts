@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('server-only', () => ({}));
+vi.mock('@/lib/shopify/admin-access-token', () => ({getAdminAccessToken: async () => 'test-only'}));
 const auth = vi.hoisted(() => ({ token: vi.fn(), query: vi.fn() }));
 vi.mock('@/lib/shopify/customer-account-oauth', () => ({ getValidAccessToken: auth.token, queryCustomerAccountApi: auth.query }));
 vi.mock('@/lib/config', () => ({ config: { shopify: { domain: 'example.myshopify.com', apiVersion: '2026-01' } } }));
@@ -44,4 +46,12 @@ it('recognizes a merchant-granted membership from server-owned tags', async () =
   const data = await (await GET()).json();
   expect(data).toMatchObject({isMember:true,discountRate:0.15,membership:{source:'merchant',status:'active'}});
   expect(JSON.parse(vi.mocked(fetch).mock.calls.at(-1)![1]!.body as string).query).toContain('tags');
+});
+
+it.each([['atp-staff',0.2],['',0]])('staff pricing is bound to authenticated server tags: %s', async(tag,rate)=>{
+  auth.token.mockResolvedValue('session-token');
+  auth.query.mockResolvedValue({data:{customer:{id:'gid://shopify/Customer/123'}}});
+  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({data:{customer:{tags:tag?[tag]:[],metafield:null}}})));
+  const data=await (await GET()).json();
+  expect(data).toMatchObject({isMember:false,staffDiscountRate:rate});
 });
