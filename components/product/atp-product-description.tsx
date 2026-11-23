@@ -43,14 +43,15 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
   const t = useTranslations('product');
   const { isRTL } = useRTL();
   const { price, selectedVariant } = useSelectedVariant(product);
-  const { hasActiveMembership, calculateServiceDiscount } = useMembershipDiscount();
-  const memberPriceApplies = hasActiveMembership && isMemberDiscountEligible(product);
+  const { hasActiveMembership, hasStaffDiscount, calculateServiceDiscount } = useMembershipDiscount();
+  const staffPriceApplies = hasStaffDiscount && product.handle !== "atp-membership";
+  const memberPriceApplies = staffPriceApplies || (hasActiveMembership && isMemberDiscountEligible(product));
   const installmentBase = memberPriceApplies
     ? calculateServiceDiscount(Number(price.amount), undefined, getMemberDiscountRate(product)).finalPrice
     : Number(price.amount);
   const totalPrice = (Math.round(installmentBase * 100) * quantity / 100).toFixed(2);
   const quantityPrice = (
-    <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === "ar"} className="text-xl sm:text-2xl" />
+    <MemberPrice original={(Math.round(Number(price.amount) * 100) * quantity / 100).toFixed(2)} amount={totalPrice} currencyCode={price.currencyCode} member={memberPriceApplies} staff={staffPriceApplies} ar={locale === "ar"} className="text-xl sm:text-2xl" />
   );
   const estimatedInstallment = new Intl.NumberFormat(locale === "ar" ? "ar-AE" : "en-AE", {
     minimumFractionDigits: 2,
@@ -137,7 +138,7 @@ function ProductDescriptionContent({ product, locale }: { product: Product; loca
             {/* Unit price; membership discounts still apply without promotional cards. */}
             <div className={`mb-6 ${isRTL ? "text-right" : ""}`}>
               <div className="flex items-center gap-2">
-                <MemberPrice original={price.amount} amount={installmentBase.toFixed(2)} currencyCode={price.currencyCode} member={memberPriceApplies} ar={locale === 'ar'} className="text-xl sm:text-2xl" />
+                <MemberPrice original={price.amount} amount={installmentBase.toFixed(2)} currencyCode={price.currencyCode} member={memberPriceApplies} staff={staffPriceApplies} ar={locale === 'ar'} className="text-xl sm:text-2xl" />
                 {isMembershipProduct && <span className="text-base text-neutral-600">{locale === "ar" ? "/سنة" : "/year"}</span>}
               </div>
               {!isMembershipProduct && <p className="mt-1 text-sm text-neutral-600">{isRTL ? "تظهر الخصومات المستحقة في السلة." : "Eligible discounts appear in your cart."}</p>}

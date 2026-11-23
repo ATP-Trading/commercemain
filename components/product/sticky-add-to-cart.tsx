@@ -27,9 +27,9 @@ export function StickyAddToCart({ product, selectedVariant, triggerRef }: Sticky
     const { addCartItem } = useCart();
     const { quantity, inventory } = useQuantity();
     const t = useTranslations("product");
-    const { calculateServiceDiscount } = useMembershipDiscount();
+    const { calculateServiceDiscount, hasStaffDiscount } = useMembershipDiscount();
     const isMembershipProduct = product.handle === "atp-membership" || product.tags.some(tag => tag.toLowerCase().includes("membership"));
-    const displayPrice = isMembershipProduct || !isMemberDiscountEligible(product) ? selectedVariant.price.amount : String(calculateServiceDiscount(Number(selectedVariant.price.amount), undefined, getMemberDiscountRate(product)).finalPrice);
+    const displayPrice = isMembershipProduct || (!hasStaffDiscount && !isMemberDiscountEligible(product)) ? selectedVariant.price.amount : String(calculateServiceDiscount(Number(selectedVariant.price.amount), undefined, getMemberDiscountRate(product)).finalPrice);
 
     useEffect(() => {
         if (!triggerRef.current) return;

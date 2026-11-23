@@ -4,7 +4,7 @@ import { config } from '@/lib/config'
 import { resolveMembershipEntitlement } from '@/lib/shopify/membership-entitlement'
 import { getAdminAccessToken } from '@/lib/shopify/admin-access-token'
 
-const noMembership = { isMember: false, tier: null, discountRate: 0, membership: null }
+const noMembership = { isMember: false, tier: null, discountRate: 0, membership: null, staffDiscountRate: 0 }
 const headers = { 'Cache-Control': 'private, no-store' }
 
 export async function GET() {
@@ -33,10 +33,11 @@ export async function GET() {
     const result = await response.json()
     if (result.errors?.length) throw new Error('Membership lookup failed')
     if (!result.data?.customer) throw new Error('Customer lookup failed')
+    const staffDiscountRate = result.data.customer.tags?.includes('atp-staff') ? 0.20 : 0
     const subscription = resolveMembershipEntitlement(result.data.customer.tags, result.data.customer.metafield?.value)
-    if (!subscription) return NextResponse.json(noMembership, { headers })
+    if (!subscription) return NextResponse.json({ ...noMembership, staffDiscountRate }, { headers })
     return NextResponse.json({
-      isMember: true, tier: 'atp', discountRate: 0.15,
+      isMember: true, tier: 'atp', discountRate: 0.15, staffDiscountRate,
       // No invented expiry: Appstle owns subscriptions; merchant grants last until the tag is removed.
       membership: subscription,
     }, { headers })

@@ -1,8 +1,8 @@
 import Price from '@/components/price'
 
 /** Show the original only when an eligible member receives a lower price. */
-export function MemberPrice({ original, amount, currencyCode, member, ar, className = 'text-base' }: {
-  original: string; amount: string; currencyCode: string; member: boolean; ar: boolean; className?: string
+export function MemberPrice({ original, amount, currencyCode, member, ar, staff = false, className = 'text-base' }: {
+  original: string; amount: string; currencyCode: string; member: boolean; ar: boolean; staff?: boolean; className?: string
 }) {
   const discounted = member && Number.isFinite(Number(amount)) && Number(amount) < Number(original)
   return <div className="flex flex-wrap items-center gap-x-3 gap-y-1" aria-live="polite">
@@ -12,7 +12,7 @@ export function MemberPrice({ original, amount, currencyCode, member, ar, classN
     </div>}
     <div className="flex flex-wrap items-center gap-2">
       <Price amount={amount} currencyCode={currencyCode} className={`${className} font-semibold`} />
-      {discounted && <span className="rounded-md border border-atp-gold/40 bg-atp-gold/10 px-2 py-1 text-xs font-medium text-neutral-800">{ar ? 'سعر الأعضاء' : 'Member price'}</span>}
+      {discounted && <span className="rounded-md border border-atp-gold/40 bg-atp-gold/10 px-2 py-1 text-xs font-medium text-neutral-800">{staff ? 'Staff discount' : ar ? 'سعر الأعضاء' : 'Member price'}</span>}
     </div>
   </div>
 }

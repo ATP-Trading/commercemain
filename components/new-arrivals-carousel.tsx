@@ -33,7 +33,7 @@ function ProductCard({ product, locale }: { product: Product; locale: Locale }) 
         </div>
         <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
           <ProductCardHeading title={title} />
-          <div className="mt-auto text-neutral-900"><MemberCardPrice amount={price.amount} currencyCode={price.currencyCode} rate={getMemberDiscountRate(product)} ar={locale === "ar"} /></div>
+          <div className="mt-auto text-neutral-900"><MemberCardPrice staffEligible={product.handle !== "atp-membership"} amount={price.amount} currencyCode={price.currencyCode} rate={getMemberDiscountRate(product)} ar={locale === "ar"} /></div>
           <span className="mt-4 flex min-h-11 items-center border-t border-neutral-200 pt-3 text-sm font-medium text-[#765b19] group-hover:underline">
             {locale === "ar" ? "عرض المنتج" : "View product"}
           </span>
