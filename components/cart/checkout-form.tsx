@@ -24,6 +24,11 @@ export function CheckoutForm({ children, className }: { children: ReactNode; cla
   };
   return <form action={checkout} className={className}>
     {children}
-    {failed && <p role="alert" className="mt-2 text-sm text-red-400">{ar ? 'تعذر فتح الدفع. يرجى المحاولة مرة أخرى.' : 'Could not open checkout. Please try again.'}</p>}
+    {failed && <div role="alert" className="mt-3 space-y-2 text-sm text-red-400">
+      <p>{ar ? 'تعذر تأكيد حسابك وخصوماتك للدفع. أعد المحاولة، أو سجّل الدخول من جديد للمتابعة.' : 'We could not verify your account and discounts for checkout. Retry, or sign in again to continue.'}</p>
+      <a className="inline-flex min-h-11 items-center underline underline-offset-4" href={`/api/auth/login?returnTo=${encodeURIComponent(ar ? '/ar/cart' : '/en/cart')}`}>
+        {ar ? 'تسجيل الدخول من جديد' : 'Sign in again'}
+      </a>
+    </div>}
   </form>;
 }

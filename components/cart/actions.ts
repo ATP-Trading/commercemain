@@ -145,27 +145,22 @@ export async function getCheckoutUrl(consent?: unknown): Promise<string> {
   }
 
 
-  // Keep checkout logged in by syncing buyer identity when possible.
-  // Shopify docs require buyerIdentity.customerAccessToken on the cart before checkout redirect.
+  // Never silently downgrade a customer checkout to a guest checkout.
   const accessToken = await getValidAccessToken()
+  if (!accessToken && cart.buyerIdentity?.customer) {
+    throw new Error('Checkout account verification required')
+  }
   let checkoutCart = await cartForSession(cart, accessToken)
   if (accessToken) {
-    try {
-      const { cart: updatedCart, userErrors } = await updateCartBuyerIdentity({
-        customerAccessToken: accessToken,
-      })
-
-      if (userErrors.length > 0) {
-        console.warn('[Checkout] Failed to sync buyer identity, continuing as guest:', userErrors)
-      } else if (updatedCart) {
-        checkoutCart = updatedCart
-      }
-    } catch (error) {
-      // Fail open: checkout should still work as guest if identity sync fails.
-      console.warn('[Checkout] Buyer identity sync failed, continuing as guest checkout:', error)
+    const { cart: updatedCart, userErrors } = await updateCartBuyerIdentity({
+      customerAccessToken: accessToken,
+    })
+    if (userErrors.length > 0 || !updatedCart?.buyerIdentity?.customer) {
+      throw new Error('Checkout account verification required')
     }
+    checkoutCart = updatedCart
   }
-  
+
   let checkoutUrl = checkoutCart.checkoutUrl
   if (consent !== undefined) {
     checkoutUrl = await getConsentedCheckoutUrl(checkoutCart.id!, normalizeCheckoutConsent(consent))
